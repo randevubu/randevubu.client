@@ -30,6 +30,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
+  // Note: Subscription checking is handled by SubscriptionGuard component
+  // This provides better UX by checking subscriptions before rendering dashboard
+  // and redirecting users without subscriptions to the subscription page
+  // 
+  // Business checking is handled by BusinessGuard component for onboarding pages
+  // This prevents users with existing businesses from accessing onboarding
+
   return response;
 }
 

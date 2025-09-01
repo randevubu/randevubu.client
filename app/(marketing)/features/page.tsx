@@ -1,27 +1,26 @@
-import { Navbar, Features, Footer } from '../../components';
+import { Features } from '../../../src/components';
 
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
+
       {/* Hero Section */}
       <section className="relative bg-white pt-20 pb-16">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
-        
+
         <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
           <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
             ⚡ Tüm Özellikler
           </div>
-          
+
           <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
             RandevuBu'nun
             <br />
             <span className="text-indigo-600">Güçlü Özellikleri</span>
           </h1>
-          
+
           <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-            Salon işletmenizi dijital çağa taşıyan, müşteri memnuniyetini artıran ve gelirinizi optimize eden 
+            Salon işletmenizi dijital çağa taşıyan, müşteri memnuniyetini artıran ve gelirinizi optimize eden
             kapsamlı özellik setimizi keşfedin.
           </p>
 
@@ -72,14 +71,14 @@ export default function FeaturesPage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Veri Güvenliği</h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Müşteri bilgileriniz SSL şifrelemesi ve KVKK uyumluluğu ile korunur. 
+                Müşteri bilgileriniz SSL şifrelemesi ve KVKK uyumluluğu ile korunur.
                 Düzenli yedekleme sistemi ile verileriniz güvende.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <svg className="w-2 h-2 text-blue-600" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="4"/>
+                      <circle cx="4" cy="4" r="4" />
                     </svg>
                   </div>
                   256-bit SSL şifrelemesi
@@ -87,7 +86,7 @@ export default function FeaturesPage() {
                 <li className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <svg className="w-2 h-2 text-blue-600" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="4"/>
+                      <circle cx="4" cy="4" r="4" />
                     </svg>
                   </div>
                   KVKK uyumlu sistem
@@ -95,7 +94,7 @@ export default function FeaturesPage() {
                 <li className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                     <svg className="w-2 h-2 text-blue-600" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="4"/>
+                      <circle cx="4" cy="4" r="4" />
                     </svg>
                   </div>
                   Günlük otomatik yedekleme
@@ -111,14 +110,14 @@ export default function FeaturesPage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Hızlı Performans</h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Bulut tabanlı altyapı ile yüksek hızlı performans. 
+                Bulut tabanlı altyapı ile yüksek hızlı performans.
                 Mobil uyumlu arayüz ile her cihazda sorunsuz çalışır.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2">
                     <svg className="w-2 h-2 text-green-600" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="4"/>
+                      <circle cx="4" cy="4" r="4" />
                     </svg>
                   </div>
                   %99.9 uptime garantisi
@@ -126,7 +125,7 @@ export default function FeaturesPage() {
                 <li className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2">
                     <svg className="w-2 h-2 text-green-600" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="4"/>
+                      <circle cx="4" cy="4" r="4" />
                     </svg>
                   </div>
                   Hızlı sayfa yükleme
@@ -134,7 +133,7 @@ export default function FeaturesPage() {
                 <li className="flex items-center text-sm text-gray-600">
                   <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center mr-2">
                     <svg className="w-2 h-2 text-green-600" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="4"/>
+                      <circle cx="4" cy="4" r="4" />
                     </svg>
                   </div>
                   Mobil responsive tasarım
@@ -144,8 +143,6 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }

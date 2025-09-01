@@ -1,0 +1,115 @@
+/* Mobile-specific enhancements */
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
+}
+
+/* Smooth scroll snap */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-mandatory {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-center {
+  scroll-snap-align: center;
+}
+
+/* Mobile gradient text */
+.mobile-gradient-text {
+  background: linear-gradient(45deg, var(--theme-primary), var(--theme-accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Mobile animations */
+.mobile-fade-up {
+  animation: mobileSlideUp 0.6s ease-out forwards;
+}
+
+@keyframes mobileSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile floating elements */
+.mobile-float {
+  animation: mobileFloat 3s ease-in-out infinite;
+}
+
+@keyframes mobileFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Mobile card hover effects */
+.mobile-card-hover {
+  transition: all 0.3s ease;
+}
+
+.mobile-card-hover:active {
+  transform: scale(0.98);
+}
+
+/* Mobile touch feedback */
+.mobile-touch-feedback {
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-touch-feedback::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.mobile-touch-feedback:active::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* Mobile safe areas */
+.mobile-safe-area-top {
+  padding-top: env(safe-area-inset-top, 20px);
+}
+
+.mobile-safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* Mobile optimized shadows */
+.mobile-shadow {
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile backdrop blur */
+.mobile-backdrop-blur {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}

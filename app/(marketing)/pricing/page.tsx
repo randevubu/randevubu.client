@@ -1,27 +1,26 @@
-import { Navbar, Pricing, Footer } from '../../components';
+import { Pricing } from '../../../src/components';
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
+
       {/* Hero Section */}
       <section className="relative bg-white pt-20 pb-16">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
-        
+
         <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
           <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
             💳 Fiyatlandırma
           </div>
-          
+
           <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
             Salonunuza Uygun
             <br />
             <span className="text-indigo-600">Fiyat Planı Seçin</span>
           </h1>
-          
+
           <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-            İşletmenizin boyutuna ve ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma seçenekleri. 
+            İşletmenizin boyutuna ve ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma seçenekleri.
             Tüm planlar 15 gün ücretsiz deneme ile başlar.
           </p>
 
@@ -35,7 +34,7 @@ export default function PricingPage() {
               </div>
               <span className="text-gray-700 font-semibold">15 Gün Ücretsiz Deneme</span>
             </div>
-            
+
             <div className="flex items-center justify-center space-x-2">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -44,7 +43,7 @@ export default function PricingPage() {
               </div>
               <span className="text-gray-700 font-semibold">İstediğiniz Zaman İptal</span>
             </div>
-            
+
             <div className="flex items-center justify-center space-x-2">
               <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
@@ -79,7 +78,7 @@ export default function PricingPage() {
                 Ücretsiz deneme süresi boyunca kredi kartı bilgisi istenyor mu?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Hayır, 15 gün ücretsiz deneme için herhangi bir ödeme bilgisi istenmez. 
+                Hayır, 15 gün ücretsiz deneme için herhangi bir ödeme bilgisi istenmez.
                 Deneme süresi bitiminde devam etmek isterseniz ödeme bilgilerinizi girebilirsiniz.
               </p>
             </div>
@@ -89,7 +88,7 @@ export default function PricingPage() {
                 Plan değiştirme işlemi nasıl yapılır?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Hesap ayarlarından istediğiniz zaman plan değiştirebilirsiniz. 
+                Hesap ayarlarından istediğiniz zaman plan değiştirebilirsiniz.
                 Yüksek plana geçişlerde fark ücreti otomatik olarak hesaplanır.
               </p>
             </div>
@@ -99,7 +98,7 @@ export default function PricingPage() {
                 SMS kredilerimi başka aya aktarabilir miyim?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                SMS kredileri kullanılmadığı takdirde bir sonraki aya aktarılır. 
+                SMS kredileri kullanılmadığı takdirde bir sonraki aya aktarılır.
                 Maksimum 3 aylık birikimi destekliyoruz.
               </p>
             </div>
@@ -109,7 +108,7 @@ export default function PricingPage() {
                 İptal işlemi nasıl yapılır?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Hesap ayarlarından "Aboneliği İptal Et" seçeneği ile veya müşteri hizmetlerimizi arayarak 
+                Hesap ayarlarından "Aboneliği İptal Et" seçeneği ile veya müşteri hizmetlerimizi arayarak
                 iptal işlemini gerçekleştirebilirsiniz. Verileriniz 30 gün boyunca saklanır.
               </p>
             </div>
@@ -119,7 +118,7 @@ export default function PricingPage() {
                 Kurumsal paketlerde özel indirimlerin var mı?
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                5+ salon zinciri olan müşterilerimiz için özel fiyatlandırma yapıyoruz. 
+                5+ salon zinciri olan müşterilerimiz için özel fiyatlandırma yapıyoruz.
                 Satış ekibimizle iletişime geçerek teklif alabilirsiniz.
               </p>
             </div>
@@ -146,8 +145,6 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Navbar, Footer } from '../../components';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -41,7 +40,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
       
       {/* Hero Section */}
       <section className="relative bg-white pt-20 pb-16">
@@ -268,7 +266,6 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }

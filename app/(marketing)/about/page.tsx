@@ -1,4 +1,3 @@
-import { Navbar, Footer } from '../../components';
 
 export default function AboutPage() {
   const team = [
@@ -62,9 +61,7 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      
+    <div className="min-h-screen">      
       {/* Hero Section */}
       <section className="relative bg-white pt-20 pb-16">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
@@ -235,7 +232,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }
