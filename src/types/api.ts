@@ -45,6 +45,23 @@ export interface MyBusinessResponse {
   };
 }
 
+export interface CreateBusinessResponse {
+  success: boolean;
+  message: string;
+  data?: import('./business').Business;
+  tokens?: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn?: number;
+  };
+  error?: {
+    message: string;
+    code: string;
+    requestId?: string;
+    details?: any;
+  };
+}
+
 export interface ApiError {
   success: false;
   message: string;

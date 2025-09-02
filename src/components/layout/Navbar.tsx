@@ -40,12 +40,16 @@ export default function Navbar() {
           setBusinesses(response.data.businesses);
           console.log('🏢 Fetched businesses:', response.data.businesses);
           
-          // Also set subscriptions from the same response if available
-          if (response.data.subscriptions) {
-            setSubscriptions(response.data.subscriptions);
-            console.log('📱 Fetched subscriptions from business response:', response.data.subscriptions);
+          // Extract subscriptions from business objects if available
+          const businessSubscriptions = response.data.businesses
+            .filter(business => business.subscription)
+            .map(business => business.subscription);
+          
+          if (businessSubscriptions.length > 0) {
+            setSubscriptions(businessSubscriptions);
+            console.log('📱 Extracted subscriptions from business objects:', businessSubscriptions);
           } else {
-            console.log('❌ No subscriptions in business response');
+            console.log('❌ No subscriptions found in business objects');
             setSubscriptions([]);
           }
         } else {
@@ -374,10 +378,15 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/auth" className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
+                {/* Mobile-enhanced Giriş Yap button */}
+                <Link href="/auth" className="md:hidden inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--theme-border)] text-[var(--theme-navbarForeground)] font-semibold shadow-sm hover:bg-[var(--theme-backgroundSecondary)] active:scale-[0.98] transition-all text-sm">
                   Giriş Yap
                 </Link>
-                <Link href="/auth" className="bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm">
+                {/* Desktop simple link */}
+                <Link href="/auth" className="hidden md:inline-flex text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
+                  Giriş Yap
+                </Link>
+                <Link href="/auth" className="hidden md:inline-flex bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm">
                   Başla
                 </Link>
               </>
@@ -547,13 +556,6 @@ export default function Navbar() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Giriş Yap
-                </Link>
-                <Link 
-                  href="/auth" 
-                  className="block w-full text-center px-4 py-3 rounded-lg font-bold text-white transition-all duration-200 hover:shadow-lg transform hover:scale-105 bg-blue-600"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Başla
                 </Link>
               </div>
             )}

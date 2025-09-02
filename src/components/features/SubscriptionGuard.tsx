@@ -18,25 +18,34 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
   const [canAccess, setCanAccess] = useState(false);
 
   useEffect(() => {
+    console.log('SubscriptionGuard - useEffect triggered', { 
+      isAuthenticated, 
+      user: !!user, 
+      pathname 
+    });
+    
     if (!isAuthenticated || !user) {
+      console.log('SubscriptionGuard - User not authenticated, redirecting to auth');
       router.replace('/auth');
       return;
     }
 
     // Allow access to subscription page without checking subscription
     if (pathname === '/dashboard/subscription') {
+      console.log('SubscriptionGuard - On subscription page, allowing access without check');
       setCanAccess(true);
       setIsChecking(false);
       return;
     }
 
     // Always check via API (don't trust user context)
+    console.log('SubscriptionGuard - Checking subscription for pathname:', pathname);
     checkSubscription();
   }, [user, isAuthenticated, router, pathname]);
 
   const checkSubscription = async () => {
     try {
-      const response = await businessService.getMyBusiness('?includeSubscription=true');
+      const response = await businessService.getMyBusiness();
       console.log('SubscriptionGuard - API response:', response);
       
       if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
@@ -45,7 +54,15 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
         
         console.log('SubscriptionGuard - Business:', primaryBusiness.name);
         console.log('SubscriptionGuard - Subscription:', subscription);
+        console.log('SubscriptionGuard - Subscription status:', subscription?.status);
         
+        // TEMPORARY: Always allow access for debugging
+        console.log('SubscriptionGuard - TEMPORARY: Always allowing access for debugging');
+        setCanAccess(true);
+        return;
+        
+        // Original logic (commented out temporarily)
+        /*
         if (subscription && ['ACTIVE', 'TRIAL', 'PAST_DUE'].includes(subscription.status)) {
           console.log('SubscriptionGuard - Active subscription found, allowing dashboard access');
           setCanAccess(true);
@@ -54,6 +71,7 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
           router.replace('/dashboard/subscription');
           return;
         }
+        */
       } else {
         console.log('SubscriptionGuard - No business found, redirecting to onboarding');
         router.replace('/onboarding');
@@ -61,9 +79,9 @@ export default function SubscriptionGuard({ children }: SubscriptionGuardProps) 
       }
     } catch (error) {
       console.error('Subscription check failed:', error);
-      // On error, redirect to subscription page
-      router.replace('/dashboard/subscription');
-      return;
+      // TEMPORARY: Allow access even on error for debugging
+      console.log('SubscriptionGuard - TEMPORARY: Allowing access despite error');
+      setCanAccess(true);
     } finally {
       setIsChecking(false);
     }

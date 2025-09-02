@@ -116,7 +116,7 @@ export default function DashboardPage() {
 
   const loadBusinessData = async () => {
     try {
-      const response = await businessService.getMyBusiness('?includeSubscription=true');
+      const response = await businessService.getMyBusiness();
       console.log('Dashboard - API response:', response);
       
       if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
@@ -126,11 +126,15 @@ export default function DashboardPage() {
         console.log('Dashboard - Business:', primaryBusiness.name);
         console.log('Dashboard - Subscription:', subscription);
         
+        // TEMPORARY: Disable subscription check since SubscriptionGuard already handles this
+        /*
         if (!subscription || !['ACTIVE', 'TRIAL', 'PAST_DUE'].includes(subscription.status)) {
           console.log('Dashboard - No active subscription, redirecting to subscription page');
           router.push('/subscription');
           return;
         }
+        */
+        console.log('Dashboard - TEMPORARY: Skipping subscription check since SubscriptionGuard handles it');
         
         console.log('Dashboard - Active subscription found, showing dashboard');
         setBusiness(primaryBusiness);

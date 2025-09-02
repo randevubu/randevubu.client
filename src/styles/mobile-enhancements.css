@@ -99,6 +99,36 @@
   padding-top: env(safe-area-inset-top, 20px);
 }
 
+/* Mobile form overflow prevention */
+.mobile-form-container {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.mobile-form-field {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Mobile URL display */
+.mobile-url-display {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  word-break: break-all;
+  hyphens: auto;
+}
+
+/* Mobile form spacing */
+.mobile-form-spacing {
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .mobile-form-spacing {
+    gap: 1rem;
+  }
+}
+
 .mobile-safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 20px);
 }

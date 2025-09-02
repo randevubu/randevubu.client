@@ -9,9 +9,11 @@ interface PaymentFormProps {
   onSubmit: (paymentData: CreatePaymentRequest) => void;
   onBack: () => void;
   loading?: boolean;
+  discountCode?: string;
+  discountAmount?: number;
 }
 
-export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = false }: PaymentFormProps) {
+export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = false, discountCode, discountAmount }: PaymentFormProps) {
   const [cardData, setCardData] = useState<IyzicoCardData>({
     cardHolderName: '',
     cardNumber: '',
@@ -38,32 +40,32 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
     const newErrors: Record<string, string> = {};
 
     if (!card.cardHolderName.trim()) {
-      newErrors.cardHolderName = 'Card holder name is required';
+      newErrors.cardHolderName = 'Kart sahibinin adı gereklidir';
     }
 
     const cardNumber = card.cardNumber.replace(/\s/g, '');
     if (!cardNumber) {
-      newErrors.cardNumber = 'Card number is required';
+      newErrors.cardNumber = 'Kart numarası gereklidir';
     } else if (cardNumber.length < 15 || cardNumber.length > 19) {
-      newErrors.cardNumber = 'Invalid card number';
+      newErrors.cardNumber = 'Geçersiz kart numarası';
     }
 
     if (!card.expireMonth) {
-      newErrors.expireMonth = 'Expiry month is required';
+      newErrors.expireMonth = 'Son kullanma ayı gereklidir';
     } else if (parseInt(card.expireMonth) < 1 || parseInt(card.expireMonth) > 12) {
-      newErrors.expireMonth = 'Invalid month';
+      newErrors.expireMonth = 'Geçersiz ay';
     }
 
     if (!card.expireYear) {
-      newErrors.expireYear = 'Expiry year is required';
+      newErrors.expireYear = 'Son kullanma yılı gereklidir';
     } else if (parseInt(card.expireYear) < new Date().getFullYear()) {
-      newErrors.expireYear = 'Card has expired';
+      newErrors.expireYear = 'Kart süresi dolmuş';
     }
 
     if (!card.cvc) {
-      newErrors.cvc = 'CVC is required';
+      newErrors.cvc = 'CVC gereklidir';
     } else if (card.cvc.length < 3 || card.cvc.length > 4) {
-      newErrors.cvc = 'Invalid CVC';
+      newErrors.cvc = 'Geçersiz CVC';
     }
 
     return newErrors;
@@ -72,17 +74,17 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
   const validateBuyer = (buyer: IyzicoBuyerData): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
-    if (!buyer.name.trim()) newErrors.name = 'Name is required';
-    if (!buyer.surname.trim()) newErrors.surname = 'Surname is required';
+    if (!buyer.name.trim()) newErrors.name = 'Ad gereklidir';
+    if (!buyer.surname.trim()) newErrors.surname = 'Soyad gereklidir';
     if (!buyer.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'E-posta gereklidir';
     } else if (!/\S+@\S+\.\S+/.test(buyer.email)) {
-      newErrors.email = 'Invalid email format';
+              newErrors.email = 'Geçersiz e-posta formatı';
     }
-    if (!buyer.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!buyer.address.trim()) newErrors.address = 'Address is required';
-    if (!buyer.city.trim()) newErrors.city = 'City is required';
-    if (!buyer.zipCode.trim()) newErrors.zipCode = 'Zip code is required';
+    if (!buyer.phone.trim()) newErrors.phone = 'Telefon gereklidir';
+    if (!buyer.address.trim()) newErrors.address = 'Adres gereklidir';
+    if (!buyer.city.trim()) newErrors.city = 'Şehir gereklidir';
+    if (!buyer.zipCode.trim()) newErrors.zipCode = 'Posta kodu gereklidir';
 
     return newErrors;
   };
@@ -97,6 +99,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
     setErrors(allErrors);
 
     if (Object.keys(allErrors).length === 0) {
+      // Use the plan ID directly without mapping
       const paymentData: CreatePaymentRequest = {
         planId: selectedPlan.id,
         card: {
@@ -104,7 +107,8 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
           cardNumber: cardData.cardNumber.replace(/\s/g, '')
         },
         buyer: buyerData,
-        installment
+        installment,
+        ...(discountCode && { discountCode })
       };
       onSubmit(paymentData);
     }
@@ -167,7 +171,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Month</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Son Kullanma Ayı</label>
               <select
                 value={cardData.expireMonth}
                 onChange={(e) => setCardData({ ...cardData, expireMonth: e.target.value })}
@@ -176,7 +180,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 }`}
                 disabled={loading}
               >
-                <option value="">Month</option>
+                <option value="">Ay</option>
                 {Array.from({ length: 12 }, (_, i) => (
                   <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
                     {String(i + 1).padStart(2, '0')}
@@ -187,7 +191,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Year</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Son Kullanma Yılı</label>
               <select
                 value={cardData.expireYear}
                 onChange={(e) => setCardData({ ...cardData, expireYear: e.target.value })}
@@ -196,7 +200,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 }`}
                 disabled={loading}
               >
-                <option value="">Year</option>
+                <option value="">Yıl</option>
                 {Array.from({ length: 20 }, (_, i) => {
                   const year = new Date().getFullYear() + i;
                   return (
@@ -226,19 +230,19 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Installments</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Taksit</label>
               <select
                 value={installment}
                 onChange={(e) => setInstallment(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={loading}
               >
-                <option value="1">1 (No installment)</option>
-                <option value="2">2 installments</option>
-                <option value="3">3 installments</option>
-                <option value="6">6 installments</option>
-                <option value="9">9 installments</option>
-                <option value="12">12 installments</option>
+                <option value="1">1 (Taksitsiz)</option>
+                <option value="2">2 taksit</option>
+                <option value="3">3 taksit</option>
+                <option value="6">6 taksit</option>
+                <option value="9">9 taksit</option>
+                <option value="12">12 taksit</option>
               </select>
             </div>
           </div>
@@ -248,7 +252,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
           <h3 className="text-lg font-bold text-gray-900 mb-6">📍 Fatura Bilgileri</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ad</label>
               <input
                 type="text"
                 value={buyerData.name}
@@ -262,7 +266,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Soyad</label>
               <input
                 type="text"
                 value={buyerData.surname}
@@ -276,7 +280,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
               <input
                 type="email"
                 value={buyerData.email}
@@ -290,7 +294,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
               <input
                 type="tel"
                 value={buyerData.phone}
@@ -305,7 +309,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Adres</label>
               <input
                 type="text"
                 value={buyerData.address}
@@ -319,7 +323,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Şehir</label>
               <input
                 type="text"
                 value={buyerData.city}
@@ -333,7 +337,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Zip Code</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Posta Kodu</label>
               <input
                 type="text"
                 value={buyerData.zipCode}
@@ -363,7 +367,10 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             ) : (
               <>
                 <span className="mr-2">Ödemeyi Tamamla</span>
-                <span>{selectedPlan.currency === 'TRY' ? '₺' : '$'}{selectedPlan.price}</span>
+                <span>
+                  {selectedPlan.currency === 'TRY' ? '₺' : '$'}
+                  {discountAmount !== undefined ? discountAmount : selectedPlan.price}
+                </span>
               </>
             )}
           </button>

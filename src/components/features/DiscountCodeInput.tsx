@@ -7,6 +7,7 @@ import { DiscountApplication } from '../../types/discount';
 interface DiscountCodeInputProps {
   planId: string;
   planAmount: number;
+  billingInterval?: string; // Add billing interval for plan mapping
   onDiscountApplied?: (discount: DiscountApplication | null) => void;
   className?: string;
   disabled?: boolean;
@@ -15,6 +16,7 @@ interface DiscountCodeInputProps {
 export const DiscountCodeInput: React.FC<DiscountCodeInputProps> = ({
   planId,
   planAmount,
+  billingInterval,
   onDiscountApplied,
   className = '',
   disabled = false
@@ -52,9 +54,11 @@ export const DiscountCodeInput: React.FC<DiscountCodeInputProps> = ({
     if (!code.trim() || disabled || isValidating) return;
     
     setHasAttemptedValidation(true);
+    
+    // Use the plan ID directly without mapping
     await validateCode({
       code: code.trim(),
-      planId,
+      planId: planId,
       amount: planAmount
     });
   };

@@ -6,10 +6,11 @@ import { useAuth } from '../../../src/context/AuthContext';
 import { businessService } from '../../../src/lib/services/business';
 import { CreateBusinessData, BusinessType } from '../../../src/types/business';
 import BusinessGuard from '../../../src/components/features/BusinessGuard';
+import ProfileGuard from '../../../src/components/features/ProfileGuard';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, refreshTokenAndUser, updateTokensAndUser } = useAuth();
   const [currentStep, setCurrentStep] = useState<'business' | 'success'>('business');
   const [createdBusiness, setCreatedBusiness] = useState<any>(null);
   
@@ -46,12 +47,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Check profile completeness before allowing business creation
-    if (user && (!user.firstName || !user.lastName)) {
-      router.push('/settings?tab=profile&redirect=onboarding');
-      return;
-    }
-
     // Check if user already has a business via API (not user context)
     checkBusinessStatus();
   }, [user, isAuthenticated, authLoading, router]);
@@ -71,6 +66,13 @@ export default function OnboardingPage() {
       fetchBusinessTypes();
     }
   };
+
+  // Populate phone from profile and keep it immutable in the form
+  useEffect(() => {
+    if (user?.phoneNumber) {
+      setFormData(prev => (prev.phone === user.phoneNumber ? prev : { ...prev, phone: user.phoneNumber }));
+    }
+  }, [user?.phoneNumber]);
 
   const fetchBusinessTypes = async () => {
     try {
@@ -163,13 +165,18 @@ export default function OnboardingPage() {
         // Clear any previous errors
         setErrors({});
         
-        // Refresh user context to include the new business
-        await refreshUser();
+        // If backend returned new tokens, use them; otherwise refresh
+        if (response.tokens?.accessToken) {
+          await updateTokensAndUser(response.tokens);
+        } else {
+          // Fallback to token refresh if no tokens in response
+          await refreshTokenAndUser();
+        }
         
         setCreatedBusiness(response.data);
         
-        // Redirect to the business page using the generated slug
-        router.push(`/business/${websiteSlug}`);
+        // Redirect to subscription page instead of business page
+        router.push('/subscription');
         return;
       } else {
         const error = 'İşletme oluşturulamadı';
@@ -249,7 +256,7 @@ export default function OnboardingPage() {
               ✅ İşletme Oluşturuldu
             </div>
 
-            {/* Big Success Icon */}
+        {/* Big Success Icon */}
             <div className="mb-8">
               <div className="mx-auto flex items-center justify-center w-32 h-32 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-2xl mb-6 animate-bounce">
                 <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,8 +385,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <BusinessGuard>
-      <div className="min-h-screen">
+    <ProfileGuard>
+      <BusinessGuard>
+        <div className="min-h-screen">
           {/* Hero Section */}
           <section className="relative bg-white pt-20 pb-12">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
@@ -403,8 +411,8 @@ export default function OnboardingPage() {
 
       {/* Form Section */}
       <section className="pb-20">
-        <div className="max-w-2xl mx-auto px-4 lg:px-6">
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 mobile-form-container">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 mx-2 sm:mx-0">
             {errors.general && (
               <div className="bg-red-50 border-l-4 border-red-500 p-6">
                 <div className="flex items-center">
@@ -450,8 +458,8 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <div className="p-8 lg:p-12">
-              <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="p-6 sm:p-8 lg:p-12">
+              <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 mobile-form-spacing">
                 {/* Business Type */}
                 <div>
                   <label className="block text-sm font-bold text-gray-900 mb-3">İşletme Türü *</label>
@@ -483,7 +491,7 @@ export default function OnboardingPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                    className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${
                       errors.name ? 'border-red-500 bg-red-50' : 'border-gray-200'
                     }`}
                     placeholder="Örnek: Güzellik Salonu"
@@ -495,7 +503,7 @@ export default function OnboardingPage() {
                   {formData.name && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
                       <p className="text-sm text-blue-800 font-medium mb-1">Website URL Önizlemesi:</p>
-                      <p className="text-sm text-blue-600 font-mono">
+                      <p className="text-sm text-blue-600 font-mono break-all mobile-url-display">
                         https://randevubu.com/business/{websiteSlug || 'your-business-name'}
                       </p>
                     </div>
@@ -516,7 +524,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Contact Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-3">E-posta *</label>
                     <input
@@ -525,9 +533,9 @@ export default function OnboardingPage() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
-                        errors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                      }`}
+                                          className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${
+                      errors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                    }`}
                       placeholder="info@isletmeniz.com"
                       disabled={loading}
                     />
@@ -541,14 +549,17 @@ export default function OnboardingPage() {
                       data-field="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
-                        errors.phone ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                      }`}
+                                          className={`w-full px-4 py-4 border-2 rounded-2xl focus:ring-0 transition-all mobile-form-field ${
+                      errors.phone ? 'border-red-500 bg-red-50' : 'bg-indigo-50 border-indigo-200'
+                    } cursor-not-allowed text-gray-700`}
                       placeholder="+90 555 123 4567"
-                      disabled={loading}
+                      disabled={true}
+                      readOnly
                     />
                     {errors.phone && <p className="text-red-500 text-sm mt-2 font-medium">{errors.phone}</p>}
+                    {!errors.phone && (
+                      <p className="text-sm text-gray-500 mt-2">Bu alan profilinizden alınır ve değiştirilemez. Güncellemek için profilinizi düzenleyin.</p>
+                    )}
                   </div>
                 </div>
 
@@ -556,15 +567,13 @@ export default function OnboardingPage() {
                 <div>
                   <label className="block text-sm font-bold text-gray-900 mb-3">Website URL</label>
                   <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.website || 'https://randevubu.com/business/'}
-                      className="w-full px-4 py-4 bg-gray-100 border-2 border-gray-300 rounded-2xl text-gray-600 cursor-not-allowed"
-                      placeholder="https://randevubu.com/business/"
-                      disabled={true}
-                      readOnly
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                    <div
+                      className="w-full px-4 py-4 bg-indigo-50 border-2 border-indigo-200 rounded-2xl text-gray-900 break-all pr-12 select-text text-sm mobile-url-display"
+                      aria-readonly="true"
+                    >
+                      {formData.website || 'https://randevubu.com/business/'}
+                    </div>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
                       </svg>
@@ -584,7 +593,7 @@ export default function OnboardingPage() {
                     type="text"
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                    className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${
                       errors.address ? 'border-red-500 bg-red-50' : 'border-gray-200'
                     }`}
                     placeholder="Mahalle, Sokak, No"
@@ -594,7 +603,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Location */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-3">Şehir *</label>
                     <input
@@ -603,7 +612,7 @@ export default function OnboardingPage() {
                       type="text"
                       value={formData.city}
                       onChange={(e) => handleInputChange('city', e.target.value)}
-                      className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                      className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${
                         errors.city ? 'border-red-500 bg-red-50' : 'border-gray-200'
                       }`}
                       placeholder="İstanbul"
@@ -618,7 +627,7 @@ export default function OnboardingPage() {
                       type="text"
                       value={formData.state}
                       onChange={(e) => handleInputChange('state', e.target.value)}
-                      className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field"
                       placeholder="İstanbul"
                       disabled={loading}
                     />
@@ -630,47 +639,14 @@ export default function OnboardingPage() {
                       type="text"
                       value={formData.postalCode}
                       onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                      className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field"
                       placeholder="34710"
                       disabled={loading}
                     />
                   </div>
                 </div>
 
-                {/* Brand Color */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-3">Marka Rengi</label>
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="color"
-                      value={formData.primaryColor}
-                      onChange={(e) => handleInputChange('primaryColor', e.target.value)}
-                      className="w-20 h-12 border-2 border-gray-200 rounded-xl cursor-pointer"
-                      disabled={loading}
-                    />
-                    <input
-                      type="text"
-                      value={formData.primaryColor}
-                      onChange={(e) => handleInputChange('primaryColor', e.target.value)}
-                      className="flex-1 px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      placeholder="#6366F1"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-3">Etiketler (virgülle ayırın)</label>
-                  <input
-                    type="text"
-                    value={Array.isArray(formData.tags) ? formData.tags.join(', ') : formData.tags}
-                    onChange={(e) => handleInputChange('tags', e.target.value)}
-                    className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                    placeholder="kuaför, güzellik, cilt bakımı"
-                    disabled={loading}
-                  />
-                </div>
+                
 
                 {/* Submit Button */}
                 <div className="pt-6">
@@ -699,5 +675,6 @@ export default function OnboardingPage() {
       </section>
     </div>
     </BusinessGuard>
+    </ProfileGuard>
   );
 }

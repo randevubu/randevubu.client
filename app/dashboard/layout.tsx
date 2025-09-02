@@ -9,6 +9,7 @@ import { Business } from '../../src/types/business';
 import { canViewBusinessStats, isAdmin } from '../../src/lib/utils/permissions';
 import { handleApiError } from '../../src/lib/utils/toast';
 import SubscriptionGuard from '../../src/components/features/SubscriptionGuard';
+import ProfileGuard from '../../src/components/features/ProfileGuard';
 
 export default function DashboardLayout({
   children,
@@ -130,10 +131,11 @@ export default function DashboardLayout({
     );
   }
 
-  // Wrap the dashboard content with SubscriptionGuard
+  // Wrap the dashboard content with ProfileGuard and SubscriptionGuard
   return (
-    <SubscriptionGuard>
-      <div className="min-h-screen bg-[var(--theme-background)] flex transition-colors duration-300">
+    <ProfileGuard>
+      <SubscriptionGuard>
+        <div className="min-h-screen bg-[var(--theme-background)] flex transition-colors duration-300">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
           <div 
@@ -282,5 +284,6 @@ export default function DashboardLayout({
         </div>
       </div>
     </SubscriptionGuard>
+    </ProfileGuard>
   );
 }

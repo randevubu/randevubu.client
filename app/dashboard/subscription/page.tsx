@@ -57,14 +57,14 @@ export default function SubscriptionPage() {
         setAvailablePlans(plansResponse);
       } catch (error) {
         console.error('Failed to load plans, using mock data:', error);
-        // Fallback to mock plans
+        // Fallback to mock plans with actual database plan IDs
         const mockPlans: SubscriptionPlan[] = [
           {
-            id: 'plan_basic',
-            name: 'basic',
-            displayName: 'Temel Plan',
+            id: 'plan_1756732329431_jc8dg9ae7js', // Use actual database plan ID
+            name: 'starter',
+            displayName: 'Başlangıç Planı',
             description: 'Küçük işletmeler için ideal',
-            price: 29.99,
+            price: 750,
             currency: 'TRY',
             billingInterval: 'monthly',
             maxBusinesses: 1,
@@ -78,11 +78,11 @@ export default function SubscriptionPage() {
             updatedAt: new Date(),
           },
           {
-            id: 'plan_professional',
+            id: 'plan_1756732329431_professional_monthly', // Use actual database plan ID
             name: 'professional',
             displayName: 'Profesyonel Plan',
             description: 'Büyüyen işletmeler için',
-            price: 59.99,
+            price: 1250,
             currency: 'TRY',
             billingInterval: 'monthly',
             maxBusinesses: 3,
@@ -96,11 +96,11 @@ export default function SubscriptionPage() {
             updatedAt: new Date(),
           },
           {
-            id: 'plan_enterprise',
+            id: 'plan_1756732329431_enterprise_monthly', // Use actual database plan ID
             name: 'enterprise',
             displayName: 'Kurumsal Plan',
             description: 'Büyük işletmeler için',
-            price: 99.99,
+            price: 2000,
             currency: 'TRY',
             billingInterval: 'monthly',
             maxBusinesses: 10,
@@ -143,7 +143,7 @@ export default function SubscriptionPage() {
         const mockSubscription: BusinessSubscription = {
           id: 'sub_123',
           businessId,
-          planId: 'plan_basic',
+          planId: 'plan_1756732329431_jc8dg9ae7js', // Use actual database plan ID
           status: SubscriptionStatus.ACTIVE,
           currentPeriodStart: new Date('2024-01-01'),
           currentPeriodEnd: new Date('2024-02-01'),
@@ -159,7 +159,7 @@ export default function SubscriptionPage() {
       const mockSubscription: BusinessSubscription = {
         id: 'sub_123',
         businessId,
-        planId: 'plan_basic',
+        planId: 'plan_1756732329431_jc8dg9ae7js', // Use actual database plan ID
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: new Date('2024-01-01'),
         currentPeriodEnd: new Date('2024-02-01'),
@@ -250,9 +250,7 @@ export default function SubscriptionPage() {
     try {
       setIsUpdating(true);
       
-      const response = await businessService.cancelSubscription(business.id, {
-        cancelAtPeriodEnd
-      });
+      const response = await subscriptionService.cancelBusinessSubscription(business.id, subscription.id);
       
       if (response.success) {
         setShowCancelModal(false);
@@ -670,6 +668,7 @@ export default function SubscriptionPage() {
                 <DiscountCodeInput
                   planId={selectedPlan.id}
                   planAmount={selectedPlan.price}
+                  billingInterval={selectedPlan.billingInterval}
                   onDiscountApplied={setDiscountApplication}
                   disabled={isUpdating}
                 />

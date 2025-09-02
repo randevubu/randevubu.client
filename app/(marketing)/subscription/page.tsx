@@ -9,8 +9,10 @@ import PaymentForm from '../../../src/components/ui/PaymentForm';
 import DiscountCodeInput from '../../../src/components/ui/DiscountCodeInput';
 import { PaymentsService } from '../../../src/lib/services/payments';
 import { SubscriptionPlan } from '../../../src/types/subscription';
-import { CreatePaymentRequest, PaymentResponse } from '../../../src/types/payment';
+import { CreatePaymentRequest } from '../../../src/types/payment';
+import { PaymentResponse } from '../../../src/lib/services/payments';
 import { ValidateDiscountCodeResponse } from '../../../src/types/discount';
+import ProfileGuard from '../../../src/components/features/ProfileGuard';
 
 function SubscriptionContent() {
   const searchParams = useSearchParams();
@@ -34,7 +36,7 @@ function SubscriptionContent() {
       // The user context might be stale or incomplete
 
       // If no user context data, check via API with subscription info
-      const response = await businessService.getMyBusiness('?includeSubscription=true');
+      const response = await businessService.getMyBusiness();
       console.log('Subscription - API response:', response);
       
       if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
@@ -113,10 +115,29 @@ function SubscriptionContent() {
       const response = await PaymentsService.createPayment(businessId, paymentDataWithDiscount);
       setPaymentResponse(response);
       
-      if (response.success) {
+      // Debug: Log the complete payment response
+      console.log('Payment Response:', {
+        success: response.success,
+        data: response.data,
+        status: response.status,
+        paymentId: response.paymentId,
+        conversationId: response.conversationId,
+        errorCode: response.errorCode,
+        errorMessage: response.errorMessage,
+        discountApplied: response.discountApplied
+      });
+      
+      // Check for payment success - if response.success is true and we have subscription/payment data
+      const isPaymentSuccessful = response.success && (
+        (response.data?.subscriptionId && response.data?.paymentId) || // New API response structure
+        (response.paymentId) || // Legacy response structure
+        (response.status && ['SUCCESS', 'PAID', 'success', 'paid'].includes(response.status.toUpperCase()))
+      );
+      
+      if (isPaymentSuccessful) {
         setCurrentStep('success');
       } else {
-        const error = response.errorMessage || 'Payment failed';
+        const error = response.errorMessage || response.data?.message || response.status || 'Payment failed';
         setErrorMessage(error);
         setCurrentStep('error');
       }
@@ -151,71 +172,146 @@ function SubscriptionContent() {
 
   if (isLoading || checkingBusiness || !businessId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">
-            {isLoading ? 'Loading...' : checkingBusiness ? 'İşletme kontrol ediliyor...' : 'Loading...'}
-          </span>
-        </div>
+      <div className="min-h-screen">
+        {/* Hero Section Skeleton */}
+        <section className="relative bg-white pt-16 sm:pt-20 pb-8 sm:pb-12">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
+          
+          <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
+            <div className="inline-block w-20 h-6 bg-indigo-100 rounded-full animate-pulse mb-3 sm:mb-4"></div>
+            
+            <div className="space-y-3 mb-4 sm:mb-6">
+              <div className="h-8 sm:h-12 lg:h-14 bg-gray-200 rounded-lg animate-pulse mx-auto w-3/4"></div>
+              <div className="h-8 sm:h-12 lg:h-14 bg-gray-200 rounded-lg animate-pulse mx-auto w-2/3"></div>
+            </div>
+            
+            <div className="h-4 sm:h-6 bg-gray-200 rounded-lg animate-pulse mx-auto w-1/2 mb-8 sm:mb-12"></div>
+            
+            {/* Step Indicator Skeleton */}
+            <div className="flex items-center justify-center mb-8 sm:mb-12 px-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-200 rounded-full animate-pulse"></div>
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse hidden sm:block"></div>
+                <div className="h-4 w-8 bg-gray-200 rounded animate-pulse sm:hidden"></div>
+                <div className="w-8 sm:w-16 h-0.5 bg-gray-200 animate-pulse"></div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-8 sm:w-16 h-0.5 bg-gray-200 animate-pulse"></div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse hidden sm:block"></div>
+                <div className="h-4 w-8 bg-gray-200 rounded animate-pulse sm:hidden"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Content Section Skeleton */}
+        <section className="pb-12 sm:pb-20">
+          <div className="max-w-7xl mx-auto px-4 lg:px-6">
+            {/* Subscription Plans Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {[...Array(3)].map((_, index) => (
+                <div key={index} className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8">
+                  {/* Plan Badge */}
+                  <div className="h-6 w-20 bg-indigo-100 rounded-full animate-pulse mb-4"></div>
+                  
+                  {/* Plan Name */}
+                  <div className="h-8 bg-gray-200 rounded-lg animate-pulse mb-3"></div>
+                  
+                  {/* Price */}
+                  <div className="flex items-baseline space-x-2 mb-6">
+                    <div className="h-10 w-16 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 w-8 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 w-6 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  
+                  {/* Features */}
+                  <div className="space-y-3 mb-8">
+                    {[...Array(5)].map((_, featureIndex) => (
+                      <div key={featureIndex} className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded animate-pulse flex-1"></div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Button */}
+                  <div className="h-12 bg-indigo-100 rounded-xl animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Loading Status */}
+            <div className="flex items-center justify-center mt-8">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-gray-600 text-sm sm:text-base">
+                  {isLoading ? 'Yükleniyor...' : checkingBusiness ? 'İşletme kontrol ediliyor...' : 'Yükleniyor...'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-12">
-      <div className="flex items-center space-x-4">
-        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-bold text-sm ${
+    <div className="flex items-center justify-center mb-8 sm:mb-12 px-4">
+      <div className="flex items-center space-x-2 sm:space-x-4 max-w-full overflow-x-auto">
+        <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 font-bold text-xs sm:text-sm flex-shrink-0 ${
           currentStep === 'plans' ? 'bg-indigo-600 text-white border-indigo-600' : 
           ['payment', 'success', 'error'].includes(currentStep) ? 'bg-green-500 text-white border-green-500' : 
           'border-gray-300 text-gray-500'
         }`}>
           1
         </div>
-        <div className="text-sm font-semibold text-gray-900">Plan Seçimi</div>
+        <div className="text-xs sm:text-sm font-semibold text-gray-900 hidden sm:block">Plan Seçimi</div>
+        <div className="text-xs font-semibold text-gray-900 sm:hidden">Plan</div>
         
-        <div className={`w-16 h-0.5 ${
+        <div className={`w-8 sm:w-16 h-0.5 flex-shrink-0 ${
           ['payment', 'success', 'error'].includes(currentStep) ? 'bg-green-500' : 'bg-gray-300'
         }`}></div>
         
-        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-bold text-sm ${
+        <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 font-bold text-xs sm:text-sm flex-shrink-0 ${
           currentStep === 'payment' ? 'bg-indigo-600 text-white border-indigo-600' : 
           ['success', 'error'].includes(currentStep) ? 'bg-green-500 text-white border-green-500' : 
           'border-gray-300 text-gray-500'
         }`}>
           2
         </div>
-        <div className="text-sm font-semibold text-gray-900">Ödeme</div>
+        <div className="text-xs sm:text-sm font-semibold text-gray-900">Ödeme</div>
         
-        <div className={`w-16 h-0.5 ${
+        <div className={`w-8 sm:w-16 h-0.5 flex-shrink-0 ${
           ['success', 'error'].includes(currentStep) ? 'bg-green-500' : 'bg-gray-300'
         }`}></div>
         
-        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-bold text-sm ${
+        <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 font-bold text-xs sm:text-sm flex-shrink-0 ${
           ['success', 'error'].includes(currentStep) ? 'bg-green-500 text-white border-green-500' : 
           'border-gray-300 text-gray-500'
         }`}>
           3
         </div>
-        <div className="text-sm font-semibold text-gray-900">Tamamlandı</div>
+        <div className="text-xs sm:text-sm font-semibold text-gray-900 hidden sm:block">Tamamlandı</div>
+        <div className="text-xs font-semibold text-gray-900 sm:hidden">Son</div>
       </div>
     </div>
   );
 
   const renderSuccessStep = () => (
     <div className="max-w-2xl mx-auto px-4 lg:px-6">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 lg:p-12 text-center">
-        <div className="mb-8">
-          <div className="mx-auto flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-lg mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-gray-100 p-4 sm:p-8 lg:p-12 text-center">
+        <div className="mb-6 sm:mb-8">
+          <div className="mx-auto flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-lg mb-4 sm:mb-6">
+            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
           
-          <h2 className="text-3xl font-black text-gray-900 mb-4">
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3 sm:mb-4">
             Ödeme Başarılı! 🎉
           </h2>
-          <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+          <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 leading-relaxed px-2">
             <span className="font-bold text-indigo-600">{selectedPlan?.displayName}</span> planına başarıyla kayıt oldunuz. 
             {discountValidation?.isValid && discountCode && (
               <span className="block text-green-600 font-semibold mt-2">
@@ -227,30 +323,33 @@ function SubscriptionContent() {
         </div>
         
         {paymentResponse && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-8 text-left">
-            <h3 className="font-bold text-green-900 mb-3 text-center">Ödeme Detayları</h3>
-            <div className="space-y-2 text-sm text-green-800">
-              {paymentResponse.paymentId && (
-                <p><span className="font-semibold">Ödeme ID:</span> {paymentResponse.paymentId}</p>
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-left">
+            <h3 className="font-bold text-green-900 mb-2 sm:mb-3 text-center text-sm sm:text-base">Ödeme Detayları</h3>
+            <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-green-800">
+              {(paymentResponse.data?.paymentId || paymentResponse.paymentId) && (
+                <p><span className="font-semibold">Ödeme ID:</span> {paymentResponse.data?.paymentId || paymentResponse.paymentId}</p>
+              )}
+              {paymentResponse.data?.subscriptionId && (
+                <p><span className="font-semibold">Abonelik ID:</span> {paymentResponse.data.subscriptionId}</p>
               )}
               {paymentResponse.conversationId && (
                 <p><span className="font-semibold">İşlem ID:</span> {paymentResponse.conversationId}</p>
               )}
-              <p><span className="font-semibold">Durum:</span> {paymentResponse.status || 'Başarılı'}</p>
+              <p><span className="font-semibold">Durum:</span> {paymentResponse.data?.message || paymentResponse.status || 'Başarılı'}</p>
             </div>
           </div>
         )}
         
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
+            className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
           >
             Dashboard'a Git 📊
           </button>
           <button
             onClick={handleStartOver}
-            className="w-full py-3 px-6 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+            className="w-full py-2 sm:py-3 px-4 sm:px-6 text-gray-600 hover:text-gray-800 font-medium text-sm sm:text-base transition-colors"
           >
             Başka Plan Seç
           </button>
@@ -261,44 +360,44 @@ function SubscriptionContent() {
 
   const renderErrorStep = () => (
     <div className="max-w-2xl mx-auto px-4 lg:px-6">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 lg:p-12 text-center">
-        <div className="mb-8">
-          <div className="mx-auto flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-rose-600 rounded-full shadow-lg mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-gray-100 p-4 sm:p-8 lg:p-12 text-center">
+        <div className="mb-6 sm:mb-8">
+          <div className="mx-auto flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-red-500 to-rose-600 rounded-full shadow-lg mb-4 sm:mb-6">
+            <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </div>
           
-          <h2 className="text-3xl font-black text-gray-900 mb-4">Ödeme Başarısız</h2>
-          <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3 sm:mb-4">Ödeme Başarısız</h2>
+          <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 leading-relaxed px-2">
             Ödemenizi işleyemedik. Lütfen kart bilgilerinizi kontrol edip tekrar deneyin.
           </p>
         </div>
         
         {errorMessage && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-8 text-left">
-            <h3 className="font-bold text-red-900 mb-3 text-center">Hata Detayları</h3>
-            <p className="text-sm text-red-800 text-center">{errorMessage}</p>
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-left">
+            <h3 className="font-bold text-red-900 mb-2 sm:mb-3 text-center text-sm sm:text-base">Hata Detayları</h3>
+            <p className="text-xs sm:text-sm text-red-800 text-center">{errorMessage}</p>
           </div>
         )}
         
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <button
             onClick={handleRetryPayment}
-            className="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
+            className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
           >
             Tekrar Dene 🔄
           </button>
           <button
             onClick={handleStartOver}
-            className="w-full py-3 px-6 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+            className="w-full py-2 sm:py-3 px-4 sm:px-6 text-gray-600 hover:text-gray-800 font-medium text-sm sm:text-base transition-colors"
           >
             Farklı Plan Seç
           </button>
         </div>
         
-        <div className="mt-8 p-6 bg-yellow-50 border-2 border-yellow-200 rounded-2xl">
-          <p className="text-sm text-yellow-800 font-semibold mb-2">
+        <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-yellow-50 border-2 border-yellow-200 rounded-xl sm:rounded-2xl">
+          <p className="text-xs sm:text-sm text-yellow-800 font-semibold mb-2">
             Test kartları kullanıyor musunuz?
           </p>
           <div className="text-xs text-yellow-700 space-y-1">
@@ -314,21 +413,21 @@ function SubscriptionContent() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-white pt-20 pb-12">
+      <section className="relative bg-white pt-16 sm:pt-20 pb-8 sm:pb-12">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
 
         <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
-          <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
+          <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-3 sm:mb-4">
             💳 Abonelik
           </div>
 
-          <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-4 sm:mb-6 leading-tight px-2">
             Size Uygun
             <br />
             <span className="text-indigo-600">Abonelik Seçin</span>
           </h1>
 
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-12">
+          <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4">
             İşletmenizin ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma planları.
           </p>
 
@@ -337,7 +436,7 @@ function SubscriptionContent() {
       </section>
 
       {/* Content Section */}
-      <section className="pb-20">
+      <section className="pb-12 sm:pb-20">
         {currentStep === 'plans' && (
           <div className="max-w-7xl mx-auto px-4 lg:px-6">
             <SubscriptionPlans onPlanSelect={handlePlanSelect} />
@@ -346,38 +445,38 @@ function SubscriptionContent() {
         
         {currentStep === 'payment' && selectedPlan && (
           <div className="max-w-4xl mx-auto px-4 lg:px-6">
-            <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-              <div className="p-6 lg:p-8 bg-indigo-50 border-b border-indigo-100">
-                <h3 className="text-xl font-bold text-indigo-900 mb-2">Ödeme Bilgileri</h3>
-                <div className="flex items-center justify-between">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-gray-100 overflow-hidden">
+              <div className="p-4 sm:p-6 lg:p-8 bg-indigo-50 border-b border-indigo-100">
+                <h3 className="text-lg sm:text-xl font-bold text-indigo-900 mb-2">Ödeme Bilgileri</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
                   <div>
-                    <p className="text-indigo-800 font-semibold">{selectedPlan.displayName}</p>
+                    <p className="text-sm sm:text-base text-indigo-800 font-semibold">{selectedPlan.displayName}</p>
                     <div className="space-y-1">
                       {discountValidation?.isValid ? (
                         <>
-                          <p className="text-indigo-400 line-through text-sm">
+                          <p className="text-indigo-400 line-through text-xs sm:text-sm">
                             {selectedPlan.currency === 'TRY' ? '₺' : '$'}{selectedPlan.price} / {selectedPlan.billingInterval === 'monthly' ? 'ay' : selectedPlan.billingInterval}
                           </p>
-                          <div className="flex items-center space-x-2">
-                            <p className="text-indigo-600 font-bold">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                            <p className="text-sm sm:text-base text-indigo-600 font-bold">
                               {selectedPlan.currency === 'TRY' ? '₺' : '$'}{discountValidation.finalAmount} / {selectedPlan.billingInterval === 'monthly' ? 'ay' : selectedPlan.billingInterval}
                             </p>
-                            <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                            <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full w-fit">
                               {(selectedPlan.price ?? 0) - (discountValidation.finalAmount ?? 0)}₺ tasarruf
                             </span>
                           </div>
                         </>
                       ) : (
-                        <p className="text-indigo-600">
+                        <p className="text-sm sm:text-base text-indigo-600">
                           {selectedPlan.currency === 'TRY' ? '₺' : '$'}{selectedPlan.price} / {selectedPlan.billingInterval === 'monthly' ? 'ay' : selectedPlan.billingInterval}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <button
                       onClick={handleBackToPlans}
-                      className="text-indigo-600 hover:text-indigo-800 font-medium text-sm transition-colors"
+                      className="text-indigo-600 hover:text-indigo-800 font-medium text-xs sm:text-sm transition-colors"
                     >
                       ← Plan Değiştir
                     </button>
@@ -385,13 +484,14 @@ function SubscriptionContent() {
                 </div>
               </div>
               
-              <div className="p-6 lg:p-8 space-y-8">
+              <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 {/* Discount Code Section */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">İndirim Kodu</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">İndirim Kodu</h4>
                   <DiscountCodeInput
                     planId={selectedPlan.id}
                     originalAmount={selectedPlan.price}
+                    billingInterval={selectedPlan.billingInterval}
                     onDiscountApplied={handleDiscountApplied}
                     className="mb-6"
                   />
@@ -399,12 +499,14 @@ function SubscriptionContent() {
 
                 {/* Payment Form Section */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Kart Bilgileri</h4>
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Kart Bilgileri</h4>
                   <PaymentForm
                     selectedPlan={selectedPlan}
                     onSubmit={handlePaymentSubmit}
                     onBack={handleBackToPlans}
                     loading={paymentLoading}
+                    discountCode={discountCode}
+                    discountAmount={discountValidation?.finalAmount ?? undefined}
                   />
                 </div>
               </div>
@@ -422,15 +524,17 @@ function SubscriptionContent() {
 
 export default function SubscriptionPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">Loading...</span>
+    <ProfileGuard>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center px-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-600 text-sm sm:text-base">Yükleniyor...</span>
+          </div>
         </div>
-      </div>
-    }>
-      <SubscriptionContent />
-    </Suspense>
+      }>
+        <SubscriptionContent />
+      </Suspense>
+    </ProfileGuard>
   );
 }

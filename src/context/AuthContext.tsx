@@ -7,6 +7,7 @@ import { userService } from '../lib/services/user';
 import { VerificationPurpose } from '../types/enums';
 import { setAccessToken as setApiAccessToken, setRefreshTokenFunction } from '../lib/api';
 import { handleApiError } from '../lib/utils/toast';
+import { logJWTContents } from '../lib/utils/jwt';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +17,8 @@ interface AuthContextType {
   login: (phoneNumber: string, verificationCode: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshTokenAndUser: () => Promise<void>;
+  updateTokensAndUser: (tokens: { accessToken: string; refreshToken?: string }) => Promise<void>;
   hasInitialized: boolean;
 }
 
@@ -229,6 +232,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const refreshTokenAndUser = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      // First refresh the token to get updated roles
+      const newToken = await refreshToken(false);
+      if (newToken) {
+        // Then fetch updated user profile with the new token
+        const userProfile = await fetchUserProfile(newToken);
+        setUser(userProfile);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateTokensAndUser = async (tokens: { accessToken: string; refreshToken?: string }): Promise<void> => {
+    console.log('🔄 updateTokensAndUser called with new tokens');
+    
+    // Decode and log JWT contents for debugging
+    logJWTContents(tokens.accessToken, 'New Access Token');
+    
+    setIsLoading(true);
+    try {
+      // Set the new access token
+      setAccessToken(tokens.accessToken);
+      setApiAccessToken(tokens.accessToken);
+      console.log('✅ Access token updated in state and API client');
+      
+      // Note: Refresh token is handled by HttpOnly cookies on the backend
+      // We don't need to manually store it, but we should acknowledge it exists
+      if (tokens.refreshToken) {
+        console.log('✅ New refresh token received (stored in HttpOnly cookie by backend)');
+      }
+      
+      // Small delay to ensure token is fully set before fetching profile
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Fetch updated user profile with the new token
+      const userProfile = await fetchUserProfile(tokens.accessToken);
+      console.log('👤 Updated user profile:', userProfile);
+      setUser(userProfile);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Initialize auth state on mount with proper hydration handling
   useEffect(() => {
     // Register refresh function with API client
@@ -285,6 +334,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     refreshUser,
+    refreshTokenAndUser,
+    updateTokensAndUser,
     hasInitialized,
   };
 

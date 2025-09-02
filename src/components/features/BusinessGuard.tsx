@@ -21,14 +21,8 @@ export default function BusinessGuard({ children }: BusinessGuardProps) {
       return;
     }
 
-    // Immediate check using user context data if available
-    if (user.businesses && user.businesses.length > 0) {
-      // User already has a business - redirect to subscription
-      router.replace('/subscription');
-      return;
-    }
-
-    // If no immediate data, check with API
+    // Always check with fresh API data (don't trust user context)
+    // This ensures we get the most up-to-date business status
     checkBusiness();
   }, [user, isAuthenticated, router]);
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
 import { CreateBusinessData, BusinessType } from '../../types/business';
+import { debugBusinessCreationFlow } from '../../lib/utils/debugAuth';
 
 interface BusinessCreationFormProps {
   onSuccess?: (business: any) => void;
@@ -13,7 +14,7 @@ interface BusinessCreationFormProps {
 
 export default function BusinessCreationForm({ onSuccess, onError }: BusinessCreationFormProps) {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { updateTokensAndUser, refreshTokenAndUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
@@ -109,13 +110,26 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
       };
 
       const response = await businessService.createBusiness(businessData);
+      console.log('🏢 Business creation response:', response);
       
       if (response.success && response.data) {
-        // Refresh user context to include the new business
-        await refreshUser();
+        // If backend returned new tokens, use them; otherwise refresh
+        if (response.tokens?.accessToken) {
+          console.log('🔑 New tokens received, updating auth state...');
+          await updateTokensAndUser(response.tokens);
+        } else {
+          console.log('⚠️ No tokens in response, falling back to refresh...');
+          await refreshTokenAndUser();
+        }
+        
+        // Debug the complete flow
+        debugBusinessCreationFlow();
         
         onSuccess?.(response.data);
-        router.push('/subscription'); // Redirect to subscription selection
+        
+        // Navigate after ensuring auth state is fully updated
+        // The updateTokensAndUser function is async and will complete before this
+        router.push('/subscription');
       } else {
         const error = 'Failed to create business';
         setErrors({ general: error });

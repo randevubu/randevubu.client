@@ -8,6 +8,7 @@ import { handleApiError } from '../../lib/utils/toast';
 interface DiscountCodeInputProps {
   planId: string;
   originalAmount: number;
+  billingInterval?: string; // Add billing interval for plan mapping
   onDiscountApplied: (discount: ValidateDiscountCodeResponse | null, code?: string) => void;
   className?: string;
 }
@@ -15,6 +16,7 @@ interface DiscountCodeInputProps {
 export default function DiscountCodeInput({ 
   planId, 
   originalAmount, 
+  billingInterval,
   onDiscountApplied,
   className = '' 
 }: DiscountCodeInputProps) {
@@ -23,6 +25,11 @@ export default function DiscountCodeInput({
   const [validationResult, setValidationResult] = useState<ValidateDiscountCodeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isApplied, setIsApplied] = useState(false);
+
+  // Debug: Log the planId when component mounts
+  useEffect(() => {
+    // console.log('DiscountCodeInput - Component mounted with planId:', planId);
+  }, [planId]);
 
   // Reset validation when code changes
   useEffect(() => {
@@ -36,7 +43,7 @@ export default function DiscountCodeInput({
 
   const validateCode = async () => {
     if (!code.trim()) {
-      setError('Please enter a discount code');
+      setError('Lütfen bir indirim kodu girin');
       return;
     }
 
@@ -44,11 +51,21 @@ export default function DiscountCodeInput({
     setError(null);
 
     try {
+      // console.log('DiscountCodeInput - Validating code:', {
+      //   code: code.trim(),
+      //   planId,
+      //   billingInterval,
+      //   amount: originalAmount
+      // });
+
+      // Use the plan ID directly without mapping
       const response = await discountService.validateDiscountCode({
         code: code.trim(),
-        planId,
+        planId: planId,
         amount: originalAmount
       });
+
+      // console.log('DiscountCodeInput - Validation response:', response);
 
       if (response.success && response.data) {
         setValidationResult(response.data);
@@ -56,16 +73,17 @@ export default function DiscountCodeInput({
           setIsApplied(true);
           onDiscountApplied(response.data, code.trim());
         } else {
-          setError(response.data.errorMessage || 'Invalid discount code');
+          setError(response.data.errorMessage || 'Geçersiz indirim kodu');
           onDiscountApplied(null, '');
         }
       } else {
-        setError(response.error?.message || 'Failed to validate discount code');
+        setError(response.error?.message || 'İndirim kodu doğrulanamadı');
         onDiscountApplied(null, '');
       }
     } catch (error) {
+      // console.error('DiscountCodeInput - Validation error:', error);
       handleApiError(error);
-      setError('Failed to validate discount code');
+      setError('İndirim kodu doğrulanamadı');
       onDiscountApplied(null, '');
     } finally {
       setIsValidating(false);
@@ -92,7 +110,7 @@ export default function DiscountCodeInput({
       {/* Discount Code Input */}
       <div>
         <label className="block text-sm font-medium text-[var(--theme-foreground)] mb-2 transition-colors duration-300">
-          Discount Code
+          İndirim Kodu
         </label>
         <div className="flex space-x-3">
           <div className="flex-1">
@@ -101,7 +119,7 @@ export default function DiscountCodeInput({
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               onKeyPress={handleKeyPress}
-              placeholder="Enter discount code"
+              placeholder="İndirim kodunu girin"
               disabled={isApplied}
               className="w-full px-4 py-3 border border-[var(--theme-border)] rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent bg-[var(--theme-background)] text-[var(--theme-foreground)] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             />
@@ -111,15 +129,15 @@ export default function DiscountCodeInput({
               type="button"
               onClick={validateCode}
               disabled={isValidating || !code.trim()}
-              className="px-6 py-3 bg-[var(--theme-secondary)] text-[var(--theme-secondaryForeground)] rounded-lg font-medium hover:bg-[var(--theme-secondaryHover)] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
             >
               {isValidating ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-[var(--theme-secondaryForeground)] border-t-transparent rounded-full animate-spin"></div>
-                  <span>Checking...</span>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Kontrol ediliyor...</span>
                 </div>
               ) : (
-                'Apply'
+                'Uygula'
               )}
             </button>
           ) : (
@@ -128,7 +146,7 @@ export default function DiscountCodeInput({
               onClick={removeDiscount}
               className="px-6 py-3 bg-[var(--theme-error)]/10 text-[var(--theme-error)] border border-[var(--theme-error)]/20 rounded-lg font-medium hover:bg-[var(--theme-error)]/20 transition-colors duration-300"
             >
-              Remove
+              Kaldır
             </button>
           )}
         </div>
@@ -152,24 +170,24 @@ export default function DiscountCodeInput({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-sm font-medium text-[var(--theme-success)]">
-              Discount code "{code}" applied successfully!
+              İndirim kodu "{code}" başarıyla uygulandı!
             </span>
           </div>
           <div className="text-sm space-y-1 ml-7">
             <div className="flex justify-between">
-              <span className="text-[var(--theme-foregroundSecondary)]">Original amount:</span>
+              <span className="text-[var(--theme-foregroundSecondary)]">Orijinal tutar:</span>
               <span className="font-medium text-[var(--theme-foreground)]">
                 {validationResult.originalAmount} TL
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[var(--theme-foregroundSecondary)]">Discount:</span>
+              <span className="text-[var(--theme-foregroundSecondary)]">İndirim:</span>
               <span className="font-medium text-[var(--theme-success)]">
                 -{validationResult.discountAmount} TL
               </span>
             </div>
             <div className="flex justify-between pt-2 border-t border-[var(--theme-border)]">
-              <span className="font-medium text-[var(--theme-foreground)]">Final amount:</span>
+              <span className="font-medium text-[var(--theme-foreground)]">Son tutar:</span>
               <span className="font-bold text-[var(--theme-primary)]">
                 {validationResult.finalAmount} TL
               </span>
@@ -181,8 +199,8 @@ export default function DiscountCodeInput({
       {/* Helpful Tips */}
       {!isApplied && !error && (
         <div className="text-xs text-[var(--theme-foregroundMuted)] space-y-1">
-          <p>💡 Enter your discount code and click "Apply" to see the discount</p>
-          <p>💡 Codes are case-insensitive and will be automatically formatted</p>
+          <p>💡 İndirim kodunuzu girin ve "Uygula" butonuna tıklayın</p>
+          <p>💡 Kodlar büyük/küçük harf duyarlı değildir ve otomatik olarak formatlanır</p>
         </div>
       )}
     </div>

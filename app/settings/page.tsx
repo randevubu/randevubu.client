@@ -8,6 +8,7 @@ import ThemeSelector from '../../src/components/ui/ThemeSelector';
 import { userService } from '../../src/lib/services/user';
 import { UpdateUserData } from '../../src/types/auth';
 import { useErrorTranslation } from '../../src/lib/hooks/useErrorTranslation';
+import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
   const { user, isAuthenticated, hasInitialized, logout, refreshUser } = useAuth();
@@ -172,6 +173,7 @@ export default function SettingsPage() {
     setProfileErrors(errors);
     
     if (Object.keys(errors).length > 0) {
+      toast.error('Lütfen form hatalarını düzeltin');
       return;
     }
     
@@ -187,16 +189,16 @@ export default function SettingsPage() {
       // Additional validation: ensure no empty strings after trimming
       if (!cleanedData.firstName) {
         setProfileErrors({ firstName: 'Ad gereklidir ve boş olamaz' });
+        toast.error('Ad gereklidir ve boş olamaz');
         return;
       }
       if (!cleanedData.lastName) {
         setProfileErrors({ lastName: 'Soyad gereklidir ve boş olamaz' });
+        toast.error('Soyad gereklidir ve boş olamaz');
         return;
       }
       
-      console.log('Sending profile data:', cleanedData);
       const response = await userService.updateProfile(cleanedData);
-      console.log('API Response:', response);
       
       if (response.success) {
         await refreshUser(); // Refresh user context
@@ -206,12 +208,12 @@ export default function SettingsPage() {
         if (redirect === 'onboarding') {
           router.push('/onboarding');
         } else {
-          // Show success message or something
-          console.log('Profile updated successfully');
+          // Show success toast
+          toast.success('Profil başarıyla güncellendi!');
         }
       } else {
         // Handle API response with success: false
-        console.log('API returned success: false');
+        toast.error('Profil güncellenirken bir hata oluştu');
         
         if (response.error?.code === 'VALIDATION_ERROR' && response.error?.details?.field) {
           // Handle field-specific validation errors with translation
@@ -230,8 +232,6 @@ export default function SettingsPage() {
         }
       }
     } catch (error: any) {
-      console.error('Profile update error:', error);
-      
       // Clear previous errors
       setProfileErrors({});
       

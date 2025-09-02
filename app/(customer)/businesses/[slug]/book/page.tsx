@@ -48,6 +48,95 @@ interface TimeSlot {
   available: boolean;
 }
 
+// Skeleton Components
+const BusinessInfoSkeleton = () => (
+  <div className="bg-[var(--theme-card)] rounded-2xl p-6 shadow-xl border border-[var(--theme-border)] mb-8">
+    <div className="flex items-center space-x-4">
+      <div className="w-12 h-12 bg-[var(--theme-backgroundSecondary)] rounded-xl animate-pulse"></div>
+      <div className="flex-1">
+        <div className="h-8 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-2 w-3/4"></div>
+        <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-1/2"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const ServiceSelectionSkeleton = () => (
+  <div className="bg-[var(--theme-card)] rounded-2xl shadow-xl border border-[var(--theme-border)] overflow-hidden">
+    <div className="p-8 border-b border-[var(--theme-border)]">
+      <div className="h-8 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-2 w-1/3"></div>
+      <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-2/3"></div>
+    </div>
+    
+    <div className="p-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, index) => (
+          <div key={index} className="bg-[var(--theme-background)] border-2 border-[var(--theme-border)] rounded-2xl p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div className="h-6 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-2/3"></div>
+              <div className="h-8 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-1/4"></div>
+            </div>
+            <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-4 w-full"></div>
+            <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-1/3"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const TimeSlotsSkeleton = () => (
+  <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+    {[...Array(12)].map((_, index) => (
+      <div key={index} className="h-12 bg-[var(--theme-backgroundSecondary)] rounded-xl animate-pulse"></div>
+    ))}
+  </div>
+);
+
+const ServiceSummarySkeleton = () => (
+  <div className="bg-[var(--theme-card)] rounded-2xl p-6 shadow-xl border border-[var(--theme-border)]">
+    <div className="flex items-center justify-between">
+      <div>
+        <div className="h-6 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-2 w-32"></div>
+        <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-20"></div>
+      </div>
+      <div className="text-right">
+        <div className="h-8 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-2 w-24"></div>
+        <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-16"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const DateSelectionSkeleton = () => (
+  <div className="bg-[var(--theme-card)] rounded-2xl shadow-xl border border-[var(--theme-border)] overflow-hidden">
+    <div className="p-8 border-b border-[var(--theme-border)]">
+      <div className="h-8 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-2 w-1/3"></div>
+      <div className="h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-2/3"></div>
+    </div>
+    
+    <div className="p-8">
+      <div className="grid grid-cols-7 gap-2">
+        {[...Array(35)].map((_, index) => (
+          <div key={index} className="h-10 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse"></div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const StepIndicatorSkeleton = () => (
+  <div className="hidden md:flex items-center space-x-3">
+    {[...Array(4)].map((_, index) => (
+      <div key={index} className="flex items-center">
+        <div className="w-7 h-7 bg-[var(--theme-backgroundSecondary)] rounded-full animate-pulse"></div>
+        <div className="ml-2 h-4 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-12"></div>
+        {index < 3 && <div className="w-6 h-px bg-[var(--theme-backgroundSecondary)] ml-3"></div>}
+      </div>
+    ))}
+  </div>
+);
+
 export default function BookAppointmentPage() {
   const params = useParams();
   const router = useRouter();
@@ -68,6 +157,7 @@ export default function BookAppointmentPage() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [notes, setNotes] = useState<string>('');
   const [step, setStep] = useState<'service' | 'datetime' | 'time' | 'confirm'>('service');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -274,6 +364,7 @@ export default function BookAppointmentPage() {
     }
 
     try {
+      setIsSubmitting(true);
       setBookingLoading(true);
       
       const response = await appointmentService.createAppointment({
@@ -286,14 +377,23 @@ export default function BookAppointmentPage() {
 
       if (response.success) {
         showSuccessToast('🎉 Randevunuz başarıyla oluşturuldu!');
-        router.push('/appointments');
+        // Add a small delay to ensure the toast is visible before redirecting
+        setTimeout(() => {
+          router.push('/appointments');
+        }, 1500);
+        // Don't reset isSubmitting here - let it stay true until redirect
+        return; // Exit early to prevent finally block from resetting isSubmitting
       } else {
         handleApiError(response);
+        setIsSubmitting(false);
       }
     } catch (error) {
       handleApiError(error);
+      setIsSubmitting(false);
     } finally {
       setBookingLoading(false);
+      // Only reset isSubmitting if we didn't return early (meaning there was an error)
+      // We don't need to check response here since we return early on success
     }
   };
 
@@ -336,10 +436,21 @@ export default function BookAppointmentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-          <p className="text-[var(--theme-foregroundSecondary)] text-lg">Randevu sistemi yükleniyor...</p>
+      <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-[var(--theme-background)]/90 backdrop-blur-xl border-b border-[var(--theme-border)]/50">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="h-6 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse w-32"></div>
+              <StepIndicatorSkeleton />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <BusinessInfoSkeleton />
+          <ServiceSelectionSkeleton />
         </div>
       </div>
     );
@@ -571,10 +682,7 @@ export default function BookAppointmentPage() {
               
               <div className="p-8">
                 {slotsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="w-8 h-8 border-2 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
-                    <span className="ml-3 text-[var(--theme-foregroundSecondary)]">Müsait saatler yükleniyor...</span>
-                  </div>
+                  <TimeSlotsSkeleton />
                 ) : availableSlots.length > 0 ? (
                   <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                     {availableSlots.map((slot) => (
@@ -680,25 +788,25 @@ export default function BookAppointmentPage() {
               <div className="flex flex-col sm:flex-row items-center gap-4 pt-6">
                 <button
                   onClick={() => setStep('time')}
-                  className="w-full sm:w-auto text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors py-3 px-6 rounded-xl border border-[var(--theme-border)] hover:border-[var(--theme-primary)] hover:bg-[var(--theme-background)]"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors py-3 px-6 rounded-xl border border-[var(--theme-border)] hover:border-[var(--theme-primary)] hover:bg-[var(--theme-background)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-[var(--theme-border)]"
                 >
                   ← Geri Dön
                 </button>
                 
                 <button
                   onClick={handleBooking}
-                  disabled={bookingLoading || !isAuthenticated}
+                  disabled={isSubmitting || !isAuthenticated}
                   className="w-full sm:w-auto bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] text-[var(--theme-primaryForeground)] py-4 px-8 rounded-2xl font-bold text-lg hover:from-[var(--theme-primaryHover)] hover:to-[var(--theme-accentHover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-xl disabled:shadow-none"
                 >
-                  {bookingLoading ? (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Randevu Oluşturuluyor...</span>
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   ) : !isAuthenticated ? (
                     'Giriş Yap ve Randevu Oluştur'
                   ) : (
-                    'Randevuyu Onayla'
+                    'Randevu Onayla'
                   )}
                 </button>
               </div>

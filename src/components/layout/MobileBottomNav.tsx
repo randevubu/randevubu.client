@@ -1,8 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MobileBottomNav() {
+  const { isAuthenticated, hasInitialized } = useAuth();
+
+  // Don't show the bottom nav for unauthenticated users
+  if (!hasInitialized || !isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 mobile-safe-area-bottom">
       {/* Mobile Bottom Navigation */}

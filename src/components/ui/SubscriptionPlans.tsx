@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PaymentsService } from '../../lib/services/payments';
 import { SubscriptionPlan } from '../../types/subscription';
+import { getFeatureTranslation } from '../../lib/utils/featureTranslations';
 
 interface SubscriptionPlansProps {
   onPlanSelect: (plan: SubscriptionPlan) => void;
@@ -19,7 +20,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
         const fetchedPlans = await PaymentsService.getSubscriptionPlans();
         setPlans(fetchedPlans);
       } catch (err) {
-        setError('Failed to load subscription plans');
+        setError('Abonelik planları yüklenemedi');
         console.error('Error fetching plans:', err);
       } finally {
         setLoading(false);
@@ -33,6 +34,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
     return (
       <div className="flex justify-center items-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Planlar yükleniyor...</span>
       </div>
     );
   }
@@ -45,7 +47,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
           onClick={() => window.location.reload()} 
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          Retry
+          Tekrar Dene
         </button>
       </div>
     );
@@ -56,8 +58,8 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Choose Your Plan</h2>
-        <p className="text-lg text-gray-600">Select the perfect plan for your business needs</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Planınızı Seçin</h2>
+        <p className="text-lg text-gray-600">İşletmenizin ihtiyaçlarına uygun mükemmel planı seçin</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -71,7 +73,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
             {plan.isPopular && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                  Most Popular
+                  En Popüler
                 </span>
               </div>
             )}
@@ -87,7 +89,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
                   {plan.currency === 'TRY' ? '₺' : '$'}{plan.price}
                 </span>
                 <span className="text-gray-600 ml-1">
-                  /{plan.billingInterval === 'monthly' ? 'month' : plan.billingInterval}
+                  /{plan.billingInterval === 'monthly' ? 'ay' : plan.billingInterval}
                 </span>
               </div>
               
@@ -97,7 +99,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                   <span className="text-gray-700">
-                    {plan.maxBusinesses === -1 ? 'Unlimited' : plan.maxBusinesses} businesses
+                    {plan.maxBusinesses === -1 ? 'Sınırsız' : plan.maxBusinesses} işletme
                   </span>
                 </li>
                 <li className="flex items-center">
@@ -105,7 +107,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                   <span className="text-gray-700">
-                    {plan.maxStaffPerBusiness === -1 ? 'Unlimited' : plan.maxStaffPerBusiness} staff per business
+                    {plan.maxStaffPerBusiness === -1 ? 'Sınırsız' : plan.maxStaffPerBusiness} personel/işletme
                   </span>
                 </li>
                 <li className="flex items-center">
@@ -113,7 +115,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                   <span className="text-gray-700">
-                    {plan.maxAppointmentsPerDay === -1 ? 'Unlimited' : plan.maxAppointmentsPerDay} appointments/day
+                    {plan.maxAppointmentsPerDay === -1 ? 'Sınırsız' : plan.maxAppointmentsPerDay} randevu/gün
                   </span>
                 </li>
                 
@@ -122,8 +124,8 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
                     <svg className="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    <span className="text-gray-700 capitalize">
-                      {feature.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}
+                    <span className="text-gray-700">
+                      {getFeatureTranslation(feature)}
                     </span>
                   </li>
                 ))}
@@ -137,7 +139,7 @@ export default function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansPro
                     : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300'
                 }`}
               >
-                Get Started
+                Başla
               </button>
             </div>
           </div>

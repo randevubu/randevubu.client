@@ -120,14 +120,14 @@ export class SubscriptionService {
   }
 
   /**
-   * Update business subscription
+   * Cancel business subscription
    */
   async cancelBusinessSubscription(
     businessId: string, 
     subscriptionId: string
   ): Promise<SubscriptionServiceResponse<BusinessSubscription>> {
     try {
-      const response = await apiClient.post(`/api/v1/businesses/${businessId}/subscription/${subscriptionId}/cancel`);
+      const response = await apiClient.post(`/api/v1/subscriptions/business/${businessId}/cancel`);
       return {
         success: true,
         data: response.data.data

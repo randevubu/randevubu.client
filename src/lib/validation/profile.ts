@@ -6,13 +6,13 @@ export const userProfileUpdateSchema = z.object({
     .string()
     .min(1, 'Ad alanı boş bırakılamaz')
     .max(50, 'Ad 50 karakterden uzun olamaz')
-    .regex(/^[a-zA-Z\s\-']+$/, 'Ad sadece harf, boşluk, tire ve apostrof içerebilir')
+    .regex(/^[a-zA-ZçğıöşüÇĞIİÖŞÜ\s\-']+$/, 'Ad sadece harf, boşluk, tire ve apostrof içerebilir')
     .optional(),
   lastName: z
     .string()
     .min(1, 'Soyad alanı boş bırakılamaz')
     .max(50, 'Soyad 50 karakterden uzun olamaz')
-    .regex(/^[a-zA-Z\s\-']+$/, 'Soyad sadece harf, boşluk, tire ve apostrof içerebilir')
+    .regex(/^[a-zA-ZçğıöşüÇĞIİÖŞÜ\s\-']+$/, 'Soyad sadece harf, boşluk, tire ve apostrof içerebilir')
     .optional(),
   avatar: z
     .string()

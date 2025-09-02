@@ -1,5 +1,5 @@
 import { apiClient } from '../api';
-import { ApiResponse, MyBusinessResponse } from '../../types/api';
+import { ApiResponse, MyBusinessResponse, CreateBusinessResponse } from '../../types/api';
 import { 
   Business, 
   CreateBusinessData, 
@@ -68,7 +68,7 @@ export const businessService = {
   // Always include subscription info to avoid separate API calls
     const baseUrl = '/api/v1/businesses/my-business';
     const params = new URLSearchParams(queryParams || '');
-    params.append('includesSubscriptionInfo', 'true');
+    params.append('includeSubscription', 'true');
     
     const url = `${baseUrl}?${params.toString()}`;
     const response = await apiClient.get<MyBusinessResponse>(url);
@@ -76,8 +76,8 @@ export const businessService = {
   },
 
   // Create a new business
-  createBusiness: async (data: CreateBusinessData): Promise<ApiResponse<Business>> => {
-    const response = await apiClient.post<ApiResponse<Business>>('/api/v1/businesses', data);
+  createBusiness: async (data: CreateBusinessData): Promise<CreateBusinessResponse> => {
+    const response = await apiClient.post<CreateBusinessResponse>('/api/v1/businesses', data);
     return response.data;
   },
 

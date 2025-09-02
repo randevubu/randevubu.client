@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { businessService, PublicBusiness } from '@/src/lib/services/business';
+import { CustomerGuard } from '@/src/components/features';
 
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<PublicBusiness[]>([]);
@@ -62,8 +63,9 @@ export default function BusinessesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3">
-      {/* Hero Section */}
+    <CustomerGuard>
+      <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3">
+        {/* Hero Section */}
       <section className="relative py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center bg-[var(--theme-card)] px-6 py-3 rounded-full shadow-lg border border-[var(--theme-border)] mb-6">
@@ -273,6 +275,7 @@ export default function BusinessesPage() {
           )}
         </div>
       </section>
-    </div>
+      </div>
+    </CustomerGuard>
   );
 }

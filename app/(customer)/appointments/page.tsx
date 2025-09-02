@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { appointmentService } from '@/src/lib/services/appointments';
 import { isCustomer } from '@/src/lib/utils/permissions';
+import { showSuccessToast, showErrorToast } from '@/src/lib/utils/toast';
 
 interface AppointmentData {
   id: string;
@@ -66,6 +67,13 @@ export default function AppointmentsPage() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
+  
+  // Cancel appointment states
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState<AppointmentData | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [showFinalConfirmation, setShowFinalConfirmation] = useState(false);
 
   useEffect(() => {
     if (hasInitialized && user && isCustomer(user)) {
@@ -162,6 +170,62 @@ export default function AppointmentsPage() {
     }
   };
 
+  const handleCancelAppointment = async () => {
+    if (!appointmentToCancel) return;
+    
+    try {
+      setIsCancelling(true);
+      const response = await appointmentService.cancelAppointment(
+        appointmentToCancel.id, 
+        cancelReason || undefined
+      );
+      
+      if (response.success) {
+        // Update the appointment in the list
+        setAppointments(prev => prev.map(apt => 
+          apt.id === appointmentToCancel.id 
+            ? { ...apt, status: 'CANCELLED', cancelReason: cancelReason }
+            : apt
+        ));
+        
+        // Close modal and reset states
+        setShowCancelModal(false);
+        setShowFinalConfirmation(false);
+        setAppointmentToCancel(null);
+        setCancelReason('');
+        
+        // Show success toast
+        showSuccessToast('Randevu başarıyla iptal edildi');
+      } else {
+        showErrorToast('Randevu iptal edilirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
+      showErrorToast('Randevu iptal edilirken bir hata oluştu');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const openCancelModal = (appointment: AppointmentData) => {
+    setAppointmentToCancel(appointment);
+    setCancelReason('');
+    setShowFinalConfirmation(false);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowFinalConfirmation(true);
+  };
+
+  const handleCancelBack = () => {
+    setShowFinalConfirmation(false);
+  };
+
+  const canCancelAppointment = (appointment: AppointmentData) => {
+    return ['PENDING', 'CONFIRMED'].includes(appointment.status);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED':
@@ -171,6 +235,8 @@ export default function AppointmentsPage() {
       case 'PENDING':
         return 'bg-[var(--theme-warning)]/20 text-[var(--theme-warning)]';
       case 'CANCELLED':
+        return 'bg-[var(--theme-error)]/20 text-[var(--theme-error)]';
+      case 'CANCELED':
         return 'bg-[var(--theme-error)]/20 text-[var(--theme-error)]';
       case 'NO_SHOW':
         return 'bg-orange-500/20 text-orange-600';
@@ -188,6 +254,8 @@ export default function AppointmentsPage() {
       case 'PENDING':
         return 'Bekliyor';
       case 'CANCELLED':
+        return 'İptal Edildi';
+      case 'CANCELED':
         return 'İptal Edildi';
       case 'NO_SHOW':
         return 'Gelmedi';
@@ -276,7 +344,7 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/5 via-[var(--theme-background)] to-[var(--theme-accent)]/5 transition-colors duration-300">
+  <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/5 via-[var(--theme-background)] to-[var(--theme-accent)]/5 transition-colors duration-300">
       <div className="max-w-7xl mx-auto py-4 sm:py-6 lg:py-8 px-3 sm:px-4 lg:px-8">
         {/* Mobile-Optimized Page Header */}
         <div className="mb-6 sm:mb-8">
@@ -318,7 +386,7 @@ export default function AppointmentsPage() {
                       { value: 'all', label: 'Tüm Durumlar' },
                       { value: 'CONFIRMED', label: 'Onaylandı' },
                       { value: 'COMPLETED', label: 'Tamamlandı' },
-                      { value: 'CANCELLED', label: 'İptal' },
+                      { value: 'CANCELLED', label: 'İptal Edildi' },
                       { value: 'NO_SHOW', label: 'Gelmedi' }
                     ].find(f => f.value === selectedStatus)?.label}
                   </span>
@@ -334,7 +402,7 @@ export default function AppointmentsPage() {
                     { value: 'all', label: 'Tüm Durumlar', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z' },
                     { value: 'CONFIRMED', label: 'Onaylandı', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
                     { value: 'COMPLETED', label: 'Tamamlandı', icon: 'M5 13l4 4L19 7' },
-                    { value: 'CANCELLED', label: 'İptal', icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { value: 'CANCELLED', label: 'İptal Edildi', icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
                     { value: 'NO_SHOW', label: 'Gelmedi', icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728' }
                   ].map((filter, index) => (
                     <button
@@ -661,6 +729,24 @@ export default function AppointmentsPage() {
                               </div>
                             </div>
                           )}
+
+                          {/* Cancel Button */}
+                          {canCancelAppointment(appointment) && (
+                            <div className="flex justify-end">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCancelModal(appointment);
+                                }}
+                                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[var(--theme-error)] to-red-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                              >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Randevuyu İptal Et
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -720,6 +806,133 @@ export default function AppointmentsPage() {
           )}
         </div>
       </div>
+
+      {/* Cancel Appointment Modal */}
+      {showCancelModal && appointmentToCancel && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--theme-card)] rounded-2xl border border-[var(--theme-border)] max-w-md w-full p-6 shadow-2xl">
+            {!showFinalConfirmation ? (
+              <>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-[var(--theme-error)] to-red-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[var(--theme-foreground)]">Randevu İptal Et</h3>
+                    <p className="text-sm text-[var(--theme-foregroundSecondary)]">Bu işlem geri alınamaz</p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="bg-[var(--theme-backgroundSecondary)] rounded-lg p-3 mb-4">
+                    <p className="text-sm font-semibold text-[var(--theme-foreground)] mb-1">
+                      {appointmentToCancel.service.name}
+                    </p>
+                    <p className="text-xs text-[var(--theme-foregroundSecondary)] mb-2">
+                      {appointmentToCancel.business.name}
+                    </p>
+                    <p className="text-xs text-[var(--theme-foregroundSecondary)]">
+                      {new Date(appointmentToCancel.date).toLocaleDateString('tr-TR', { 
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long'
+                      })} - {new Date(appointmentToCancel.startTime).toLocaleTimeString('tr-TR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="cancelReason" className="block text-sm font-semibold text-[var(--theme-foreground)] mb-2">
+                      İptal Nedeni (İsteğe bağlı)
+                    </label>
+                    <textarea
+                      id="cancelReason"
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      placeholder="İptal nedeninizi yazabilirsiniz..."
+                      className="w-full p-3 bg-[var(--theme-backgroundSecondary)] border border-[var(--theme-border)] rounded-lg text-sm text-[var(--theme-foreground)] placeholder-[var(--theme-foregroundSecondary)] focus:outline-none focus:border-[var(--theme-primary)] transition-colors duration-200 resize-none"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowCancelModal(false);
+                      setAppointmentToCancel(null);
+                      setCancelReason('');
+                      setShowFinalConfirmation(false);
+                    }}
+                    className="flex-1 px-4 py-2 bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foreground)] rounded-lg text-sm font-semibold hover:bg-[var(--theme-border)] transition-colors duration-200"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    onClick={handleCancelConfirmation}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-[var(--theme-error)] to-red-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                  >
+                    Randevuyu İptal Et
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-[var(--theme-error)] to-red-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[var(--theme-foreground)]">Emin misiniz?</h3>
+                    <p className="text-sm text-[var(--theme-foregroundSecondary)]">Bu işlem geri alınamaz</p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="bg-gradient-to-r from-[var(--theme-error)]/10 to-red-500/10 rounded-lg p-4 border border-[var(--theme-error)]/20">
+                    <p className="text-sm text-[var(--theme-foreground)] mb-2">
+                      <strong>{appointmentToCancel.service.name}</strong> randevusunu iptal etmek istediğinizden emin misiniz?
+                    </p>
+                    <p className="text-xs text-[var(--theme-foregroundSecondary)]">
+                      Bu işlem geri alınamaz ve randevu kalıcı olarak iptal edilecektir.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCancelBack}
+                    disabled={isCancelling}
+                    className="flex-1 px-4 py-2 bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foreground)] rounded-lg text-sm font-semibold hover:bg-[var(--theme-border)] transition-colors duration-200 disabled:opacity-50"
+                  >
+                    Geri Dön
+                  </button>
+                  <button
+                    onClick={handleCancelAppointment}
+                    disabled={isCancelling}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-[var(--theme-error)] to-red-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCancelling ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        İptal Ediliyor...
+                      </div>
+                    ) : (
+                      'Evet, İptal Et'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

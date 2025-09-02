@@ -2,6 +2,7 @@
 
 import Navbar from '../../src/components/layout/Navbar';
 import Footer from '../../src/components/layout/Footer';
+import ProfileGuard from '../../src/components/features/ProfileGuard';
 
 export default function CustomerLayout({
   children,
@@ -9,15 +10,17 @@ export default function CustomerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--theme-background)] transition-colors duration-300">
-      <Navbar />
-      
-      {/* Main Content */}
-      <main className="flex-1">
-        {children}
-      </main>
+    <ProfileGuard>
+      <div className="min-h-screen bg-[var(--theme-background)] transition-colors duration-300">
+        <Navbar />
+        
+        {/* Main Content */}
+        <main className="flex-1">
+          {children}
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </ProfileGuard>
   );
 }

@@ -111,5 +111,14 @@ export const appointmentService = {
     
     const response = await apiClient.get<ApiResponse<MyAppointmentsResponse>>(url);
     return response.data;
+  },
+
+  // Cancel an appointment
+  cancelAppointment: async (appointmentId: string, reason?: string): Promise<ApiResponse<Appointment>> => {
+    const response = await apiClient.post<ApiResponse<Appointment>>(
+      `/api/v1/appointments/${appointmentId}/cancel`,
+      { reason }
+    );
+    return response.data;
   }
 };

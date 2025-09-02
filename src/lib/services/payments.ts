@@ -35,6 +35,11 @@ export interface PaymentResponse {
   status?: string;
   errorCode?: string;
   errorMessage?: string;
+  data?: {
+    subscriptionId?: string;
+    paymentId?: string;
+    message?: string;
+  };
   discountApplied?: {
     code: string;
     discountAmount: number;

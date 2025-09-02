@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { userService } from '@/src/lib/services/user';
 import { appointmentService } from '@/src/lib/services/appointments';
@@ -27,6 +27,7 @@ export default function ProfilePage() {
     upcoming: 0,
     completed: 0
   });
+  const profileContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -43,7 +44,7 @@ export default function ProfilePage() {
       }
     }
   }, [user]);
-  
+
   const fetchAppointments = async () => {
     try {
       const response = await appointmentService.getMyAppointments();
@@ -70,10 +71,10 @@ export default function ProfilePage() {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch appointments:', error);
+      toast.error('Randevular yüklenirken bir hata oluştu');
     }
   };
-
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -155,6 +156,23 @@ export default function ProfilePage() {
     }
   };
 
+  // Handle click outside to save form
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isEditing && profileContainerRef.current && !profileContainerRef.current.contains(event.target as Node)) {
+        handleSave();
+      }
+    };
+
+    if (isEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEditing, handleSave]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/5 via-[var(--theme-background)] to-[var(--theme-accent)]/5 transition-colors duration-300">
       <div className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-8">
@@ -194,20 +212,14 @@ export default function ProfilePage() {
           </div>
 
           {/* Profile Content */}
-          <div className="px-4 sm:px-6 py-6">
+          <div 
+            ref={profileContainerRef}
+            className="px-4 sm:px-6 py-6"
+          >
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-3 sm:space-y-0">
               <h2 className="text-xl sm:text-lg font-bold text-[var(--theme-foreground)] transition-colors duration-300 text-center sm:text-left">
                 Profil Bilgileri
               </h2>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] rounded-xl text-sm font-semibold hover:bg-[var(--theme-primaryHover)] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-                {isEditing ? 'İptal Et' : 'Düzenle'}
-              </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -217,62 +229,62 @@ export default function ProfilePage() {
                   <label className="block text-sm font-semibold text-[var(--theme-foregroundSecondary)] mb-2 transition-colors duration-300">
                     Adınız
                   </label>
-                  {isEditing ? (
-                    <div>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        onBlur={handleFieldBlur}
-                        className={`w-full px-4 py-3 text-base border-2 ${errors.firstName ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)] focus:border-[var(--theme-error)]' : 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]'} bg-[var(--theme-card)] text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
-                        placeholder="Adınız"
-                      />
-                      {errors.firstName && (
-                        <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          {errors.firstName}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 text-base bg-[var(--theme-backgroundSecondary)] rounded-xl text-[var(--theme-foreground)] transition-colors duration-300 border border-[var(--theme-border)]">
-                      {user?.firstName || 'Belirtilmemiş'}
-                    </div>
-                  )}
+                  <div>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={isEditing ? formData.firstName : (user?.firstName || '')}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      onFocus={() => setIsEditing(true)}
+                      readOnly={!isEditing}
+                      className={`w-full px-4 py-3 text-base border-2 ${
+                        errors.firstName ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)] focus:border-[var(--theme-error)]' : 
+                        isEditing ? 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]' :
+                        'border-[var(--theme-border)] bg-[var(--theme-backgroundSecondary)] cursor-pointer hover:bg-[var(--theme-backgroundTertiary)]'
+                      } ${isEditing ? 'bg-[var(--theme-card)]' : 'bg-[var(--theme-backgroundSecondary)]'} text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
+                      placeholder={isEditing ? "Adınız" : (user?.firstName || 'Belirtilmemiş')}
+                    />
+                    {errors.firstName && (
+                      <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.firstName}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-[var(--theme-foregroundSecondary)] mb-2 transition-colors duration-300">
                     Soyadı
                   </label>
-                  {isEditing ? (
-                    <div>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        onBlur={handleFieldBlur}
-                        className={`w-full px-4 py-3 text-base border-2 ${errors.lastName ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)] focus:border-[var(--theme-error)]' : 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]'} bg-[var(--theme-card)] text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
-                        placeholder="Soyadınız"
-                      />
-                      {errors.lastName && (
-                        <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          {errors.lastName}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 text-base bg-[var(--theme-backgroundSecondary)] rounded-xl text-[var(--theme-foreground)] transition-colors duration-300 border border-[var(--theme-border)]">
-                      {user?.lastName || 'Belirtilmemiş'}
-                    </div>
-                  )}
+                  <div>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={isEditing ? formData.lastName : (user?.lastName || '')}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      onFocus={() => setIsEditing(true)}
+                      readOnly={!isEditing}
+                      className={`w-full px-4 py-3 text-base border-2 ${
+                        errors.lastName ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)] focus:border-[var(--theme-error)]' : 
+                        isEditing ? 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]' :
+                        'border-[var(--theme-border)] bg-[var(--theme-backgroundSecondary)] cursor-pointer hover:bg-[var(--theme-backgroundTertiary)]'
+                      } ${isEditing ? 'bg-[var(--theme-card)]' : 'bg-[var(--theme-backgroundSecondary)]'} text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
+                      placeholder={isEditing ? "Soyadınız" : (user?.lastName || 'Belirtilmemiş')}
+                    />
+                    {errors.lastName && (
+                      <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.lastName}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -294,66 +306,66 @@ export default function ProfilePage() {
                   <label className="block text-sm font-semibold text-[var(--theme-foregroundSecondary)] mb-2 transition-colors duration-300">
                     Zaman Dilimi
                   </label>
-                  {isEditing ? (
-                    <div>
-                      <select
-                        name="timezone"
-                        value={formData.timezone}
-                        onChange={handleInputChange}
-                        onBlur={handleFieldBlur}
-                        className={`w-full px-4 py-3 text-base border-2 ${errors.timezone ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)] focus:border-[var(--theme-error)]' : 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]'} bg-[var(--theme-card)] text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
-                      >
-                        <option value="UTC">UTC</option>
-                        <option value="Europe/Istanbul">İstanbul (GMT+3)</option>
-                        <option value="Europe/London">Londra (GMT+0)</option>
-                        <option value="America/New_York">New York (GMT-5)</option>
-                      </select>
-                      {errors.timezone && (
-                        <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          {errors.timezone}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 text-base bg-[var(--theme-backgroundSecondary)] rounded-xl text-[var(--theme-foreground)] transition-colors duration-300 border border-[var(--theme-border)]">
-                      {user?.timezone || 'UTC'}
-                    </div>
-                  )}
+                  <div>
+                    <select
+                      name="timezone"
+                      value={isEditing ? formData.timezone : (user?.timezone || 'UTC')}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      onFocus={() => setIsEditing(true)}
+                      disabled={!isEditing}
+                      className={`w-full px-4 py-3 text-base border-2 ${
+                        errors.timezone ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)] focus:border-[var(--theme-error)]' : 
+                        isEditing ? 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]' :
+                        'border-[var(--theme-border)] bg-[var(--theme-backgroundSecondary)] cursor-pointer hover:bg-[var(--theme-backgroundTertiary)]'
+                      } ${isEditing ? 'bg-[var(--theme-card)]' : 'bg-[var(--theme-backgroundSecondary)]'} text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300 ${!isEditing ? 'cursor-pointer' : ''}`}
+                    >
+                      <option value="UTC">UTC</option>
+                      <option value="Europe/Istanbul">İstanbul (GMT+3)</option>
+                      <option value="Europe/London">Londra (GMT+0)</option>
+                      <option value="America/New_York">New York (GMT-5)</option>
+                    </select>
+                    {errors.timezone && (
+                      <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.timezone}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-1 transition-colors duration-300">
                     Dil
                   </label>
-                  {isEditing ? (
-                    <div>
-                      <select
-                        name="language"
-                        value={formData.language}
-                        onChange={handleInputChange}
-                        onBlur={handleFieldBlur}
-                        className={`w-full px-3 py-2 text-sm border ${errors.language ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)]' : 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)]'} bg-[var(--theme-card)] text-[var(--theme-foreground)] rounded-lg focus:ring-2 focus:border-transparent transition-all duration-300`}
-                      >
-                        <option value="tr">Türkçe</option>
-                        <option value="en">English</option>
-                      </select>
-                      {errors.language && (
-                        <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          {errors.language}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="px-3 py-2 text-sm bg-[var(--theme-backgroundSecondary)] rounded-lg text-[var(--theme-foreground)] transition-colors duration-300">
-                      {user?.language === 'tr' ? 'Türkçe' : 'English'}
-                    </div>
-                  )}
+                  <div>
+                    <select
+                      name="language"
+                      value={isEditing ? formData.language : (user?.language || 'tr')}
+                      onChange={handleInputChange}
+                      onBlur={handleFieldBlur}
+                      onFocus={() => setIsEditing(true)}
+                      disabled={!isEditing}
+                      className={`w-full px-3 py-2 text-sm border ${
+                        errors.language ? 'border-[var(--theme-error)] focus:ring-[var(--theme-error)]' : 
+                        isEditing ? 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)]' :
+                        'border-[var(--theme-border)] bg-[var(--theme-backgroundSecondary)] cursor-pointer hover:bg-[var(--theme-backgroundTertiary)]'
+                      } ${isEditing ? 'bg-[var(--theme-card)]' : 'bg-[var(--theme-backgroundSecondary)]'} text-[var(--theme-foreground)] rounded-lg focus:ring-2 focus:border-transparent transition-all duration-300 ${!isEditing ? 'cursor-pointer' : ''}`}
+                    >
+                      <option value="tr">Türkçe</option>
+                      <option value="en">English</option>
+                    </select>
+                    {errors.language && (
+                      <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.language}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
