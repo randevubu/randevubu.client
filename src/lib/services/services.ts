@@ -96,5 +96,13 @@ export const servicesService = {
       `/api/v1/services/${serviceId}`
     );
     return response.data;
+  },
+
+  // Get public services of a business (for booking flow)
+  getPublicServices: async (businessId: string): Promise<ApiResponse<Service[]>> => {
+    const response = await apiClient.get<ApiResponse<Service[]>>(
+      `/api/v1/services/business/${businessId}/public`
+    );
+    return response.data;
   }
 };

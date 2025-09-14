@@ -9,11 +9,9 @@ interface PaymentFormProps {
   onSubmit: (paymentData: CreatePaymentRequest) => void;
   onBack: () => void;
   loading?: boolean;
-  discountCode?: string;
-  discountAmount?: number;
 }
 
-export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = false, discountCode, discountAmount }: PaymentFormProps) {
+export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = false }: PaymentFormProps) {
   const [cardData, setCardData] = useState<IyzicoCardData>({
     cardHolderName: '',
     cardNumber: '',
@@ -77,9 +75,9 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
     if (!buyer.name.trim()) newErrors.name = 'Ad gereklidir';
     if (!buyer.surname.trim()) newErrors.surname = 'Soyad gereklidir';
     if (!buyer.email.trim()) {
-      newErrors.email = 'E-posta gereklidir';
+      newErrors.email = 'E-posta adresi gereklidir';
     } else if (!/\S+@\S+\.\S+/.test(buyer.email)) {
-              newErrors.email = 'Geçersiz e-posta formatı';
+      newErrors.email = 'Geçersiz e-posta formatı';
     }
     if (!buyer.phone.trim()) newErrors.phone = 'Telefon gereklidir';
     if (!buyer.address.trim()) newErrors.address = 'Adres gereklidir';
@@ -108,7 +106,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
         },
         buyer: buyerData,
         installment,
-        ...(discountCode && { discountCode })
+
       };
       onSubmit(paymentData);
     }
@@ -279,7 +277,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
               {errors.surname && <p className="text-red-500 text-sm mt-1">{errors.surname}</p>}
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
               <input
                 type="email"
@@ -288,6 +286,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
+                placeholder="ornek@email.com"
                 disabled={loading}
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -369,7 +368,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 <span className="mr-2">Ödemeyi Tamamla</span>
                 <span>
                   {selectedPlan.currency === 'TRY' ? '₺' : '$'}
-                  {discountAmount !== undefined ? discountAmount : selectedPlan.price}
+                  {selectedPlan.price}
                 </span>
               </>
             )}

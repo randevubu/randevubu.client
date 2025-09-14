@@ -1,0 +1,30 @@
+# PWA Icons Required
+
+Please add the following icon files to this directory for your PWA to work properly:
+
+## Required Files:
+- `icon-192.png` - 192x192 pixels PNG icon
+- `icon-512.png` - 512x512 pixels PNG icon
+
+## Optional Files:
+- `screenshot-desktop.png` - 1280x720 pixels screenshot for desktop
+- `screenshot-mobile.png` - 375x667 pixels screenshot for mobile
+
+## Icon Guidelines:
+- Use your app/brand logo
+- Ensure good contrast and visibility at small sizes
+- Icons should work well on both light and dark backgrounds
+- Consider using simple, recognizable designs
+
+## Tools for Icon Generation:
+- Use online PWA icon generators
+- Adobe Illustrator/Photoshop
+- Figma with export options
+- Free tools like GIMP
+
+## Notes:
+- Icons are used for app installation, notifications, and app drawer
+- Screenshots are shown in app stores and installation prompts
+- Make sure icons match your brand identity
+
+Once you add these files, delete this placeholder file.

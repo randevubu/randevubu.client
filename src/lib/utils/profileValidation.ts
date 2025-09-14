@@ -16,8 +16,8 @@ export const isProfileComplete = (user: User | null): boolean => {
  * Checks if the current pathname should allow incomplete profiles
  */
 export const isProfileRelatedPage = (pathname: string): boolean => {
-  const profilePaths = ['/profile', '/settings'];
-  const profilePatterns = ['/settings'];
+  const profilePaths = ['/profile', '/settings', '/appointments', '/businesses'];
+  const profilePatterns = ['/settings', '/businesses'];
   
   return profilePaths.includes(pathname) || 
          profilePatterns.some(pattern => pathname.includes(pattern));

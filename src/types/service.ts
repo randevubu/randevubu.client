@@ -4,7 +4,7 @@ export interface Service {
   name: string;
   description?: string;
   duration: number;
-  price: number;
+  price: number | null;
   currency: string;
   category?: string;
   image?: string;

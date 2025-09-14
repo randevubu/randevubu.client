@@ -7,7 +7,8 @@ import { authService } from '../../lib/services/auth';
 import { AxiosError } from 'axios';
 import { ApiError } from '../../types/api';
 import { formatPhoneForDisplay, formatPhoneForAPI } from '../../lib/utils/phone';
-import { handleApiError, showSuccessToast } from '../../lib/utils/toast';
+import { useApiError } from '../../lib/hooks/useApiError';
+import { useCommonTranslations } from '../../lib/utils/translations';
 import { VerificationPurpose } from '../../types/enums';
 
 type AuthStep = 'phone' | 'otp' | 'register';
@@ -16,12 +17,14 @@ export default function PhoneAuth() {
   const [step, setStep] = useState<AuthStep>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
-  const [isNewUser, setIsNewUser] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
   const { login } = useAuth();
+  const { handleError, handleSuccess } = useApiError();
+  const commonT = useCommonTranslations();
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +43,13 @@ export default function PhoneAuth() {
       
       if (response.success) {
         setStep('otp');
-        showSuccessToast('Doğrulama kodu gönderildi');
+        handleSuccess('Doğrulama kodu gönderildi');
       } else {
-        handleApiError(response);
+        // This case might not be an AxiosError, so we need to handle it differently
+        handleError(new Error('API returned unsuccessful response') as any);
       }
     } catch (error) {
-      handleApiError(error);
+      handleError(error as any);
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +67,7 @@ export default function PhoneAuth() {
     const result = await login(formattedPhoneNumber, otp);
     
     if (result.success) {
-      showSuccessToast('Giriş başarılı! Yönlendiriliyorsunuz...');
+      handleSuccess('Giriş başarılı! Yönlendiriliyorsunuz...');
       // Login successful - redirect to home page
       window.location.href = '/';
     }
@@ -83,10 +87,10 @@ export default function PhoneAuth() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      showSuccessToast('Kayıt başarılı! Dashboard\'a yönlendiriliyorsunuz...');
+      handleSuccess('Kayıt başarılı! Dashboard\'a yönlendiriliyorsunuz...');
       window.location.href = '/dashboard';
     } catch (error) {
-      handleApiError(error);
+      handleError(error as any);
     } finally {
       setIsLoading(false);
     }
@@ -143,18 +147,51 @@ export default function PhoneAuth() {
               Telefon Numarası
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span className="text-[var(--theme-foregroundMuted)] text-sm transition-colors duration-300">🇹🇷 +90</span>
+              <div className="flex rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-background)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)] focus-within:border-[var(--theme-primary)] transition-all duration-300">
+                <div 
+                  className="flex items-center px-4 py-4 border-r border-[var(--theme-border)] bg-[var(--theme-muted)] rounded-l-2xl cursor-pointer hover:bg-[var(--theme-mutedHover)] transition-colors duration-200"
+                  onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                >
+                  <span className="text-xl mr-2">🇹🇷</span>
+                  <span className="text-[var(--theme-foreground)] text-xl">+90</span>
+                  <svg 
+                    className={`w-4 h-4 ml-2 text-[var(--theme-foregroundMuted)] transition-transform duration-200 ${isCountryDropdownOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <input
+                  id="phone"
+                  type="tel"
+                  required
+                  value={phoneNumber}
+                  onChange={handlePhoneChange}
+                  className="flex-1 px-4 py-4 text-lg placeholder-[var(--theme-foregroundMuted)] focus:outline-none bg-transparent text-[var(--theme-foreground)] transition-colors duration-300 rounded-r-2xl"
+                  placeholder="0555 123 45 67"
+                />
               </div>
-              <input
-                id="phone"
-                type="tel"
-                required
-                value={phoneNumber}
-                onChange={handlePhoneChange}
-                className="block w-full pl-16 pr-4 py-4 border border-[var(--theme-border)] rounded-2xl text-lg placeholder-[var(--theme-foregroundMuted)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] bg-[var(--theme-background)] text-[var(--theme-foreground)] transition-colors duration-300"
-                placeholder="0555 123 45 67"
-              />
+              
+              {/* Dropdown */}
+              {isCountryDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-[var(--theme-background)] border border-[var(--theme-border)] rounded-2xl shadow-lg z-10 overflow-hidden">
+                  <div 
+                    className="flex items-center px-4 py-4 hover:bg-[var(--theme-muted)] cursor-pointer transition-colors duration-200"
+                    onClick={() => setIsCountryDropdownOpen(false)}
+                  >
+                    <span className="text-lg mr-3">🇹🇷</span>
+                    <div className="flex-1">
+                      <div className="text-[var(--theme-foreground)] font-medium">Turkey</div>
+                      <div className="text-sm text-[var(--theme-foregroundMuted)]">+90</div>
+                    </div>
+                    <svg className="w-4 h-4 text-[var(--theme-primary)]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

@@ -33,9 +33,15 @@ export interface Business {
   timezone: string;
   logoUrl?: string;
   coverImageUrl?: string;
+  profileImageUrl?: string;
+  galleryImages?: string[];
   primaryColor?: string;
   theme?: Record<string, any>;
   settings?: Record<string, any>;
+  priceSettings?: {
+    hideAllServicePrices: boolean;
+    showPriceOnBooking: boolean;
+  };
   isActive: boolean;
   isVerified: boolean;
   verifiedAt?: Date;
@@ -48,12 +54,36 @@ export interface Business {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
+  businessType?: {
+    id: string;
+    name: string;
+    displayName: string;
+    icon?: string;
+    category: string;
+  };
   subscription?: {
     id: string;
     status: string;
     planId: string;
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
+    cancelAtPeriodEnd: boolean;
+    plan: {
+      id: string;
+      name: string;
+      displayName: string;
+      description: string;
+      price: string;
+      currency: string;
+      billingInterval: string;
+      features: string[];
+      limits: {
+        maxBusinesses: number;
+        maxStaffPerBusiness: number;
+        maxAppointmentsPerDay: number;
+      };
+      isPopular: boolean;
+    };
   };
 }
 
@@ -79,6 +109,25 @@ export interface BusinessImage {
   sortOrder: number;
   isActive: boolean;
   createdAt: Date;
+}
+
+export type ImageType = 'logo' | 'cover' | 'profile' | 'gallery';
+
+export interface BusinessImages {
+  logoUrl?: string;
+  coverImageUrl?: string;
+  profileImageUrl?: string;
+  galleryImages: string[];
+}
+
+export interface UploadImageData {
+  image: File;
+  imageType: ImageType;
+}
+
+export interface UploadImageResponse {
+  imageUrl: string;
+  business?: Business;
 }
 
 export interface CreateBusinessData {

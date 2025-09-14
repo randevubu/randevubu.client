@@ -43,7 +43,21 @@ export default function Navbar() {
           // Extract subscriptions from business objects if available
           const businessSubscriptions = response.data.businesses
             .filter(business => business.subscription)
-            .map(business => business.subscription);
+            .map(business => {
+              const subscription = business.subscription!;
+              // Convert business subscription to full BusinessSubscription format
+              return {
+                id: subscription.id,
+                businessId: business.id,
+                planId: subscription.planId,
+                status: subscription.status as any,
+                currentPeriodStart: subscription.currentPeriodStart,
+                currentPeriodEnd: subscription.currentPeriodEnd,
+                cancelAtPeriodEnd: false,
+                createdAt: new Date(),
+                updatedAt: new Date()
+              } as BusinessSubscription;
+            });
           
           if (businessSubscriptions.length > 0) {
             setSubscriptions(businessSubscriptions);

@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
 import { CreateBusinessData, BusinessType } from '../../types/business';
 import { debugBusinessCreationFlow } from '../../lib/utils/debugAuth';
+import { getAccessToken } from '../../lib/api';
+import { debugTokenState } from '../../lib/utils/tokenDebug';
 
 interface BusinessCreationFormProps {
   onSuccess?: (business: any) => void;
@@ -110,25 +112,42 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
       };
 
       const response = await businessService.createBusiness(businessData);
-      console.log('🏢 Business creation response:', response);
+      console.log('🚀 Creating business...');
+      console.log('📦 Business creation response:', response);
+      console.log('📦 Raw response keys:', Object.keys(response));
       
       if (response.success && response.data) {
-        // If backend returned new tokens, use them; otherwise refresh
+        console.log('✅ Business created successfully:', response.data.name);
+        
+        // 🔍 CHECK: Are we getting new tokens?
         if (response.tokens?.accessToken) {
-          console.log('🔑 New tokens received, updating auth state...');
+          console.log('🔑 NEW ACCESS TOKEN RECEIVED!');
+          console.log('Old token preview:', getAccessToken()?.substring(0, 50) + '...');
+          
+          // ✅ UPDATE: Store new token immediately via AuthContext
           await updateTokensAndUser(response.tokens);
+          
+          console.log('New token preview:', response.tokens.accessToken.substring(0, 50) + '...');
+          console.log('✅ Token updated successfully');
+          console.log('👑 User promoted to business owner!');
         } else {
-          console.log('⚠️ No tokens in response, falling back to refresh...');
-          await refreshTokenAndUser();
+          console.warn('⚠️ NO NEW TOKENS IN RESPONSE!');
+          console.log('Response structure:', {
+            hasData: !!response.data,
+            hasTokens: !!response.tokens,
+            keys: Object.keys(response)
+          });
+          console.log('⚠️ Falling back to force role refresh...');
+          await refreshTokenAndUser(true); // Force role refresh
         }
         
         // Debug the complete flow
         debugBusinessCreationFlow();
+        debugTokenState('After business creation');
         
         onSuccess?.(response.data);
         
         // Navigate after ensuring auth state is fully updated
-        // The updateTokensAndUser function is async and will complete before this
         router.push('/subscription');
       } else {
         const error = 'Failed to create business';

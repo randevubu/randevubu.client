@@ -25,7 +25,7 @@ export interface CreatePaymentRequest {
   card: IyzicoCardData;
   buyer: IyzicoBuyerData;
   installment?: string;
-  discountCode?: string;
+
 }
 
 export interface PaymentResponse {
@@ -39,13 +39,9 @@ export interface PaymentResponse {
     subscriptionId?: string;
     paymentId?: string;
     message?: string;
+
   };
-  discountApplied?: {
-    code: string;
-    discountAmount: number;
-    originalAmount: number;
-    finalAmount: number;
-  };
+
 }
 
 export interface TestCard {

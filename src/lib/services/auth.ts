@@ -44,6 +44,20 @@ export const authService = {
     return data;
   },
 
+  getProfile: async (forceRoleRefresh = false): Promise<ApiResponse<{ user: any }>> => {
+    const headers: Record<string, string> = {};
+    
+    if (forceRoleRefresh) {
+      headers['X-Role-Update'] = 'true';
+    }
+
+    const response = await apiClient.get<ApiResponse<{ user: any }>>(
+      '/api/v1/users/profile?includeBusinessSummary=true',
+      { headers }
+    );
+    return response.data;
+  },
+
   logout: async (): Promise<ApiResponse<{ success: boolean }>> => {
     const response = await apiClient.post<ApiResponse<{ success: boolean }>>('/api/v1/auth/logout');
     return response.data;

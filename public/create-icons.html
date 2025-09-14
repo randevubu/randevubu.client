@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate PWA Icons</title>
+</head>
+<body>
+    <h1>PWA Icon Generator</h1>
+    <p>This will create placeholder icons for testing. Open browser console and run the scripts below:</p>
+    
+    <canvas id="canvas192" width="192" height="192" style="border: 1px solid #ccc;"></canvas>
+    <canvas id="canvas512" width="512" height="512" style="border: 1px solid #ccc;"></canvas>
+    
+    <script>
+        function createIcon(canvasId, size, text) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#4f46e5'; // Blue color from your theme
+            ctx.fillRect(0, 0, size, size);
+            
+            // Text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size/4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, size/2, size/2);
+            
+            // Download link
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Run these in browser console:
+        console.log('Run: createIcon("canvas192", 192, "RB")');
+        console.log('Run: createIcon("canvas512", 512, "RB")');
+    </script>
+    
+    <div style="margin-top: 20px; padding: 20px; background: #f0f0f0;">
+        <h2>Alternative: Create icons manually</h2>
+        <p>1. Create 192x192 and 512x512 PNG files</p>
+        <p>2. Name them icon-192.png and icon-512.png</p>
+        <p>3. Place in the /public folder</p>
+        <p>4. Use your app logo or initials like "RB" for RandevuBu</p>
+    </div>
+</body>
+</html>

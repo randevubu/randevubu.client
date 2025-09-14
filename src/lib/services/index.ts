@@ -7,4 +7,5 @@ export * from './customers';
 export * from './reports';
 export * from './payments';
 export * from './subscription';
-export * from './discount';
+
+export * from './staff';

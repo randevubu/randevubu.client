@@ -219,14 +219,10 @@ export class SubscriptionService {
   async changeSubscriptionPlan(
     businessId: string, 
     subscriptionId: string, 
-    newPlanId: string,
-    discountCode?: string
+    newPlanId: string
   ): Promise<SubscriptionServiceResponse<BusinessSubscription>> {
     try {
       const requestData: any = { newPlanId };
-      if (discountCode) {
-        requestData.discountCode = discountCode;
-      }
 
       const response = await apiClient.post(`/api/v1/businesses/${businessId}/subscription/${subscriptionId}/change-plan`, requestData);
       return {

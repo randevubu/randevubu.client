@@ -7,6 +7,7 @@ interface CalendarProps {
   onDateSelect: (date: string) => void;
   minDate?: Date;
   maxDate?: Date;
+  disabledDates?: string[];
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export default function Calendar({
   onDateSelect, 
   minDate = new Date(), 
   maxDate,
+  disabledDates = [],
   className = '' 
 }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -35,7 +37,7 @@ export default function Calendar({
     'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
   ];
 
-  const dayNames = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pa'];
+  const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -43,15 +45,26 @@ export default function Calendar({
 
   const getFirstDayOfMonth = (year: number, month: number) => {
     const firstDay = new Date(year, month, 1).getDay();
-    return firstDay === 0 ? 6 : firstDay - 1; // Convert Sunday (0) to be last (6)
+    // Convert Sunday (0) to 6, Monday (1) to 0, Tuesday (2) to 1, etc.
+    return firstDay === 0 ? 6 : firstDay - 1;
   };
 
   const formatDateString = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    // Format date as YYYY-MM-DD in local timezone to avoid UTC conversion issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const isDateDisabled = (date: Date) => {
-    return date < minDate || date > effectiveMaxDate;
+    // Allow today's date to be selectable by comparing only the date part (not time)
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const minDateOnly = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+    const dateString = formatDateString(date);
+    
+    return dateOnly < minDateOnly || dateOnly > effectiveMaxDate || disabledDates.includes(dateString);
   };
 
   const isToday = (date: Date) => {
@@ -96,7 +109,7 @@ export default function Calendar({
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-10 w-10"></div>
+        <div key={`empty-${i}`} className="h-12 w-full flex items-center justify-center"></div>
       );
     }
 
@@ -113,7 +126,7 @@ export default function Calendar({
           onClick={() => handleDateClick(day)}
           disabled={disabled}
           className={`
-            h-10 w-10 rounded-lg text-sm font-medium transition-all duration-200
+            h-12 w-full rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center
             ${disabled 
               ? 'text-[var(--theme-foregroundMuted)] cursor-not-allowed opacity-40' 
               : 'hover:bg-[var(--theme-primary)] hover:text-[var(--theme-primaryForeground)] hover:scale-105'
@@ -123,7 +136,7 @@ export default function Calendar({
               : 'text-[var(--theme-foreground)]'
             }
             ${todayDate && !selected 
-              ? 'bg-[var(--theme-accent)]/20 text-[var(--theme-accent)] font-bold ring-2 ring-[var(--theme-accent)]/30' 
+              ? 'bg-blue-100 text-blue-700 font-bold ring-2 ring-blue-300 border-2 border-blue-400' 
               : ''
             }
           `}
@@ -166,10 +179,10 @@ export default function Calendar({
       </div>
 
       {/* Day Headers */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-2 mb-4">
         {dayNames.map((day) => (
-          <div key={day} className="h-10 flex items-center justify-center">
-            <span className="text-xs font-medium text-[var(--theme-foregroundSecondary)]">
+          <div key={day} className="h-12 flex items-center justify-center">
+            <span className="text-sm font-semibold text-[var(--theme-foregroundSecondary)]">
               {day}
             </span>
           </div>
@@ -177,7 +190,7 @@ export default function Calendar({
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-2">
         {renderCalendarDays()}
       </div>
 
@@ -185,7 +198,7 @@ export default function Calendar({
       <div className="mt-4 pt-4 border-t border-[var(--theme-border)]">
         <div className="flex items-center justify-center space-x-6 text-xs">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-[var(--theme-accent)]/20 ring-2 ring-[var(--theme-accent)]/30"></div>
+            <div className="w-3 h-3 rounded-full bg-blue-100 ring-2 ring-blue-300 border border-blue-400"></div>
             <span className="text-[var(--theme-foregroundSecondary)]">Bugün</span>
           </div>
           <div className="flex items-center space-x-2">

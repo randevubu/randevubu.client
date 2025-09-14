@@ -31,7 +31,7 @@ export default function ProfileGuard({ children, redirectTo = '/settings?tab=pro
     if (shouldRedirectForProfile(user, pathname)) {
       // Show toast notification only once globally
       if (!globalToastShown) {
-        toast.error('Profil bilgilerinizi tamamlamanız gerekiyor! Ad ve soyad bilgilerinizi girin.');
+        toast.error('Lütfen ad ve soyadınızı girin', { duration: 3000 });
         globalToastShown = true;
       }
       

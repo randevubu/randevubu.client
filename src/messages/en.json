@@ -1,0 +1,129 @@
+{
+  "errors": {
+    "auth": {
+      "unauthorized": "You need to sign in",
+      "invalidToken": "Invalid token",
+      "tokenExpired": "Your session has expired, please sign in again",
+      "accessDenied": "You don't have permission for this operation",
+      "invalidCredentials": "Invalid phone number or verification code",
+      "invalidPhoneNumber": "Invalid phone number format",
+      "invalidVerificationCode": "Invalid verification code",
+      "verificationCodeExpired": "Verification code has expired",
+      "phoneAlreadyRegistered": "This phone number is already registered",
+      "phoneNotRegistered": "This phone number is not registered",
+      "accountDisabled": "Your account has been disabled",
+      "accountNotVerified": "Your account is not verified yet",
+      "tooManyLoginAttempts": "Too many login attempts. Please try again later",
+      "sessionExpired": "Your session has expired"
+    },
+    "business": {
+      "accessDenied": "Access to business denied",
+      "notFound": "Business not found",
+      "inactive": "Business is not active",
+      "closed": "Business is closed",
+      "notVerified": "Business is not verified",
+      "slugTaken": "This URL address is already taken",
+      "ownerRequired": "Business owner permission required",
+      "staffRequired": "Staff permission required",
+      "noAccess": "You don't have access to any business",
+      "subscriptionRequired": "Subscription required for this feature",
+      "limitReached": "You've reached your business limit",
+      "deletionNotAllowed": "This business cannot be deleted"
+    },
+    "appointment": {
+      "notFound": "Appointment not found",
+      "accessDenied": "You don't have access to this appointment",
+      "timeConflict": "You have another appointment at this time",
+      "pastDate": "Cannot create appointment for past date",
+      "tooFarFuture": "Cannot create appointment too far in the future",
+      "outsideHours": "Cannot create appointment outside business hours",
+      "alreadyConfirmed": "This appointment is already confirmed",
+      "alreadyCompleted": "This appointment is already completed",
+      "alreadyCancelled": "This appointment is already cancelled",
+      "cannotCancel": "This appointment cannot be cancelled",
+      "noShowNotAllowed": "Cannot mark as no-show",
+      "staffNotAvailable": "Staff is not available at this time",
+      "serviceUnavailable": "This service is currently unavailable"
+    },
+    "service": {
+      "notFound": "Service not found",
+      "inactive": "Service is not active",
+      "accessDenied": "You don't have access to this service",
+      "nameRequired": "Service name is required",
+      "priceInvalid": "Invalid price",
+      "durationInvalid": "Invalid duration",
+      "hasAppointments": "This service has appointments and cannot be deleted"
+    },
+    "customer": {
+      "notFound": "Customer not found",
+      "accessDenied": "You don't have access to this customer",
+      "alreadyExists": "This customer already exists",
+      "noCustomersFound": "No customers found"
+    },
+    "staff": {
+      "notFound": "Staff not found",
+      "accessDenied": "You don't have access to this staff member",
+      "alreadyExists": "This staff member already exists",
+      "notAvailable": "Staff is not available",
+      "cannotDeleteSelf": "You cannot delete your own account"
+    },
+    "role": {
+      "notFound": "Role not found",
+      "alreadyExists": "This role already exists",
+      "assignmentFailed": "Role assignment failed",
+      "adminRequired": "Administrator permission required"
+    },
+    "permission": {
+      "denied": "Permission denied",
+      "notFound": "Permission not found",
+      "insufficient": "Insufficient permissions",
+      "adminRequired": "Administrator permission required"
+    },
+    "validation": {
+      "general": "Validation error",
+      "requiredField": "{fieldName} field is required",
+      "invalidEmail": "Invalid email format",
+      "invalidPhone": "Invalid phone number format",
+      "invalidDate": "Invalid date format",
+      "invalidTime": "Invalid time format",
+      "passwordTooWeak": "Password is too weak",
+      "invalidFileType": "Invalid file type",
+      "fileTooLarge": "File is too large",
+      "invalidUrl": "Invalid URL format",
+      "phoneNumber": "Please enter a valid phone number"
+    },
+    "system": {
+      "internalError": "Internal server error occurred",
+      "databaseError": "Database error",
+      "externalServiceError": "External service error",
+      "rateLimitExceeded": "Too many requests. Please wait",
+      "maintenanceMode": "System is under maintenance",
+      "serviceUnavailable": "Service is currently unavailable",
+      "paymentProcessingError": "Payment processing error"
+    },
+    "subscription": {
+      "notFound": "Subscription not found",
+      "expired": "Your subscription has expired",
+      "cancelled": "Your subscription has been cancelled",
+      "required": "Subscription required for this feature",
+      "planLimitReached": "You've reached your plan limit"
+    },
+    "notification": {
+      "smsDeliveryFailed": "SMS could not be sent",
+      "emailDeliveryFailed": "Email could not be sent",
+      "disabled": "Notifications are disabled"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close"
+  }
+}

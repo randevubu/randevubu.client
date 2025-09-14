@@ -10,7 +10,10 @@ import {
   NotificationResult,
   ClosureAnalytics,
   CustomerImpactReport,
-  RescheduleSuggestion
+  RescheduleSuggestion,
+  ImageType,
+  BusinessImages,
+  UploadImageResponse
 } from '../../types/business';
 import { ClosureType } from '../../types/enums';
 
@@ -77,8 +80,17 @@ export const businessService = {
 
   // Create a new business
   createBusiness: async (data: CreateBusinessData): Promise<CreateBusinessResponse> => {
+    console.log('📤 Sending business creation request...');
     const response = await apiClient.post<CreateBusinessResponse>('/api/v1/businesses', data);
-    return response.data;
+    
+    // 🔍 DEBUG: Log the exact response structure
+    console.log('📦 Raw API response:', response.data);
+    console.log('📦 Response includes tokens:', !!response.data.tokens);
+    if (response.data.tokens) {
+      console.log('🔑 Token keys:', Object.keys(response.data.tokens));
+    }
+    
+    return response.data; // This should include { data: {...}, tokens: {...} }
   },
 
   // Get business by ID - using your existing endpoint
@@ -93,10 +105,156 @@ export const businessService = {
     return response.data;
   },
 
+  // Get business hours status (public endpoint for booking flow)
+  getBusinessHoursStatus: async (businessId: string, date?: string, timezone?: string): Promise<ApiResponse<{
+    businessId: string;
+    date: string;
+    isOpen: boolean;
+    openTime?: string;
+    closeTime?: string;
+    breaks?: Array<{
+      startTime: string;
+      endTime: string;
+      description: string;
+    }>;
+    isOverride: boolean;
+    timezone: string;
+  }>> => {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (timezone) params.append('timezone', timezone);
+    
+    const queryString = params.toString();
+    const url = `/api/v1/businesses/${businessId}/hours/status${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<ApiResponse<any>>(url);
+    return response.data;
+  },
+
+  // Get business hours (for business owners/staff)
+  getBusinessHours: async (businessId: string): Promise<ApiResponse<{
+    businessHours: Record<string, any>;
+  }>> => {
+    if (!businessId) {
+      throw new Error('Business ID is required');
+    }
+    
+    const response = await apiClient.get<ApiResponse<any>>(`/api/v1/businesses/${businessId}/hours`);
+    return response.data;
+  },
+
+  // Update business hours
+  updateBusinessHours: async (businessId: string, businessHours: Record<string, any>): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put<ApiResponse<any>>(`/api/v1/businesses/${businessId}/hours`, {
+      businessHours
+    });
+    return response.data;
+  },
+
+  // Create business hours override
+  createBusinessHoursOverride: async (businessId: string, data: {
+    date: string;
+    isOpen: boolean;
+    openTime?: string;
+    closeTime?: string;
+    breaks?: Array<{
+      startTime: string;
+      endTime: string;
+      description: string;
+    }>;
+    reason?: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>(`/api/v1/businesses/${businessId}/hours/overrides`, data);
+    return response.data;
+  },
+
+  // Update business hours override
+  updateBusinessHoursOverride: async (businessId: string, date: string, data: {
+    isOpen?: boolean;
+    openTime?: string;
+    closeTime?: string;
+    breaks?: Array<{
+      startTime: string;
+      endTime: string;
+      description: string;
+    }>;
+    reason?: string;
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put<ApiResponse<any>>(`/api/v1/businesses/${businessId}/hours/overrides/${date}`, data);
+    return response.data;
+  },
+
+  // Delete business hours override
+  deleteBusinessHoursOverride: async (businessId: string, date: string): Promise<ApiResponse<any>> => {
+    const response = await apiClient.delete<ApiResponse<any>>(`/api/v1/businesses/${businessId}/hours/overrides/${date}`);
+    return response.data;
+  },
+
+  // Get business hours overrides
+  getBusinessHoursOverrides: async (businessId: string, params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<any[]>> => {
+    if (!businessId) {
+      throw new Error('Business ID is required');
+    }
+    
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    
+    const queryString = queryParams.toString();
+    const url = `/api/v1/businesses/${businessId}/hours/overrides${queryString ? `?${queryString}` : ''}`;
+    
+    try {
+      const response = await apiClient.get<ApiResponse<any[]>>(url);
+      return response.data;
+    } catch (error) {
+      // If the endpoint doesn't work, try as a POST with businessId in body as a workaround
+      if (error.response?.status === 400 && error.response?.data?.error === 'Business ID is required') {
+        try {
+          const postUrl = '/api/v1/businesses/hours/overrides/list';
+          const postResponse = await apiClient.post<ApiResponse<any[]>>(postUrl, {
+            businessId,
+            ...params
+          });
+          return postResponse.data;
+        } catch (postError) {
+          // If workaround also fails, throw original error
+        }
+      }
+      
+      throw error;
+    }
+  },
+
   // Update business - using your existing endpoint  
   updateBusiness: async (id: string, data: UpdateBusinessData): Promise<ApiResponse<Business>> => {
     const response = await apiClient.put<ApiResponse<Business>>(`/api/v1/businesses/${id}`, data);
     return response.data;
+  },
+
+  // Patch business - use PATCH method as backend might support this instead of PUT
+  patchBusiness: async (id: string, data: UpdateBusinessData): Promise<ApiResponse<Business>> => {
+    const response = await apiClient.patch<ApiResponse<Business>>(`/api/v1/businesses/${id}`, data);
+    return response.data;
+  },
+
+  // Update my business - more consistent with getMyBusiness
+  updateMyBusiness: async (data: UpdateBusinessData): Promise<ApiResponse<Business>> => {
+    try {
+      // Try the my-business endpoint first (more RESTful)
+      const response = await apiClient.put<ApiResponse<Business>>('/api/v1/businesses/my-business', data);
+      return response.data;
+    } catch (error) {
+      // Fallback to the original method if the my-business endpoint doesn't support PUT
+      const myBusiness = await businessService.getMyBusiness();
+      if (myBusiness.success && myBusiness.data?.businesses?.length > 0) {
+        const businessId = myBusiness.data.businesses[0].id;
+        return await businessService.updateBusiness(businessId, data);
+      }
+      throw new Error('No business found to update');
+    }
   },
 
   // Get business types
@@ -377,5 +535,99 @@ export const businessService = {
       console.warn('Auto-reschedule endpoint not available');
       throw error;
     }
+  },
+
+  // Get business price visibility settings
+  getPriceSettings: async (): Promise<ApiResponse<{
+    hideAllServicePrices: boolean;
+    showPriceOnBooking: boolean;
+  }>> => {
+    const response = await apiClient.get<ApiResponse<any>>('/api/v1/businesses/my-business/price-settings');
+    return response.data;
+  },
+
+  // Update business price visibility settings
+  updatePriceSettings: async (settings: {
+    hideAllServicePrices: boolean;
+    showPriceOnBooking: boolean;
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put<ApiResponse<any>>('/api/v1/businesses/my-business/price-settings', settings);
+    return response.data;
+  },
+
+  // ================================
+  // BUSINESS IMAGE UPLOAD METHODS
+  // ================================
+
+  // Upload business image
+  uploadBusinessImage: async (
+    businessId: string,
+    file: File,
+    imageType: 'logo' | 'cover' | 'profile' | 'gallery'
+  ): Promise<ApiResponse<{ imageUrl: string; business?: Business }>> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('imageType', imageType);
+
+    const response = await apiClient.post<ApiResponse<{ imageUrl: string; business?: Business }>>(
+      `/api/v1/businesses/${businessId}/images/upload`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  // Get business images
+  getBusinessImages: async (businessId: string): Promise<ApiResponse<{
+    images: {
+      logoUrl?: string;
+      coverImageUrl?: string;
+      profileImageUrl?: string;
+      galleryImages: string[];
+    };
+  }>> => {
+    const response = await apiClient.get<ApiResponse<any>>(`/api/v1/businesses/${businessId}/images`);
+    return response.data;
+  },
+
+  // Delete business image (logo, cover, profile)
+  deleteBusinessImage: async (
+    businessId: string,
+    imageType: 'logo' | 'cover' | 'profile'
+  ): Promise<ApiResponse<{ business: Business }>> => {
+    const response = await apiClient.delete<ApiResponse<{ business: Business }>>(
+      `/api/v1/businesses/${businessId}/images/${imageType}`
+    );
+    return response.data;
+  },
+
+  // Delete gallery image
+  deleteGalleryImage: async (
+    businessId: string,
+    imageUrl: string
+  ): Promise<ApiResponse<{ business: Business }>> => {
+    const response = await apiClient.delete<ApiResponse<{ business: Business }>>(
+      `/api/v1/businesses/${businessId}/images/gallery`,
+      {
+        data: { imageUrl },
+      }
+    );
+    return response.data;
+  },
+
+  // Update gallery images order
+  updateGalleryOrder: async (
+    businessId: string,
+    orderedImageUrls: string[]
+  ): Promise<ApiResponse<{ business: Business }>> => {
+    const response = await apiClient.put<ApiResponse<{ business: Business }>>(
+      `/api/v1/businesses/${businessId}/images/gallery`,
+      { imageUrls: orderedImageUrls }
+    );
+    return response.data;
   },
 };

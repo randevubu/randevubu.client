@@ -17,7 +17,7 @@ interface AuthContextType {
   login: (phoneNumber: string, verificationCode: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  refreshTokenAndUser: () => Promise<void>;
+  refreshTokenAndUser: (forceRoleRefresh?: boolean) => Promise<void>;
   updateTokensAndUser: (tokens: { accessToken: string; refreshToken?: string }) => Promise<void>;
   hasInitialized: boolean;
 }
@@ -127,8 +127,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Fetch user profile
-  const fetchUserProfile = async (token?: string): Promise<User | null> => {
+  // Fetch user profile with role update support
+  const fetchUserProfile = async (token?: string, forceRoleRefresh = false): Promise<User | null> => {
     try {
       const currentToken = token || accessToken;
       if (!currentToken) return null;
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setApiAccessToken(token); // Ensure API client has token immediately
       }
       
-      const response = await userService.getProfile();
+      const response = await authService.getProfile(forceRoleRefresh);
       if (response.success && response.data?.user) {
         return response.data.user;
       }
@@ -154,7 +154,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (newToken) {
           // Retry with new token
           try {
-            const response = await userService.getProfile();
+            const response = await authService.getProfile(forceRoleRefresh);
             if (response.success && response.data?.user) {
               return response.data.user;
             }
@@ -232,15 +232,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const refreshTokenAndUser = async (): Promise<void> => {
+  const refreshTokenAndUser = async (forceRoleRefresh = false): Promise<void> => {
     setIsLoading(true);
     try {
       // First refresh the token to get updated roles
       const newToken = await refreshToken(false);
       if (newToken) {
-        // Then fetch updated user profile with the new token
-        const userProfile = await fetchUserProfile(newToken);
+        // Then fetch updated user profile with the new token and force role refresh
+        const userProfile = await fetchUserProfile(newToken, forceRoleRefresh);
         setUser(userProfile);
+        console.log('✅ Token and user profile updated', forceRoleRefresh ? 'with role refresh' : '');
       }
     } finally {
       setIsLoading(false);
@@ -249,6 +250,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const updateTokensAndUser = async (tokens: { accessToken: string; refreshToken?: string }): Promise<void> => {
     console.log('🔄 updateTokensAndUser called with new tokens');
+    console.log('🔍 Old token preview:', accessToken?.substring(0, 50) + '...');
     
     // Decode and log JWT contents for debugging
     logJWTContents(tokens.accessToken, 'New Access Token');
@@ -259,6 +261,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAccessToken(tokens.accessToken);
       setApiAccessToken(tokens.accessToken);
       console.log('✅ Access token updated in state and API client');
+      console.log('🔍 New token preview:', tokens.accessToken.substring(0, 50) + '...');
       
       // Note: Refresh token is handled by HttpOnly cookies on the backend
       // We don't need to manually store it, but we should acknowledge it exists
@@ -269,10 +272,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Small delay to ensure token is fully set before fetching profile
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      // Fetch updated user profile with the new token
-      const userProfile = await fetchUserProfile(tokens.accessToken);
-      console.log('👤 Updated user profile:', userProfile);
-      setUser(userProfile);
+      // Fetch updated user profile with the new token and force role refresh
+      console.log('🔄 Fetching updated user profile with new token...');
+      const userProfile = await fetchUserProfile(tokens.accessToken, true);
+      
+      if (userProfile) {
+        console.log('👤 Updated user profile with new roles:', userProfile.roles?.map(r => r.name) || 'No roles');
+        console.log('🎭 User effective role level:', userProfile.effectiveLevel || 'No level');
+        setUser(userProfile);
+      } else {
+        console.warn('⚠️ Failed to fetch updated user profile');
+      }
     } finally {
       setIsLoading(false);
     }

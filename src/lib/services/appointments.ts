@@ -39,14 +39,24 @@ export interface BusinessAppointmentsParams {
 
 export const appointmentService = {
   // Get business appointments for a date range
-  getBusinessAppointments: async (params: BusinessAppointmentsParams): Promise<ApiResponse<{ appointments: Appointment[] }>> => {
+  getBusinessAppointments: async (params: BusinessAppointmentsParams): Promise<ApiResponse<Appointment[]>> => {
     const queryParams = new URLSearchParams();
     if (params.startDate) queryParams.append('startDate', params.startDate);
     if (params.endDate) queryParams.append('endDate', params.endDate);
-    
-    const url = `/api/v1/appointments/business/${params.businessId}/date-range${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await apiClient.get<ApiResponse<{ appointments: Appointment[] }>>(url);
-    return response.data;
+    // Add cache-busting timestamp
+    queryParams.append('_t', Date.now().toString());
+
+    const url = `/api/v1/appointments/business/${params.businessId}/date-range?${queryParams.toString()}`;
+    console.log('Fetching business appointments:', url);
+
+    try {
+      const response = await apiClient.get<ApiResponse<Appointment[]>>(url);
+      console.log('Business appointments response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching business appointments:', error);
+      throw error;
+    }
   },
 
   // Create a new appointment
@@ -118,6 +128,44 @@ export const appointmentService = {
     const response = await apiClient.post<ApiResponse<Appointment>>(
       `/api/v1/appointments/${appointmentId}/cancel`,
       { reason }
+    );
+    return response.data;
+  },
+
+  // Get the nearest appointment in the current hour (for push notifications)
+  getNearestAppointmentCurrentHour: async (): Promise<ApiResponse<{ appointment: Appointment; timeUntilAppointment: number }>> => {
+    const response = await apiClient.get<ApiResponse<{ appointment: Appointment; timeUntilAppointment: number }>>(
+      '/api/v1/appointments/nearest-current-hour'
+    );
+    return response.data;
+  },
+
+  // Get all appointments in current hour (for push notifications)
+  getCurrentHourAppointments: async (): Promise<ApiResponse<Appointment[]>> => {
+    const response = await apiClient.get<ApiResponse<Appointment[]>>(
+      '/api/v1/appointments/current-hour'
+    );
+    return response.data;
+  },
+
+  // Get next appointment regardless of time range
+  getNextAppointment: async (): Promise<ApiResponse<Appointment>> => {
+    const response = await apiClient.get<ApiResponse<Appointment>>(
+      '/api/v1/appointments/next'
+    );
+    return response.data;
+  },
+
+  // Get appointment statistics
+  getAppointmentStats: async (period: 'today' | 'week' | 'month' = 'today'): Promise<ApiResponse<{
+    total: number;
+    pending: number;
+    confirmed: number;
+    cancelled: number;
+    completed: number;
+  }>> => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/api/v1/appointments/stats?period=${period}`
     );
     return response.data;
   }

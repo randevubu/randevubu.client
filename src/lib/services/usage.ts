@@ -98,7 +98,12 @@ export class UsageService {
   async getUsageSummary(businessId: string): Promise<ApiResponse<UsageSummary>> {
     try {
       const response = await apiClient.get(`/api/v1/businesses/${businessId}/usage/summary`);
-      return response.data;
+      // Handle nested data structure from API
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: response.data.data?.data || response.data.data
+      };
     } catch (error: any) {
       return {
         success: false,
@@ -117,7 +122,12 @@ export class UsageService {
   async getUsageAlerts(businessId: string): Promise<ApiResponse<UsageAlerts>> {
     try {
       const response = await apiClient.get(`/api/v1/businesses/${businessId}/usage/alerts`);
-      return response.data;
+      // Handle nested data structure from API
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: response.data.data?.data || response.data.data
+      };
     } catch (error: any) {
       return {
         success: false,
@@ -174,7 +184,12 @@ export class UsageService {
   async checkUsageLimits(businessId: string): Promise<ApiResponse<UsageLimitsCheck>> {
     try {
       const response = await apiClient.get(`/api/v1/businesses/${businessId}/usage/limits-check`);
-      return response.data;
+      // Handle nested data structure from API
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        data: response.data.data?.data || response.data.data
+      };
     } catch (error: any) {
       return {
         success: false,

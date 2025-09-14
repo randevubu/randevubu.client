@@ -38,7 +38,9 @@ export const showInfoToast = (message: string) => {
 };
 
 export const showLoadingToast = (message: string) => {
-  return toast.loading(message);
+  return toast.loading(message, {
+    duration: Infinity, // Keep the toast until manually dismissed
+  });
 };
 
 export const dismissToast = (toastId: string) => {
@@ -53,17 +55,25 @@ const truncateMessage = (message: string, maxLength: number = 80): string => {
 const getShortErrorMessage = (fullMessage: string): string => {
   // Common patterns to make messages more user-friendly
   const patterns = [
-    { 
+    {
       pattern: /Body validation failed: (.+)/,
-      replacement: 'Validation error'
+      replacement: 'Doğrulama hatası'
     },
     {
       pattern: /(.+) can only contain (.+)/,
-      replacement: 'Invalid format'
+      replacement: 'Geçersiz format'
     },
     {
       pattern: /Field (.+) is required/,
-      replacement: 'Required field missing'
+      replacement: 'Zorunlu alan eksik'
+    },
+    {
+      pattern: /File size too large/,
+      replacement: 'Dosya boyutu çok büyük'
+    },
+    {
+      pattern: /Invalid file type/,
+      replacement: 'Geçersiz dosya türü'
     }
   ];
 
@@ -81,10 +91,10 @@ export const handleApiError = (error: ApiErrorResponse | any) => {
   if (error?.error?.message) {
     const fullMessage = error.error.message;
     const suggestions = error.error.details?.suggestions;
-    
+
     // Use short message for toast, but keep full context available
     let toastMessage = getShortErrorMessage(fullMessage);
-    
+
     // Add suggestion if available and short
     if (suggestions && suggestions.length > 0) {
       const suggestion = suggestions[0];
@@ -92,7 +102,7 @@ export const handleApiError = (error: ApiErrorResponse | any) => {
         toastMessage += `\n${suggestion}`;
       }
     }
-    
+
     showErrorToast(toastMessage);
   } else if (error?.response?.data?.error?.message) {
     // Handle Axios error responses
@@ -104,6 +114,6 @@ export const handleApiError = (error: ApiErrorResponse | any) => {
   } else if (error?.message) {
     showErrorToast(getShortErrorMessage(error.message));
   } else {
-    showErrorToast('An unexpected error occurred');
+    showErrorToast('Beklenmeyen bir hata oluştu');
   }
 };
