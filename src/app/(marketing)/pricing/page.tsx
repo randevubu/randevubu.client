@@ -1,6 +1,10 @@
+'use client';
+
 import { Pricing } from '../../../components';
+import { useTranslations } from 'next-intl';
 
 export default function PricingPage() {
+  const t = useTranslations('pricing');
   return (
     <div className="min-h-screen">
 
@@ -10,18 +14,17 @@ export default function PricingPage() {
 
         <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
           <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
-            💳 Fiyatlandırma
+            💳 {t('hero.badge')}
           </div>
 
           <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
-            Salonunuza Uygun
+            {t('hero.title')}
             <br />
-            <span className="text-indigo-600">Fiyat Planı Seçin</span>
+            <span className="text-indigo-600">{t('hero.titleHighlight')}</span>
           </h1>
 
           <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-            İşletmenizin boyutuna ve ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma seçenekleri.
-            Tüm planlar 15 gün ücretsiz deneme ile başlar.
+            {t('hero.description')}
           </p>
 
           {/* Value Props */}
@@ -32,7 +35,7 @@ export default function PricingPage() {
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-gray-700 font-semibold">15 Gün Ücretsiz Deneme</span>
+              <span className="text-gray-700 font-semibold">{t('hero.valueProps.freeTrial')}</span>
             </div>
 
             <div className="flex items-center justify-center space-x-2">
@@ -41,7 +44,7 @@ export default function PricingPage() {
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-gray-700 font-semibold">İstediğiniz Zaman İptal</span>
+              <span className="text-gray-700 font-semibold">{t('hero.valueProps.cancelAnytime')}</span>
             </div>
 
             <div className="flex items-center justify-center space-x-2">
@@ -50,7 +53,7 @@ export default function PricingPage() {
                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                 </svg>
               </div>
-              <span className="text-gray-700 font-semibold">7/24 Türkçe Destek</span>
+              <span className="text-gray-700 font-semibold">{t('hero.valueProps.support')}</span>
             </div>
           </div>
         </div>
@@ -64,62 +67,57 @@ export default function PricingPage() {
         <div className="max-w-4xl mx-auto px-4 lg:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-black text-gray-900 mb-4">
-              Sıkça Sorulan
-              <span className="text-indigo-600"> Sorular</span>
+              {t('faq.title')}
+              <span className="text-indigo-600"> {t('faq.titleHighlight')}</span>
             </h2>
             <p className="text-lg text-gray-600">
-              Fiyatlandırma ile ilgili merak ettikleriniz
+              {t('faq.subtitle')}
             </p>
           </div>
 
           <div className="space-y-6">
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Ücretsiz deneme süresi boyunca kredi kartı bilgisi istenyor mu?
+                {t('faq.questions.creditCard.question')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Hayır, 15 gün ücretsiz deneme için herhangi bir ödeme bilgisi istenmez.
-                Deneme süresi bitiminde devam etmek isterseniz ödeme bilgilerinizi girebilirsiniz.
+                {t('faq.questions.creditCard.answer')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Plan değiştirme işlemi nasıl yapılır?
+                {t('faq.questions.planChange.question')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Hesap ayarlarından istediğiniz zaman plan değiştirebilirsiniz.
-                Yüksek plana geçişlerde fark ücreti otomatik olarak hesaplanır.
+                {t('faq.questions.planChange.answer')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                SMS kredilerimi başka aya aktarabilir miyim?
+                {t('faq.questions.smsCredits.question')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                SMS kredileri kullanılmadığı takdirde bir sonraki aya aktarılır.
-                Maksimum 3 aylık birikimi destekliyoruz.
+                {t('faq.questions.smsCredits.answer')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                İptal işlemi nasıl yapılır?
+                {t('faq.questions.cancellation.question')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Hesap ayarlarından "Aboneliği İptal Et" seçeneği ile veya müşteri hizmetlerimizi arayarak
-                iptal işlemini gerçekleştirebilirsiniz. Verileriniz 30 gün boyunca saklanır.
+                {t('faq.questions.cancellation.answer')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Kurumsal paketlerde özel indirimlerin var mı?
+                {t('faq.questions.enterprise.question')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                5+ salon zinciri olan müşterilerimiz için özel fiyatlandırma yapıyoruz.
-                Satış ekibimizle iletişime geçerek teklif alabilirsiniz.
+                {t('faq.questions.enterprise.answer')}
               </p>
             </div>
           </div>
@@ -128,17 +126,17 @@ export default function PricingPage() {
           <div className="text-center mt-12">
             <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Başka sorunuz mu var?
+                {t('cta.title')}
               </h3>
               <p className="text-gray-600 mb-6">
-                Müşteri hizmetleri ekibimiz size yardımcı olmaktan mutluluk duyar.
+                {t('cta.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  Bizi Arayın
+                  {t('cta.callUs')}
                 </button>
                 <button className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-2xl font-semibold hover:border-indigo-600 hover:text-indigo-600 transition-all">
-                  Canlı Destek
+                  {t('cta.liveSupport')}
                 </button>
               </div>
             </div>

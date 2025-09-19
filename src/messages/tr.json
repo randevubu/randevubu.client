@@ -125,5 +125,111 @@
     "edit": "Düzenle",
     "add": "Ekle",
     "close": "Kapat"
+  },
+  "subscription": {
+    "plans": {
+      "baslangic": {
+        "name": "Başlangıç",
+        "description": "Bireysel profesyoneller ve küçük işletmeler için ideal"
+      },
+      "standart": {
+        "name": "Standart", 
+        "description": "Büyüyen işletmeler ve çoklu personeli olan salonlar için"
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Köklü işletmeler ve şirket zincirleri için tam çözüm"
+      }
+    },
+    "features": {
+      "appointment_booking": "Randevu rezervasyonu",
+      "calendar_management": "Takvim yönetimi",
+      "customer_database": "Müşteri veritabanı",
+      "email_notifications": "E-posta bildirimleri",
+      "sms_notifications": "SMS bildirimleri",
+      "basic_analytics": "Temel analitik",
+      "advanced_analytics": "Gelişmiş analitik",
+      "premium_analytics": "Premium analitik",
+      "business_hours": "Çalışma saatleri",
+      "staff_management": "Personel yönetimi",
+      "service_management": "Hizmet yönetimi",
+      "custom_branding": "Özel markalama",
+      "business_closure_management": "İş yeri kapanış yönetimi",
+      "multi_location": "Çoklu lokasyon",
+      "api_access": "API erişimi",
+      "priority_support": "Öncelikli destek",
+      "user_behavior_tracking": "Kullanıcı davranış takibi",
+      "advanced_reporting": "Gelişmiş raporlama"
+    },
+    "ui": {
+      "subscriptionPlans": "Abonelik Planları",
+      "choosePlan": "Size Uygun Abonelik Seçin",
+      "planDescription": "İşletmenizin boyutuna göre tasarlanmış esnek fiyatlandırma planları. İstediğiniz zaman değiştirebilirsiniz.",
+      "mostPopular": "En Popüler",
+      "startNow": "Hemen Başla",
+      "selectPlan": "Plan Seç",
+      "businesses": "iş yeri",
+      "staffPerBusiness": "personel/iş yeri",
+      "appointmentsPerDay": "randevu/gün",
+      "maxBusinesses": "Maksimum İş Yeri",
+      "maxStaff": "Maksimum Personel",
+      "unlimited": "Sınırsız",
+      "monthly": "ay",
+      "yearly": "yıl",
+      "allPlansBenefits": "Tüm Planlar İçin Özel Avantajlar",
+      "freeTrial": "15 gün ücretsiz deneme",
+      "cancelAnytime": "İstediğiniz zaman iptal",
+      "turkishSupport": "Türkçe müşteri desteği",
+      "pricingNote": "Tüm fiyatlar KDV dahildir. Ödeme güvenliği SSL sertifikası ile korunmaktadır.",
+      "haveQuestions": "Soruların mı var? Bizi Ara",
+      "comparisonTable": "Karşılaştırma Tablosu",
+      "tryAgain": "Tekrar Dene"
+    }
+  },
+  "pricing": {
+    "hero": {
+      "badge": "Fiyatlandırma",
+      "title": "Salonunuza Uygun",
+      "titleHighlight": "Fiyat Planı Seçin",
+      "description": "İşletmenizin boyutuna ve ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma seçenekleri. Tüm planlar 15 gün ücretsiz deneme ile başlar.",
+      "valueProps": {
+        "freeTrial": "15 Gün Ücretsiz Deneme",
+        "cancelAnytime": "İstediğiniz Zaman İptal",
+        "support": "7/24 Türkçe Destek"
+      }
+    },
+    "faq": {
+      "title": "Sıkça Sorulan",
+      "titleHighlight": "Sorular",
+      "subtitle": "Fiyatlandırma ile ilgili merak ettikleriniz",
+      "questions": {
+        "creditCard": {
+          "question": "Ücretsiz deneme süresi boyunca kredi kartı bilgisi isteniy mu?",
+          "answer": "Hayır, 15 gün ücretsiz deneme için herhangi bir ödeme bilgisi istenmez. Deneme süresi bitiminde devam etmek isterseniz ödeme bilgilerinizi girebilirsiniz."
+        },
+        "planChange": {
+          "question": "Plan değiştirme işlemi nasıl yapılır?",
+          "answer": "Hesap ayarlarından istediğiniz zaman plan değiştirebilirsiniz. Yüksek plana geçişlerde fark ücreti otomatik olarak hesaplanır."
+        },
+        "smsCredits": {
+          "question": "SMS kredilerimi başka aya aktarabilir miyim?",
+          "answer": "SMS kredileri kullanılmadığı takdirde bir sonraki aya aktarılır. Maksimum 3 aylık birikimi destekliyoruz."
+        },
+        "cancellation": {
+          "question": "İptal işlemi nasıl yapılır?",
+          "answer": "Hesap ayarlarından \"Aboneliği İptal Et\" seçeneği ile veya müşteri hizmetlerimizi arayarak iptal işlemini gerçekleştirebilirsiniz. Verileriniz 30 gün boyunca saklanır."
+        },
+        "enterprise": {
+          "question": "Kurumsal paketlerde özel indirimlerin var mı?",
+          "answer": "5+ salon zinciri olan müşterilerimiz için özel fiyatlandırma yapıyoruz. Satış ekibimizle iletişime geçerek teklif alabilirsiniz."
+        }
+      }
+    },
+    "cta": {
+      "title": "Başka sorunuz mu var?",
+      "description": "Müşteri hizmetleri ekibimiz size yardımcı olmaktan mutluluk duyar.",
+      "callUs": "Bizi Arayın",
+      "liveSupport": "Canlı Destek"
+    }
   }
 }

@@ -125,5 +125,111 @@
     "edit": "Edit",
     "add": "Add",
     "close": "Close"
+  },
+  "subscription": {
+    "plans": {
+      "baslangic": {
+        "name": "Starter",
+        "description": "Perfect for individual professionals and small businesses"
+      },
+      "standart": {
+        "name": "Standard", 
+        "description": "For growing businesses and salons with multiple staff"
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Complete solution for established businesses and chains"
+      }
+    },
+    "features": {
+      "appointment_booking": "Appointment booking",
+      "calendar_management": "Calendar management",
+      "customer_database": "Customer database",
+      "email_notifications": "Email notifications",
+      "sms_notifications": "SMS notifications",
+      "basic_analytics": "Basic analytics",
+      "advanced_analytics": "Advanced analytics",
+      "premium_analytics": "Premium analytics",
+      "business_hours": "Business hours",
+      "staff_management": "Staff management",
+      "service_management": "Service management",
+      "custom_branding": "Custom branding",
+      "business_closure_management": "Business closure management",
+      "multi_location": "Multi-location",
+      "api_access": "API access",
+      "priority_support": "Priority support",
+      "user_behavior_tracking": "User behavior tracking",
+      "advanced_reporting": "Advanced reporting"
+    },
+    "ui": {
+      "subscriptionPlans": "Subscription Plans",
+      "choosePlan": "Choose the Right Plan for You",
+      "planDescription": "Flexible pricing plans designed for your business size. Change anytime you want.",
+      "mostPopular": "Most Popular",
+      "startNow": "Start Now",
+      "selectPlan": "Select Plan",
+      "businesses": "businesses",
+      "staffPerBusiness": "staff per business",
+      "appointmentsPerDay": "appointments/day",
+      "maxBusinesses": "Max Businesses",
+      "maxStaff": "Max Staff",
+      "unlimited": "Unlimited",
+      "monthly": "month",
+      "yearly": "year",
+      "allPlansBenefits": "Special Benefits for All Plans",
+      "freeTrial": "15-day free trial",
+      "cancelAnytime": "Cancel anytime",
+      "turkishSupport": "Turkish customer support",
+      "pricingNote": "All prices include VAT. Payment security is protected with SSL certificate.",
+      "haveQuestions": "Have questions? Call us",
+      "comparisonTable": "Comparison Table",
+      "tryAgain": "Try Again"
+    }
+  },
+  "pricing": {
+    "hero": {
+      "badge": "Pricing",
+      "title": "Choose the Right",
+      "titleHighlight": "Plan for Your Salon",
+      "description": "Flexible pricing options designed for your business size and needs. All plans start with a 15-day free trial.",
+      "valueProps": {
+        "freeTrial": "15-Day Free Trial",
+        "cancelAnytime": "Cancel Anytime",
+        "support": "24/7 Turkish Support"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked",
+      "titleHighlight": "Questions",
+      "subtitle": "Everything you want to know about pricing",
+      "questions": {
+        "creditCard": {
+          "question": "Is a credit card required during the free trial period?",
+          "answer": "No, no payment information is required for the 15-day free trial. You can enter your payment details when you want to continue after the trial period."
+        },
+        "planChange": {
+          "question": "How do I change my plan?",
+          "answer": "You can change your plan anytime from your account settings. The price difference is automatically calculated when upgrading to a higher plan."
+        },
+        "smsCredits": {
+          "question": "Can I carry over my SMS credits to the next month?",
+          "answer": "SMS credits are carried over to the next month if unused. We support up to 3 months of accumulation."
+        },
+        "cancellation": {
+          "question": "How do I cancel my subscription?",
+          "answer": "You can cancel your subscription from your account settings using the \"Cancel Subscription\" option or by calling our customer service. Your data will be kept for 30 days."
+        },
+        "enterprise": {
+          "question": "Are there special discounts for enterprise packages?",
+          "answer": "We offer special pricing for customers with 5+ salon chains. You can get a quote by contacting our sales team."
+        }
+      }
+    },
+    "cta": {
+      "title": "Have more questions?",
+      "description": "Our customer service team is happy to help you.",
+      "callUs": "Call Us",
+      "liveSupport": "Live Support"
+    }
   }
 }

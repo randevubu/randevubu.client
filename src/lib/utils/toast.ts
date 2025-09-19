@@ -56,6 +56,18 @@ const getShortErrorMessage = (fullMessage: string): string => {
   // Common patterns to make messages more user-friendly
   const patterns = [
     {
+      pattern: /Notification settings validation failed/,
+      replacement: 'En az bir bildirim kanalı aktif olmalıdır'
+    },
+    {
+      pattern: /At least one reminder channel must be selected/,
+      replacement: 'En az bir bildirim kanalı seçilmelidir'
+    },
+    {
+      pattern: /All selected reminder channels must be enabled/,
+      replacement: 'Seçilen tüm bildirim kanalları etkinleştirilmelidir'
+    },
+    {
       pattern: /Body validation failed: (.+)/,
       replacement: 'Doğrulama hatası'
     },

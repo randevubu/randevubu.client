@@ -8,6 +8,8 @@ import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
 import ThemeSelector from '../../../components/ui/ThemeSelector';
 import BusinessHoursSettings from '../../../components/ui/BusinessHoursSettings';
 import { BusinessImageManager } from '../../../components/features/BusinessImageManager';
+import { StaffPrivacySettings } from '../../../components/features/StaffPrivacySettings';
+import BusinessNotificationSettings from '../../../components/features/BusinessNotificationSettings';
 import { Business, UpdateBusinessData, BusinessType } from '../../../types/business';
 
 interface SettingsFormData {
@@ -119,8 +121,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'appearance', name: 'Görünüm', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4 4 4 0 004-4V5z' },
-    { id: 'notifications', name: 'Bildirimler', icon: 'M15 17h5l-5 5v-5zM4.021 8.583a11.003 11.003 0 0114.99 0A7.5 7.5 0 0012 3c-2.31 0-4.438 1.04-5.832 2.712A7.48 7.48 0 014.02 8.583z' },
-    { id: 'announcements', name: 'Duyuru Ayarları', icon: 'M11 5.088a19.2 19.2 0 012.356-1.618c.224-.128.336-.192.448-.192.112 0 .224.064.448.192.82.468 1.527.885 2.356 1.618A20.932 20.932 0 0121 12c0 4.991-1.343 9.207-3.962 12.51a19.2 19.2 0 01-2.356 1.618c-.224.128-.336.192-.448.192-.112 0-.224-.064-.448-.192a19.2 19.2 0 01-2.356-1.618A20.932 20.932 0 013 12c0-4.991 1.343-9.207 3.962-12.51z' },
+    { id: 'notifications', name: 'Hatırlatma Ayarları', icon: 'M15 17h5l-5 5v-5zM4.021 8.583a11.003 11.003 0 0114.99 0A7.5 7.5 0 0012 3c-2.31 0-4.438 1.04-5.832 2.712A7.48 7.48 0 014.02 8.583z' },
     { id: 'business', name: 'İşletme Ayarları', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
     { id: 'images', name: 'Görsel Yönetimi', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
     { id: 'appointments', name: 'Randevu Ayarları', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
@@ -372,119 +373,23 @@ export default function SettingsPage() {
 
   const renderNotificationSettings = () => (
     <div className="space-y-6">
-      <div className="space-y-5">
-        {/* Communication Notifications */}
-        <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-6 h-6 bg-[var(--theme-info)]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-3 h-3 text-[var(--theme-info)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">İletişim Bildirimleri</h3>
+      {/* Business Notification Settings */}
+      <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-6 border border-[var(--theme-border)] transition-colors duration-300">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-8 h-8 bg-[var(--theme-primary)]/10 rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
+            </svg>
           </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">SMS Bildirimleri</label>
-              <FormField
-                label=""
-                name="smsNotifications"
-                type="select"
-                value={formData.smsNotifications}
-                onChange={handleInputChange}
-                isEditing={true}
-                displayValue={formData.smsNotifications === 'true' ? 'Aktif' : 'Pasif'}
-              >
-                <option value="true">Aktif</option>
-                <option value="false">Pasif</option>
-              </FormField>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Push Bildirimleri</label>
-              <FormField
-                label=""
-                name="pushNotifications"
-                type="select"
-                value={formData.pushNotifications}
-                onChange={handleInputChange}
-                isEditing={true}
-                displayValue={formData.pushNotifications === 'true' ? 'Aktif' : 'Pasif'}
-              >
-                <option value="true">Aktif</option>
-                <option value="false">Pasif</option>
-              </FormField>
-            </div>
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">İş Bildirimleri</h3>
+            <p className="text-sm text-[var(--theme-foregroundSecondary)] mt-1">
+              Müşterilerinize gönderilecek randevu hatırlatma ayarlarını yönetin
+            </p>
           </div>
         </div>
 
-        {/* Reminder Settings */}
-        <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-6 h-6 bg-[var(--theme-warning)]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-3 h-3 text-[var(--theme-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Hatırlatma Ayarları</h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Randevu Hatırlatmaları</label>
-              <FormField
-                label=""
-                name="appointmentReminders"
-                type="select"
-                value={formData.appointmentReminders}
-                onChange={handleInputChange}
-                isEditing={true}
-                displayValue={formData.appointmentReminders === 'true' ? 'Aktif' : 'Pasif'}
-              >
-                <option value="true">Aktif</option>
-                <option value="false">Pasif</option>
-              </FormField>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Hatırlatma Zamanı</label>
-              <FormField
-                label=""
-                name="reminderTiming"
-                type="select"
-                value={formData.reminderTiming}
-                onChange={handleInputChange}
-                isEditing={true}
-                displayValue={reminderTimingOptions.find(opt => opt.value === formData.reminderTiming)?.label}
-              >
-                {reminderTimingOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </FormField>
-            </div>
-          </div>
-        </div>
-
-        {/* Sound Settings */}
-        <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="w-6 h-6 bg-[var(--theme-success)]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-3 h-3 text-[var(--theme-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 15h3l3 3V6L8 9H5v6z" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Ses Ayarları</h3>
-          </div>
-          <FormField
-            label=""
-            name="soundNotifications"
-            type="select"
-            value={formData.soundNotifications}
-            onChange={handleInputChange}
-            isEditing={true}
-            displayValue={formData.soundNotifications === 'true' ? 'Aktif' : 'Pasif'}
-          >
-            <option value="true">Aktif</option>
-            <option value="false">Pasif</option>
-          </FormField>
-        </div>
+        <BusinessNotificationSettings />
       </div>
     </div>
   );
@@ -812,33 +717,169 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Appointment Reminder Settings */}
+        {/* Booking Rules */}
         <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-6 h-6 bg-[var(--theme-info)]/10 rounded-lg flex items-center justify-center">
               <svg className="w-3 h-3 text-[var(--theme-info)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Randevu Hatırlatma Ayarları</h3>
+            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Rezervasyon Kuralları</h3>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
-              Randevu hatırlatma mesajları, randevuya kaç dakika kala müşteriye gönderilsin? (Varsayılan: 60)
-            </label>
-            <FormField
-              label=""
-              name="reminderMinutes"
-              type="text"
-              value="60"
-              onChange={handleInputChange}
-              isEditing={true}
-              displayValue="60"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Kaç Gün Öncesinden Randevu Alınabilir</label>
+              <FormField
+                label=""
+                name="maxAdvanceBookingDays"
+                type="select"
+                value="7"
+                onChange={handleInputChange}
+                isEditing={true}
+                displayValue="1 hafta"
+              >
+                <option value="1">1 gün</option>
+                <option value="3">3 gün</option>
+                <option value="7">1 hafta</option>
+                <option value="14">2 hafta</option>
+                <option value="30">1 ay</option>
+                <option value="60">2 ay</option>
+              </FormField>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Minimum Randevu Bildirimi Süresi</label>
+              <FormField
+                label=""
+                name="minimumNoticeHours"
+                type="select"
+                value="2"
+                onChange={handleInputChange}
+                isEditing={true}
+                displayValue="2 saat"
+              >
+                <option value="0">Anında rezervasyon</option>
+                <option value="1">1 saat önce</option>
+                <option value="2">2 saat önce</option>
+                <option value="4">4 saat önce</option>
+                <option value="24">1 gün önce</option>
+              </FormField>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Aynı Gün İçin Maksimum Randevu Sayısı</label>
+              <FormField
+                label=""
+                name="maxAppointmentsPerDay"
+                type="select"
+                value="5"
+                onChange={handleInputChange}
+                isEditing={true}
+                displayValue="5 randevu"
+              >
+                <option value="1">1 randevu</option>
+                <option value="2">2 randevu</option>
+                <option value="3">3 randevu</option>
+                <option value="4">4 randevu</option>
+                <option value="5">5 randevu</option>
+                <option value="6">6 randevu</option>
+                <option value="7">7 randevu</option>
+                <option value="8">8 randevu</option>
+                <option value="9">9 randevu</option>
+                <option value="10">10 randevu</option>
+              </FormField>
+            </div>
           </div>
         </div>
 
-        {/* Active Customer Definition */}
+        {/* Cancellation & No-Show Policies */}
+        <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-6 h-6 bg-[var(--theme-warning)]/10 rounded-lg flex items-center justify-center">
+              <svg className="w-3 h-3 text-[var(--theme-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">İptal ve Gelmeme Politikaları</h3>
+          </div>
+
+          {/* Danger Warning */}
+          <div className="mb-6 p-4 bg-[var(--theme-error)]/5 border border-[var(--theme-error)]/20 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 w-5 h-5 mt-0.5">
+                <svg className="w-5 h-5 text-[var(--theme-error)]" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--theme-error)] mb-1">Önemli Uyarı</h4>
+                <p className="text-xs text-[var(--theme-error)] leading-relaxed">
+                  Bu kuralları aşan müşteriler sistemden otomatik olarak engellenecek ve bir daha işletmenizden randevu alamayacaktır.
+                  Bu politikalar müşteri deneyimini korumak ve adil bir rezervasyon sistemi sağlamak için uygulanır.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Randevu İptali İçin Minimum Süre</label>
+              <FormField
+                label=""
+                name="cancellationNoticeHours"
+                type="select"
+                value="4"
+                onChange={handleInputChange}
+                isEditing={true}
+                displayValue="4 saat"
+              >
+                <option value="1">1 saat önce</option>
+                <option value="2">2 saat önce</option>
+                <option value="4">4 saat önce</option>
+                <option value="12">12 saat önce</option>
+                <option value="24">1 gün önce</option>
+              </FormField>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Maksimum İptal Sayısı (Aylık)</label>
+              <FormField
+                label=""
+                name="maxCancellationsPerMonth"
+                type="select"
+                value="3"
+                onChange={handleInputChange}
+                isEditing={true}
+                displayValue="3 iptal"
+              >
+                <option value="1">1 iptal</option>
+                <option value="2">2 iptal</option>
+                <option value="3">3 iptal</option>
+                <option value="5">5 iptal</option>
+                <option value="unlimited">Sınırsız</option>
+              </FormField>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Maksimum Gelmeme Sayısı (Aylık)</label>
+              <FormField
+                label=""
+                name="maxNoShowsPerMonth"
+                type="select"
+                value="2"
+                onChange={handleInputChange}
+                isEditing={true}
+                displayValue="2 gelmeme"
+              >
+                <option value="1">1 gelmeme</option>
+                <option value="2">2 gelmeme</option>
+                <option value="3">3 gelmeme</option>
+                <option value="5">5 gelmeme</option>
+                <option value="unlimited">Sınırsız</option>
+              </FormField>
+            </div>
+          </div>
+        </div>
+
+
+        {/* Customer Management */}
         <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-6 h-6 bg-[var(--theme-success)]/10 rounded-lg flex items-center justify-center">
@@ -846,129 +887,121 @@ export default function SettingsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Aktif Müşteri Tanımı</h3>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
-              Bir müşteri kaç ay içerisinde en az bir kez bile randevuya gelmiş olsa aktif müşteri kategorisinde yer alsın? (Varsayılan: 3)
-            </label>
-            <FormField
-              label=""
-              name="activeCustomerMonths"
-              type="text"
-              value="2"
-              onChange={handleInputChange}
-              isEditing={true}
-              displayValue="2"
-            />
-          </div>
-        </div>
-
-        {/* Online Appointment Settings */}
-        <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-6 h-6 bg-[var(--theme-accent)]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-3 h-3 text-[var(--theme-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Online Randevu Ayarları</h3>
+            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Müşteri Yönetimi</h3>
           </div>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
-                Online randevular onayımdan sonra takvime eklensin? (Varsayılan: Kapalı)
+                Aktif Müşteri Tanımı (Son X ay içinde randevu almış)
               </label>
               <FormField
                 label=""
-                name="autoApproveOnlineAppointments"
+                name="activeCustomerMonths"
                 type="select"
-                value="false"
+                value="3"
                 onChange={handleInputChange}
                 isEditing={true}
-                displayValue="Kapalı"
+                displayValue="3 ay"
               >
-                <option value="true">Açık</option>
-                <option value="false">Kapalı</option>
+                <option value="1">1 ay</option>
+                <option value="2">2 ay</option>
+                <option value="3">3 ay</option>
+                <option value="6">6 ay</option>
+                <option value="12">12 ay</option>
               </FormField>
             </div>
             <div>
               <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
-                Kimler online randevu alabilsin? (Varsayılan: Hiç kimse)
+                Müşteri Sadakat Programı Eşiği
               </label>
               <FormField
                 label=""
-                name="onlineAppointmentAccess"
+                name="loyaltyProgramThreshold"
                 type="select"
-                value="none"
+                value="5"
                 onChange={handleInputChange}
                 isEditing={true}
-                displayValue="Hiç kimse"
+                displayValue="5 randevu"
               >
-                <option value="registered">Sadece Kayıtlı Müşteriler</option>
-                <option value="active">Sadece Aktif Müşteriler</option>
-                <option value="everyone">Herkes</option>
-                <option value="none">Hiç kimse</option>
+                <option value="3">3 randevu</option>
+                <option value="5">5 randevu</option>
+                <option value="10">10 randevu</option>
+                <option value="15">15 randevu</option>
+                <option value="20">20 randevu</option>
               </FormField>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
-                Müşterileriniz, online sayfanız üzerinden kaç adet randevusunu iptal ederse online randevu alımı engellensin? (Varsayılan: 5)
+            <div className="flex items-center justify-between p-3 border border-[var(--theme-border)] rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-[var(--theme-foreground)]">Müşteri Notları</p>
+                <p className="text-xs text-[var(--theme-foregroundSecondary)] mt-1">
+                  Personelin müşteriler hakkında not ekleyebilmesini sağla
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={handleInputChange}
+                  name="enableCustomerNotes"
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[var(--theme-backgroundSecondary)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--theme-primary)]/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-success)]"></div>
               </label>
-              <FormField
-                label=""
-                name="maxCancellations"
-                type="text"
-                value="10"
-                onChange={handleInputChange}
-                isEditing={true}
-                displayValue="10"
-              />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
-                Müşterileriniz kaç adet randevusuna gelmezse online randevu alımı engellensin? (Varsayılan: 2)
+            <div className="flex items-center justify-between p-3 border border-[var(--theme-border)] rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-[var(--theme-foreground)]">Randevu Geçmişi Görüntüleme</p>
+                <p className="text-xs text-[var(--theme-foregroundSecondary)] mt-1">
+                  Müşterilerin kendi randevu geçmişlerini görebilmesini sağla
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={handleInputChange}
+                  name="enableCustomerHistory"
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[var(--theme-backgroundSecondary)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--theme-primary)]/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-success)]"></div>
               </label>
-              <FormField
-                label=""
-                name="maxNoShows"
-                type="text"
-                value="10"
-                onChange={handleInputChange}
-                isEditing={true}
-                displayValue="10"
-              />
             </div>
-          </div>
-        </div>
-
-        {/* Appointment Configuration */}
-        <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-6 h-6 bg-[var(--theme-info)]/10 rounded-lg flex items-center justify-center">
-              <svg className="w-3 h-3 text-[var(--theme-info)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div className="flex items-center justify-between p-3 border border-[var(--theme-border)] rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-[var(--theme-foreground)]">Doğum Günü Hatırlatmaları</p>
+                <p className="text-xs text-[var(--theme-foregroundSecondary)] mt-1">
+                  Müşteri doğum günlerinde otomatik hatırlatma gönder
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={handleInputChange}
+                  name="enableBirthdayReminders"
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[var(--theme-backgroundSecondary)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--theme-primary)]/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-accent)]"></div>
+              </label>
             </div>
-            <h3 className="text-sm font-semibold text-[var(--theme-foreground)]">Randevu Ayarları</h3>
-          </div>
-          
-          <div>
-            <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">Varsayılan Randevu Süresi</label>
-            <FormField
-              label=""
-              name="defaultAppointmentDuration"
-              type="select"
-              value="30"
-              onChange={handleInputChange}
-              isEditing={true}
-              displayValue="30 dakika"
-            >
-              <option value="15">15 dakika</option>
-              <option value="30">30 dakika</option>
-              <option value="45">45 dakika</option>
-              <option value="60">1 saat</option>
-            </FormField>
+            <div className="flex items-center justify-between p-3 border border-[var(--theme-border)] rounded-lg">
+              <div>
+                <p className="text-sm font-medium text-[var(--theme-foreground)]">Müşteri Değerlendirmeleri</p>
+                <p className="text-xs text-[var(--theme-foregroundSecondary)] mt-1">
+                  Randevu sonrası müşterilerden değerlendirme iste
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={handleInputChange}
+                  name="enableCustomerReviews"
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-[var(--theme-backgroundSecondary)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--theme-primary)]/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-warning)]"></div>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -977,6 +1010,14 @@ export default function SettingsPage() {
 
   const renderStaffSettings = () => (
     <div className="space-y-6">
+      {/* Staff Privacy Settings */}
+      <StaffPrivacySettings 
+        onSettingsUpdated={() => {
+          // Optionally reload business data or show success message
+          console.log('Staff privacy settings updated');
+        }}
+      />
+
       <div className="space-y-5">
         {/* Staff Management */}
         <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-4 border border-[var(--theme-border)] transition-colors duration-300">
@@ -1074,8 +1115,6 @@ export default function SettingsPage() {
         return renderAppearanceSettings();
       case 'notifications':
         return renderNotificationSettings();
-      case 'announcements':
-        return renderAnnouncementSettings();
       case 'business':
         return renderBusinessSettings();
       case 'images':

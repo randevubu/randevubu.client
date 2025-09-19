@@ -5,6 +5,45 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { businessService } from '@/src/lib/services/business';
 import { staffService, StaffWithUser } from '@/src/lib/services/staff';
 
+// Extended interface to include displayName for privacy settings
+interface StaffWithDisplayName extends StaffWithUser {
+  displayName?: string;
+}
+
+// API response type for staff with display names
+interface StaffResponse {
+  success: boolean;
+  data: {
+    staff: StaffWithDisplayName[];
+  };
+  error?: {
+    message: string;
+  };
+}
+
+// Utility functions for staff display
+const getStaffDisplayName = (staff: StaffWithDisplayName): string => {
+  return staff.displayName || 
+         `${staff.user.firstName || ''} ${staff.user.lastName || ''}`.trim() || 
+         'Personel';
+};
+
+const getStaffInitials = (staff: StaffWithDisplayName): string => {
+  const firstName = staff.user.firstName?.trim();
+  const lastName = staff.user.lastName?.trim();
+  const displayName = staff.displayName?.trim();
+  
+  if (firstName) {
+    return firstName.charAt(0).toUpperCase();
+  } else if (displayName) {
+    return displayName.charAt(0).toUpperCase();
+  } else if (lastName) {
+    return lastName.charAt(0).toUpperCase();
+  } else {
+    return 'S'; // Staff fallback
+  }
+};
+
 interface Service {
   id: string;
   name: string;
@@ -49,8 +88,8 @@ export default function StaffSelectionPage() {
 
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [staff, setStaff] = useState<StaffWithUser[]>([]);
-  const [selectedStaff, setSelectedStaff] = useState<StaffWithUser | null>(null);
+  const [staff, setStaff] = useState<StaffWithDisplayName[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<StaffWithDisplayName | null>(null);
   const [loading, setLoading] = useState(true);
   const [staffLoading, setStaffLoading] = useState(false);
   const [staffError, setStaffError] = useState<string | null>(null);
@@ -82,7 +121,7 @@ export default function StaffSelectionPage() {
           router.push(`/businesses/${slug}/book/service`);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching business data:', error);
     } finally {
       setLoading(false);
@@ -93,27 +132,29 @@ export default function StaffSelectionPage() {
     try {
       setStaffLoading(true);
       setStaffError(null);
-      const response = await staffService.getBusinessStaffForBooking(businessId);
+      const response = await staffService.getBusinessStaffForBooking(businessId) as StaffResponse;
       
       if (response.success && response.data?.staff) {
-        const activeStaff = response.data.staff;
-        setStaff(activeStaff);
+        setStaff(response.data.staff);
         
         // Don't auto-select staff, let user choose
         // Even if there's only one staff member, show the selection page
       } else {
         throw new Error(response.error?.message || 'Staff bilgileri alınamadı');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching staff:', error);
-      const errorMessage = error?.response?.data?.message || error.message || 'Personel bilgileri yüklenirken bir hata oluştu';
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Personel bilgileri yüklenirken bir hata oluştu';
       setStaffError(errorMessage);
     } finally {
       setStaffLoading(false);
     }
   };
 
-  const handleStaffSelect = (staff: StaffWithUser) => {
+
+  const handleStaffSelect = (staff: StaffWithDisplayName) => {
     setSelectedStaff(staff);
     // Navigate to datetime selection
     router.push(`/businesses/${slug}/book/datetime?serviceId=${serviceId}&staffId=${staff.id}`);
@@ -228,16 +269,16 @@ export default function StaffSelectionPage() {
                 {staff.map((staffMember) => (
                   <div
                     key={staffMember.id}
-                    className={`relative bg-[var(--theme-background)] border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                    className={`relative bg-white border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95 group ${
                       selectedStaff?.id === staffMember.id 
-                        ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/5' 
-                        : 'border-[var(--theme-border)] hover:border-[var(--theme-primary)]'
+                        ? 'border-[var(--theme-primary)] bg-gradient-to-br from-[var(--theme-primary)]/10 to-[var(--theme-accent)]/5 shadow-lg ring-2 ring-[var(--theme-primary)]/20' 
+                        : 'border-gray-200 hover:border-[var(--theme-primary)] shadow-md hover:shadow-lg hover:ring-1 hover:ring-[var(--theme-primary)]/30'
                     }`}
                     onClick={() => handleStaffSelect(staffMember)}
                   >
                     {/* Selected indicator */}
                     {selectedStaff?.id === staffMember.id && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--theme-success)] rounded-full flex items-center justify-center">
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--theme-success)] rounded-full flex items-center justify-center shadow-lg animate-pulse">
                         <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -246,33 +287,33 @@ export default function StaffSelectionPage() {
                     
                     <div className="text-center">
                       {/* Staff avatar */}
-                      <div className="mx-auto mb-3">
+                      <div className="mx-auto mb-4">
                         {staffMember.user.avatar ? (
                           <img
                             src={staffMember.user.avatar}
-                            alt={`${staffMember.user.firstName} ${staffMember.user.lastName}`}
-                            className="w-16 h-16 rounded-full object-cover mx-auto border-2 border-[var(--theme-border)]"
+                            alt={getStaffDisplayName(staffMember)}
+                            className="w-20 h-20 rounded-full object-cover mx-auto border-3 border-gray-200 shadow-md"
                           />
                         ) : (
-                          <div className="w-16 h-16 bg-[var(--theme-primary)]/20 rounded-full flex items-center justify-center mx-auto border-2 border-[var(--theme-border)]">
-                            <span className="text-[var(--theme-primary)] font-bold text-lg">
-                              {staffMember.user.firstName?.charAt(0)}{staffMember.user.lastName?.charAt(0)}
+                          <div className="w-20 h-20 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-full flex items-center justify-center mx-auto border-3 border-gray-200 shadow-md">
+                            <span className="text-white font-bold text-2xl">
+                              {getStaffInitials(staffMember)}
                             </span>
                           </div>
                         )}
                       </div>
                       
                       {/* Staff info */}
-                      <div className="space-y-1">
-                        <h4 className="font-semibold text-[var(--theme-foreground)] text-sm">
-                          {staffMember.user.firstName} {staffMember.user.lastName}
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-gray-800 text-base">
+                          {getStaffDisplayName(staffMember)}
                         </h4>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                           staffMember.role === 'OWNER' 
-                            ? 'bg-[var(--theme-primary)]/20 text-[var(--theme-primary)]'
+                            ? 'bg-blue-100 text-blue-700'
                             : staffMember.role === 'MANAGER'
-                            ? 'bg-[var(--theme-accent)]/20 text-[var(--theme-accent)]'
-                            : 'bg-[var(--theme-secondary)]/20 text-[var(--theme-secondary)]'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-gray-100 text-gray-700'
                         }`}>
                           {staffMember.role === 'OWNER' ? 'Sahip' : 
                            staffMember.role === 'MANAGER' ? 'Yönetici' : 'Personel'}

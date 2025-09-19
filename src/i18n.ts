@@ -1,5 +1,4 @@
-import {notFound} from 'next/navigation';
-import {getRequestConfig} from 'next-intl/server';
+import { getRequestConfig } from 'next-intl/server';
 
 export const locales = ['tr', 'en'] as const;
 export const defaultLocale = 'tr' as const;

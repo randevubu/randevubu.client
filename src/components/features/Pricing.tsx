@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { PaymentsService } from '../../lib/services/payments';
 import { SubscriptionPlan } from '../../types/subscription';
 
 export default function Pricing() {
   const router = useRouter();
+  const t = useTranslations('subscription');
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,33 @@ export default function Pricing() {
     router.push(`/subscription?plan=${planId}`);
   };
 
+  // Helper function to get translated plan name
+  const getTranslatedPlanName = (planName: string) => {
+    try {
+      return t(`plans.${planName}.name`);
+    } catch {
+      return planName; // Fallback to original name if translation not found
+    }
+  };
+
+  // Helper function to get translated plan description
+  const getTranslatedPlanDescription = (planName: string) => {
+    try {
+      return t(`plans.${planName}.description`);
+    } catch {
+      return ''; // Fallback to empty string if translation not found
+    }
+  };
+
+  // Helper function to get translated feature name
+  const getTranslatedFeatureName = (feature: string) => {
+    try {
+      return t(`features.${feature}`);
+    } catch {
+      return feature.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase());
+    }
+  };
+
   if (loading) {
     return (
       <section className="py-16 bg-[var(--theme-background)] transition-colors duration-300">
@@ -53,7 +82,7 @@ export default function Pricing() {
               onClick={() => window.location.reload()} 
               className="px-4 py-2 bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] rounded hover:bg-[var(--theme-primaryHover)]"
             >
-              Tekrar Dene
+              {t('ui.tryAgain')}
             </button>
           </div>
         </div>
@@ -101,17 +130,15 @@ export default function Pricing() {
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
         <div className="text-center mb-12">
           <div className="inline-flex items-center px-3 py-1 bg-[var(--theme-primary)]/10 rounded-full text-[var(--theme-primary)] font-medium text-xs mb-4 transition-colors duration-300">
-            💳 Abonelik Planları
+            💳 {t('ui.subscriptionPlans')}
           </div>
           
           <h2 className="text-3xl lg:text-4xl font-black text-[var(--theme-foreground)] mb-4 leading-tight transition-colors duration-300">
-            Size Uygun
-            <br />
-            <span className="text-[var(--theme-primary)] transition-colors duration-300">Abonelik Seçin</span>
+            {t('ui.choosePlan')}
           </h2>
           
           <p className="text-base lg:text-lg text-[var(--theme-foregroundSecondary)] max-w-2xl mx-auto leading-relaxed transition-colors duration-300">
-            İşletmenizin boyutuna göre tasarlanmış esnek fiyatlandırma planları. İstediğiniz zaman değiştirebilirsiniz.
+            {t('ui.planDescription')}
           </p>
         </div>
 
@@ -131,7 +158,7 @@ export default function Pricing() {
                 {plan.isPopular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <div className={`bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg`}>
-                      ⭐ En Popüler
+                      ⭐ {t('ui.mostPopular')}
                     </div>
                   </div>
                 )}
@@ -139,8 +166,12 @@ export default function Pricing() {
                 <div className="p-8">
                   {/* Header */}
                   <div className="text-center mb-8">
-                    <h3 className="text-2xl font-bold text-[var(--theme-cardForeground)] mb-2 transition-colors duration-300">{plan.displayName}</h3>
-                    <p className="text-[var(--theme-foregroundSecondary)] mb-6 transition-colors duration-300">{plan.description || 'Perfect for your business needs'}</p>
+                    <h3 className="text-2xl font-bold text-[var(--theme-cardForeground)] mb-2 transition-colors duration-300">
+                      {getTranslatedPlanName(plan.name)}
+                    </h3>
+                    <p className="text-[var(--theme-foregroundSecondary)] mb-6 transition-colors duration-300">
+                      {getTranslatedPlanDescription(plan.name) || plan.description || 'Perfect for your business needs'}
+                    </p>
                     
                     <div className="mb-6">
                       <div className="flex items-baseline justify-center">
@@ -148,7 +179,7 @@ export default function Pricing() {
                           {plan.currency === 'TRY' ? '₺' : '$'}{plan.price.toLocaleString('tr-TR')}
                         </span>
                         <span className="text-xl text-[var(--theme-foregroundMuted)] ml-2 transition-colors duration-300">
-                          /{plan.billingInterval === 'monthly' ? 'ay' : plan.billingInterval}
+                          /{plan.billingInterval === 'monthly' ? t('ui.monthly') : t('ui.yearly')}
                         </span>
                       </div>
                     </div>
@@ -161,7 +192,7 @@ export default function Pricing() {
                           : `bg-[var(--theme-foreground)] text-[var(--theme-background)] hover:bg-[var(--theme-foregroundSecondary)]`
                       }`}
                     >
-                      {plan.isPopular ? 'Hemen Başla' : 'Plan Seç'}
+                      {plan.isPopular ? t('ui.startNow') : t('ui.selectPlan')}
                     </button>
                   </div>
 
@@ -174,7 +205,7 @@ export default function Pricing() {
                         </svg>
                       </div>
                       <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                        {plan.maxBusinesses === -1 ? 'Unlimited' : plan.maxBusinesses} businesses
+                        {t('ui.maxBusinesses')}: {plan.maxBusinesses === -1 ? t('ui.unlimited') : plan.maxBusinesses}
                       </span>
                     </div>
                     <div className="flex items-start space-x-3">
@@ -184,17 +215,7 @@ export default function Pricing() {
                         </svg>
                       </div>
                       <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                        {plan.maxStaffPerBusiness === -1 ? 'Unlimited' : plan.maxStaffPerBusiness} staff per business
-                      </span>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                        {plan.maxAppointmentsPerDay === -1 ? 'Unlimited' : plan.maxAppointmentsPerDay} appointments/day
+                        {t('ui.maxStaff')}: {plan.maxStaffPerBusiness === -1 ? t('ui.unlimited') : plan.maxStaffPerBusiness}
                       </span>
                     </div>
                     
@@ -206,7 +227,7 @@ export default function Pricing() {
                           </svg>
                         </div>
                         <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                          {feature.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase())}
+                          {getTranslatedFeatureName(feature)}
                         </span>
                       </div>
                     ))}
@@ -221,7 +242,7 @@ export default function Pricing() {
         <div className="mt-16 text-center">
           <div className="bg-gradient-to-r from-[var(--theme-backgroundSecondary)] to-[var(--theme-backgroundTertiary)] rounded-3xl p-8 transition-colors duration-300">
             <h3 className="text-2xl font-bold text-[var(--theme-foreground)] mb-4 transition-colors duration-300">
-              Tüm Planlar İçin Özel Avantajlar
+              {t('ui.allPlansBenefits')}
             </h3>
             
             <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -231,7 +252,7 @@ export default function Pricing() {
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-[var(--theme-foreground)] font-medium transition-colors duration-300">15 gün ücretsiz deneme</span>
+                <span className="text-[var(--theme-foreground)] font-medium transition-colors duration-300">{t('ui.freeTrial')}</span>
               </div>
               
               <div className="flex items-center justify-center space-x-2">
@@ -240,7 +261,7 @@ export default function Pricing() {
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-[var(--theme-foreground)] font-medium transition-colors duration-300">İstediğiniz zaman iptal</span>
+                <span className="text-[var(--theme-foreground)] font-medium transition-colors duration-300">{t('ui.cancelAnytime')}</span>
               </div>
               
               <div className="flex items-center justify-center space-x-2">
@@ -249,20 +270,20 @@ export default function Pricing() {
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                   </svg>
                 </div>
-                <span className="text-[var(--theme-foreground)] font-medium transition-colors duration-300">Türkçe müşteri desteği</span>
+                <span className="text-[var(--theme-foreground)] font-medium transition-colors duration-300">{t('ui.turkishSupport')}</span>
               </div>
             </div>
 
             <p className="text-sm text-[var(--theme-foregroundMuted)] mb-6 transition-colors duration-300">
-              Tüm fiyatlar KDV dahildir. Ödeme güvenliği SSL sertifikası ile korunmaktadır.
+              {t('ui.pricingNote')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-8 py-3 rounded-2xl font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                Soruların mı var? Bizi Ara
+                {t('ui.haveQuestions')}
               </button>
               <button className="border-2 border-[var(--theme-border)] text-[var(--theme-foreground)] px-8 py-3 rounded-2xl font-semibold hover:border-[var(--theme-primary)] hover:text-[var(--theme-primary)] transition-all duration-300">
-                Karşılaştırma Tablosu
+                {t('ui.comparisonTable')}
               </button>
             </div>
           </div>

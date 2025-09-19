@@ -15,6 +15,11 @@ import {
   BusinessImages,
   UploadImageResponse
 } from '../../types/business';
+import { 
+  StaffPrivacySettings, 
+  StaffPrivacySettingsRequest, 
+  PublicStaffResponse 
+} from '../../types/staffPrivacy';
 import { ClosureType } from '../../types/enums';
 
 export interface PublicBusiness {
@@ -209,9 +214,9 @@ export const businessService = {
     try {
       const response = await apiClient.get<ApiResponse<any[]>>(url);
       return response.data;
-    } catch (error) {
-      // If the endpoint doesn't work, try as a POST with businessId in body as a workaround
-      if (error.response?.status === 400 && error.response?.data?.error === 'Business ID is required') {
+      } catch (error: any) {
+        // If the endpoint doesn't work, try as a POST with businessId in body as a workaround
+        if (error.response?.status === 400 && error.response?.data?.error === 'Business ID is required') {
         try {
           const postUrl = '/api/v1/businesses/hours/overrides/list';
           const postResponse = await apiClient.post<ApiResponse<any[]>>(postUrl, {
@@ -249,7 +254,7 @@ export const businessService = {
     } catch (error) {
       // Fallback to the original method if the my-business endpoint doesn't support PUT
       const myBusiness = await businessService.getMyBusiness();
-      if (myBusiness.success && myBusiness.data?.businesses?.length > 0) {
+      if (myBusiness.success && myBusiness.data?.businesses && myBusiness.data.businesses.length > 0) {
         const businessId = myBusiness.data.businesses[0].id;
         return await businessService.updateBusiness(businessId, data);
       }
@@ -628,6 +633,113 @@ export const businessService = {
       `/api/v1/businesses/${businessId}/images/gallery`,
       { imageUrls: orderedImageUrls }
     );
+    return response.data;
+  },
+
+  // ================================
+  // BUSINESS NOTIFICATION SETTINGS METHODS
+  // ================================
+
+  // Get business notification settings
+  getBusinessNotificationSettings: async (): Promise<ApiResponse<{
+    id: string;
+    businessId: string;
+    enableAppointmentReminders: boolean;
+    reminderChannels: string[];
+    reminderTiming: number[];
+    smsEnabled: boolean;
+    pushEnabled: boolean;
+    emailEnabled: boolean;
+    quietHours?: {
+      start: string;
+      end: string;
+    };
+    timezone: string;
+    createdAt: string;
+    updatedAt: string;
+  }>> => {
+    const response = await apiClient.get<ApiResponse<any>>('/api/v1/businesses/my-business/notification-settings');
+    return response.data;
+  },
+
+  // Update business notification settings
+  updateBusinessNotificationSettings: async (settings: {
+    enableAppointmentReminders?: boolean;
+    reminderChannels?: string[];
+    reminderTiming?: number[];
+    smsEnabled?: boolean;
+    pushEnabled?: boolean;
+    emailEnabled?: boolean;
+    quietHours?: {
+      start: string;
+      end: string;
+    } | null;
+    timezone?: string;
+  }): Promise<ApiResponse<{
+    id: string;
+    businessId: string;
+    enableAppointmentReminders: boolean;
+    reminderChannels: string[];
+    reminderTiming: number[];
+    smsEnabled: boolean;
+    pushEnabled: boolean;
+    emailEnabled: boolean;
+    quietHours?: {
+      start: string;
+      end: string;
+    };
+    timezone: string;
+    createdAt: string;
+    updatedAt: string;
+  }>> => {
+    const response = await apiClient.put<ApiResponse<any>>('/api/v1/businesses/my-business/notification-settings', settings);
+    return response.data;
+  },
+
+  // Test business notification settings
+  testBusinessNotificationSettings: async (testData?: {
+    appointmentId?: string;
+    channels?: string[];
+    customMessage?: string;
+  }): Promise<ApiResponse<{
+    results: Array<{
+      success: boolean;
+      messageId?: string;
+      channel: string;
+      status: string;
+      error?: string;
+    }>;
+    summary: {
+      total: number;
+      successful: number;
+      failed: number;
+      channels: string[];
+      testMessage: string;
+    };
+  }>> => {
+    const response = await apiClient.post<ApiResponse<any>>('/api/v1/businesses/my-business/test-reminder', testData || {});
+    return response.data;
+  },
+
+  // ================================
+  // STAFF PRIVACY SETTINGS METHODS
+  // ================================
+
+  // Get staff privacy settings
+  getStaffPrivacySettings: async (): Promise<ApiResponse<StaffPrivacySettings>> => {
+    const response = await apiClient.get<ApiResponse<StaffPrivacySettings>>('/api/v1/businesses/my-business/staff-privacy-settings');
+    return response.data;
+  },
+
+  // Update staff privacy settings
+  updateStaffPrivacySettings: async (settings: StaffPrivacySettingsRequest): Promise<ApiResponse<StaffPrivacySettings>> => {
+    const response = await apiClient.put<ApiResponse<StaffPrivacySettings>>('/api/v1/businesses/my-business/staff-privacy-settings', settings);
+    return response.data;
+  },
+
+  // Get public staff list (for customer booking)
+  getPublicStaff: async (businessId: string): Promise<PublicStaffResponse> => {
+    const response = await apiClient.get<PublicStaffResponse>(`/api/v1/public/businesses/${businessId}/staff`);
     return response.data;
   },
 };
