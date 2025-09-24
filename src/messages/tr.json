@@ -28,7 +28,11 @@
       "noAccess": "Erişilebilir iş yeriniz bulunmuyor",
       "subscriptionRequired": "Bu özellik için abonelik gerekli",
       "limitReached": "İş yeri limitinize ulaştınız",
-      "deletionNotAllowed": "Bu iş yeri silinemez"
+      "deletionNotAllowed": "Bu iş yeri silinemez",
+      "smsQuotaExceeded": "SMS kotanız dolmuş. Paketinizi yükseltin veya yeni döngüyü bekleyin.",
+      "staffLimitExceeded": "Personel limitiniz dolmuş. Daha fazla personel eklemek için paketinizi yükseltin.",
+      "serviceLimitExceeded": "Hizmet limitiniz dolmuş. Daha fazla hizmet eklemek için paketinizi yükseltin.",
+      "customerLimitExceeded": "Müşteri limitiniz dolmuş. Daha fazla müşteri eklemek için paketinizi yükseltin."
     },
     "appointment": {
       "notFound": "Randevu bulunamadı",
@@ -139,6 +143,14 @@
       "premium": {
         "name": "Premium",
         "description": "Köklü işletmeler ve şirket zincirleri için tam çözüm"
+      },
+      "starter": {
+        "name": "Başlangıç Planı",
+        "description": "Küçük işletmeler için ideal"
+      },
+      "pro": {
+        "name": "Pro Paket",
+        "description": "Büyük işletmeler ve salon zincirleri için profesyonel çözüm"
       }
     },
     "features": {
@@ -159,7 +171,50 @@
       "api_access": "API erişimi",
       "priority_support": "Öncelikli destek",
       "user_behavior_tracking": "Kullanıcı davranış takibi",
-      "advanced_reporting": "Gelişmiş raporlama"
+      "advanced_reporting": "Gelişmiş raporlama",
+      "Online appointment booking system": "Online randevu rezervasyon sistemi",
+      "Up to 1 staff member": "1 personele kadar",
+      "Up to 5 staff members": "5 personele kadar",
+      "Up to 15 staff members": "15 personele kadar",
+      "Unlimited customers": "Sınırsız müşteri",
+      "Email & SMS notifications": "E-posta ve SMS bildirimleri",
+      "1,000 SMS per month": "Aylık 1.000 SMS",
+      "1,500 SMS per month": "Aylık 1.500 SMS",
+      "3,000 SMS per month": "Aylık 3.000 SMS",
+      "Basic reporting & analytics": "Temel raporlama ve analitik",
+      "Advanced reporting & analytics": "Gelişmiş raporlama ve analitik",
+      "All Starter features": "Tüm Başlangıç özellikleri",
+      "All Premium features": "Tüm Premium özellikleri",
+      "Multi-location management": "Çoklu lokasyon yönetimi",
+      "Custom branding & themes": "Özel markalama ve temalar",
+      "Google Calendar sync": "Google Takvim senkronizasyonu",
+      "WhatsApp integration": "WhatsApp entegrasyonu",
+      "Google Calendar & Outlook integration": "Google Takvim ve Outlook entegrasyonu",
+      "Online payment processing": "Online ödeme işleme",
+      "POS system integration": "POS sistemi entegrasyonu",
+      "Priority email & phone support": "Öncelikli e-posta ve telefon desteği",
+      "API access": "API erişimi",
+      "Advanced customer segmentation": "Gelişmiş müşteri segmentasyonu",
+      "Automated marketing campaigns": "Otomatik pazarlama kampanyaları",
+      "Full API access": "Tam API erişimi",
+      "Advanced multi-location support": "Gelişmiş çoklu lokasyon desteği",
+      "CRM integration": "CRM entegrasyonu",
+      "ERP system integration": "ERP sistemi entegrasyonu",
+      "Advanced analytics & reporting": "Gelişmiş analitik ve raporlama",
+      "Custom integrations": "Özel entegrasyonlar",
+      "Dedicated account manager": "Özel hesap yöneticisi",
+      "White-label solutions": "Beyaz etiket çözümleri",
+      "Advanced automation workflows": "Gelişmiş otomasyon iş akışları",
+      "Priority phone & email support": "Öncelikli telefon ve e-posta desteği",
+      "Custom training sessions": "Özel eğitim seansları",
+      "Unlimited appointments": "Sınırsız randevu",
+      "Email support": "E-posta desteği",
+      "Mobile app access": "Mobil uygulama erişimi",
+      "Sınırsız Randevu": "Sınırsız Randevu",
+      "Sınırsız Müşteri": "Sınırsız Müşteri",
+      "Randevu Hatırlatma Mesajları": "Randevu Hatırlatma Mesajları",
+      "Müşteri Galeri Sistemi": "Müşteri Galeri Sistemi",
+      "Periyodik Randevu Takibi": "Periyodik Randevu Takibi"
     },
     "ui": {
       "subscriptionPlans": "Abonelik Planları",
@@ -176,6 +231,7 @@
       "unlimited": "Sınırsız",
       "monthly": "ay",
       "yearly": "yıl",
+      "smsPerMonth": "SMS/ay",
       "allPlansBenefits": "Tüm Planlar İçin Özel Avantajlar",
       "freeTrial": "15 gün ücretsiz deneme",
       "cancelAnytime": "İstediğiniz zaman iptal",

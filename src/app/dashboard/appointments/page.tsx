@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import ClosureDialog from '../../../components/ui/ClosureDialog';
+import AppointmentBookingDialog from '../../../components/features/AppointmentBookingDialog';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { MyAppointmentsParams, appointmentService } from '../../../lib/services/appointments';
 import { businessService } from '../../../lib/services/business';
 import { servicesService } from '../../../lib/services/services';
-import { canViewBusinessStats } from '../../../lib/utils/permissions';
+import { canViewBusinessStats, isStaff, isOwner, hasRole } from '../../../lib/utils/permissions';
 import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
 import { Appointment, AppointmentStatus } from '../../../types';
 import { Business } from '../../../types/business';
@@ -48,6 +49,13 @@ export default function AppointmentsPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Appointment booking dialog state
+  const [appointmentBookingDialogOpen, setAppointmentBookingDialogOpen] = useState(false);
+  const [selectedTimeSlotForBooking, setSelectedTimeSlotForBooking] = useState<string>('');
+
+  // Calendar mode state
+  const [calendarMode, setCalendarMode] = useState<'booking' | 'blocking'>('booking');
 
   // Appointments state
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -96,6 +104,7 @@ export default function AppointmentsPage() {
     
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
+
 
   useEffect(() => {
     if (user && canViewBusinessStats(user)) {
@@ -255,17 +264,38 @@ export default function AppointmentsPage() {
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
       case AppointmentStatus.PENDING:
-        return 'bg-[var(--theme-warning)]/20 text-[var(--theme-warning)] transition-colors duration-300';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600';
       case AppointmentStatus.CONFIRMED:
-        return 'bg-[var(--theme-info)]/20 text-[var(--theme-info)] transition-colors duration-300';
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
+      case AppointmentStatus.IN_PROGRESS:
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
       case AppointmentStatus.COMPLETED:
-        return 'bg-[var(--theme-success)]/20 text-[var(--theme-success)] transition-colors duration-300';
+        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700';
       case AppointmentStatus.CANCELED:
-        return 'bg-[var(--theme-error)]/20 text-[var(--theme-error)] transition-colors duration-300';
+        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
       case AppointmentStatus.NO_SHOW:
-        return 'bg-[var(--theme-foregroundMuted)]/20 text-[var(--theme-foregroundMuted)] transition-colors duration-300';
+        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
       default:
-        return 'bg-[var(--theme-foregroundMuted)]/20 text-[var(--theme-foregroundMuted)] transition-colors duration-300';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600';
+    }
+  };
+
+  const getStatusIcon = (status: AppointmentStatus) => {
+    switch (status) {
+      case AppointmentStatus.PENDING:
+        return '⏳';
+      case AppointmentStatus.CONFIRMED:
+        return '✅';
+      case AppointmentStatus.IN_PROGRESS:
+        return '🔄';
+      case AppointmentStatus.COMPLETED:
+        return '✔️';
+      case AppointmentStatus.CANCELED:
+        return '❌';
+      case AppointmentStatus.NO_SHOW:
+        return '👻';
+      default:
+        return '❓';
     }
   };
 
@@ -652,20 +682,20 @@ export default function AppointmentsPage() {
     }
 
     switch (appointment.status) {
-      case AppointmentStatus.CONFIRMED:
-        return 'bg-gradient-to-r from-[var(--theme-success)]/10 to-[var(--theme-success)]/20 border-l-4 border-l-[var(--theme-success)]';
       case AppointmentStatus.PENDING:
-        return 'bg-gradient-to-r from-[var(--theme-warning)]/10 to-[var(--theme-warning)]/20 border-l-4 border-l-[var(--theme-warning)]';
-      case AppointmentStatus.COMPLETED:
-        return 'bg-gradient-to-r from-green-100 to-green-200 border-l-4 border-l-green-500';
-      case AppointmentStatus.CANCELED:
-        return 'bg-gradient-to-r from-[var(--theme-error)]/10 to-[var(--theme-error)]/20 border-l-4 border-l-[var(--theme-error)]';
-      case AppointmentStatus.NO_SHOW:
-        return 'bg-gradient-to-r from-gray-100 to-gray-200 border-l-4 border-l-gray-600';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-700/20 border-l-4 border-l-gray-500 shadow-sm';
+      case AppointmentStatus.CONFIRMED:
+        return 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-l-4 border-l-green-500 shadow-sm';
       case AppointmentStatus.IN_PROGRESS:
-        return 'bg-gradient-to-r from-blue-100 to-blue-200 border-l-4 border-l-blue-500';
+        return 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-l-4 border-l-green-500 shadow-sm';
+      case AppointmentStatus.COMPLETED:
+        return 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-l-4 border-l-blue-500 shadow-sm';
+      case AppointmentStatus.CANCELED:
+        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-l-4 border-l-red-500 shadow-sm';
+      case AppointmentStatus.NO_SHOW:
+        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-l-4 border-l-red-500 shadow-sm';
       default:
-        return 'bg-gradient-to-r from-[var(--theme-foregroundMuted)]/10 to-[var(--theme-foregroundMuted)]/20 border-l-4 border-l-[var(--theme-foregroundMuted)]';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-700/20 border-l-4 border-l-gray-500 shadow-sm';
     }
   };
 
@@ -769,73 +799,89 @@ export default function AppointmentsPage() {
   };
 
   // Enhanced click handler with scroll detection
+  // Check if user can book appointments for customers
+  const canBookForCustomers = () => {
+    return user && (isOwner(user) || isStaff(user) || hasRole(user, 'MANAGER'));
+  };
+
+  // Enhanced click handler with mode-based behavior
   const handleTimeSlotClick = (timeSlot: string, shiftKey: boolean = false) => {
     // Ignore clicks if user was scrolling
     if (isScrolling) {
       setIsScrolling(false);
       return;
     }
-    
-    // Only allow selection on empty slots that are not closed and not in the past
+
+    // Only allow interaction on empty slots that are not closed and not in the past
     const slotInfo = getSlotAppointment(timeSlot);
     const isClosed = isTimeSlotClosed(selectedDate, timeSlot);
     const isPast = isTimeSlotInPast(selectedDate, timeSlot);
-    
+
     if (slotInfo.type !== 'empty' || isClosed || isPast) {
       return;
     }
 
-    if (!isSelecting) {
-      // Start selection mode
-      setIsSelecting(true);
-      setSelectionStart(timeSlot);
-      setSelectedTimeSlots([timeSlot]);
-      return;
-    }
-
-    // We're in selection mode, this click ends the selection
-    if (!selectionStart) return;
-
-    const timeSlots = generateTimeSlots();
-    const startIndex = timeSlots.indexOf(selectionStart);
-    const currentIndex = timeSlots.indexOf(timeSlot);
-    
-    if (startIndex === -1 || currentIndex === -1) return;
-
-    const start = Math.min(startIndex, currentIndex);
-    const end = Math.max(startIndex, currentIndex);
-    
-    // Check all slots in the range to ensure they're all empty, not closed, and not in the past
-    let allEmpty = true;
-    for (let i = start; i <= end; i++) {
-      const slot = timeSlots[i];
-      const slotInfo = getSlotAppointment(slot);
-      const isClosed = isTimeSlotClosed(selectedDate, slot);
-      const isPast = isTimeSlotInPast(selectedDate, slot);
-      if (slotInfo.type !== 'empty' || isClosed || isPast) {
-        allEmpty = false;
-        break;
+    if (calendarMode === 'booking') {
+      // Booking mode: Single click opens appointment booking dialog
+      if (canBookForCustomers()) {
+        setSelectedTimeSlotForBooking(timeSlot);
+        setAppointmentBookingDialogOpen(true);
       }
-    }
-    
-    if (!allEmpty) {
+      // For regular customers, we could show a message or redirect to customer booking
+    } else if (calendarMode === 'blocking') {
+      // Blocking mode: First click = start, second click = end
+      if (!isSelecting) {
+        // Start selection mode
+        setIsSelecting(true);
+        setSelectionStart(timeSlot);
+        setSelectedTimeSlots([timeSlot]);
+        return;
+      }
+
+      // We're in selection mode, this click ends the selection
+      if (!selectionStart) return;
+
+      const timeSlots = generateTimeSlots();
+      const startIndex = timeSlots.indexOf(selectionStart);
+      const currentIndex = timeSlots.indexOf(timeSlot);
+
+      if (startIndex === -1 || currentIndex === -1) return;
+
+      const start = Math.min(startIndex, currentIndex);
+      const end = Math.max(startIndex, currentIndex);
+
+      // Check all slots in the range to ensure they're all empty, not closed, and not in the past
+      let allEmpty = true;
+      for (let i = start; i <= end; i++) {
+        const slot = timeSlots[i];
+        const slotInfo = getSlotAppointment(slot);
+        const isClosed = isTimeSlotClosed(selectedDate, slot);
+        const isPast = isTimeSlotInPast(selectedDate, slot);
+        if (slotInfo.type !== 'empty' || isClosed || isPast) {
+          allEmpty = false;
+          break;
+        }
+      }
+
+      if (!allEmpty) {
+        setIsSelecting(false);
+        setSelectionStart(null);
+        setSelectedTimeSlots([]);
+        return;
+      }
+
+      // Select the range and open dialog
+      const selection = [];
+      for (let i = start; i <= end; i++) {
+        selection.push(timeSlots[i]);
+      }
+      setSelectedTimeSlots(selection);
+      setClosureDialogOpen(true);
+
+      // Reset selection mode
       setIsSelecting(false);
       setSelectionStart(null);
-      setSelectedTimeSlots([]);
-      return;
     }
-
-    // Select the range and open dialog
-    const selection = [];
-    for (let i = start; i <= end; i++) {
-      selection.push(timeSlots[i]);
-    }
-    setSelectedTimeSlots(selection);
-    setClosureDialogOpen(true);
-    
-    // Reset selection mode
-    setIsSelecting(false);
-    setSelectionStart(null);
   };
 
   // Debounced hover handler for smoother selection
@@ -902,52 +948,19 @@ export default function AppointmentsPage() {
     setSelectedTimeSlots([]);
   };
 
-  // Enhanced mobile touch handlers with improved gesture recognition
+  // Simplified mobile touch handlers - just detect scrolling
   const handleTouchStart = (timeSlot: string, e?: React.TouchEvent) => {
-    const slotInfo = getSlotAppointment(timeSlot);
-    const isClosed = isTimeSlotClosed(selectedDate, timeSlot);
-    const isPast = isTimeSlotInPast(selectedDate, timeSlot);
-    
-    // For closed slots, don't handle touch - let click event handle it
-    if (isClosed) return;
-    
-    if (slotInfo.type !== 'empty' || isPast) return;
-
-    // Store touch start time for distinguishing tap vs long press
+    // Store touch start time for scroll detection
     setTouchStartTime(Date.now());
-
-    // Reset scroll detection
     setIsScrolling(false);
-    
-    // Start selection immediately for better responsiveness
-    if (!isSelecting) {
-      setIsSelecting(true);
-      setSelectionStart(timeSlot);
-      setSelectedTimeSlots([timeSlot]);
+
+    // Prevent default to avoid text selection in blocking mode
+    if (calendarMode === 'blocking' && e) {
+      e.preventDefault();
     }
-    
-    // Prevent default to avoid text selection
-    e?.preventDefault();
   };
 
   const handleTouchEnd = (timeSlot: string, e?: React.TouchEvent) => {
-    const slotInfo = getSlotAppointment(timeSlot);
-    
-    const isClosed = isTimeSlotClosed(selectedDate, timeSlot);
-    const isPast = isTimeSlotInPast(selectedDate, timeSlot);
-    
-    // For closed slots, don't handle touch - let click event handle it
-    if (isClosed) return;
-    
-    if (slotInfo.type !== 'empty' || isPast) return;
-
-    // If we have a valid selection range, open the closure dialog
-    if (selectedTimeSlots.length > 0 && isSelecting) {
-      setClosureDialogOpen(true);
-      setIsSelecting(false);
-      setSelectionStart(null);
-    }
-    
     // Reset scroll detection
     setIsScrolling(false);
   };
@@ -1032,6 +1045,11 @@ export default function AppointmentsPage() {
     setSelectedTimeSlots([]);
     loadAppointmentsForCurrentView();
     loadClosures(); // Also reload closures to show the new one
+  };
+
+  const handleAppointmentCreated = () => {
+    setSelectedTimeSlotForBooking('');
+    loadAppointmentsForCurrentView(); // Reload appointments to show the new one
   };
 
   const handleDeleteClosure = () => {
@@ -1132,6 +1150,76 @@ export default function AppointmentsPage() {
             </button>
           </div>
 
+          {/* Calendar Mode Toggle - Only show for business owners/staff */}
+          {canBookForCustomers() && (
+            <div className="flex rounded-lg border border-[var(--theme-border)] p-1 bg-[var(--theme-backgroundSecondary)]">
+              <button
+                onClick={() => {
+                  setCalendarMode('booking');
+                  // Reset any active selection when switching modes
+                  setIsSelecting(false);
+                  setSelectionStart(null);
+                  setSelectedTimeSlots([]);
+                }}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex-1 sm:flex-none ${calendarMode === 'booking'
+                  ? 'bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] shadow-sm'
+                  : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:bg-[var(--theme-card)]'
+                  }`}
+                title="Müşteriler için randevu alın"
+              >
+                📅 Randevu Al
+              </button>
+              <button
+                onClick={() => {
+                  setCalendarMode('blocking');
+                  // Reset any active selection when switching modes
+                  setIsSelecting(false);
+                  setSelectionStart(null);
+                  setSelectedTimeSlots([]);
+                }}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex-1 sm:flex-none ${calendarMode === 'blocking'
+                  ? 'bg-[var(--theme-error)] text-white shadow-sm'
+                  : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:bg-[var(--theme-card)]'
+                  }`}
+                title="Zaman aralığı kapatın"
+              >
+                🚫 Zaman Engelle
+              </button>
+            </div>
+          )}
+
+          {/* Mode Status Indicator */}
+          {canBookForCustomers() && (
+            <div className="text-xs text-[var(--theme-foregroundSecondary)] flex items-center gap-2">
+              {calendarMode === 'booking' ? (
+                <>
+                  <span className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-[var(--theme-primary)] rounded-full"></div>
+                    Randevu Alma Modu - Boş saatlere tıklayın
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[var(--theme-error)] rounded-full"></div>
+                    {isSelecting
+                      ? "Zaman Engelleme - Bitiş saatini seçin"
+                      : "Zaman Engelleme - Başlangıç saatini seçin"
+                    }
+                  </span>
+                  {isSelecting && (
+                    <button
+                      onClick={cancelSelection}
+                      className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium underline"
+                    >
+                      İptal
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Navigation and Controls in one row */}
           <div className="flex items-center justify-between gap-2">
             <button
@@ -1228,33 +1316,6 @@ export default function AppointmentsPage() {
       </div>
 
 
-      {/* Selection mode indicator */}
-      {isSelecting && (
-        <div className="bg-[var(--theme-primary)]/10 border border-[var(--theme-primary)]/20 rounded-lg p-3 mb-3">
-          <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-[var(--theme-primary)] rounded-full"></div>
-                <span className="text-sm font-medium text-[var(--theme-primary)]">
-                  {isMobile 
-                    ? "Seçim Modu - Bitiş zamanına dokunun veya kapatma oluşturmak için sürükleyin"
-                    : "Seçim Modu - Kapatma oluşturmak için bitiş zamanına tıklayın"
-                  }
-                </span>
-              </div>
-              <button
-                onClick={cancelSelection}
-                className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] text-sm font-medium"
-              >
-                İptal
-              </button>
-          </div>
-          {selectionStart && (
-            <div className="mt-1 text-xs text-[var(--theme-primary)]">
-              Başlangıç: {selectionStart}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Content based on view mode */}
       {viewMode === 'daily' && (
@@ -1283,12 +1344,6 @@ export default function AppointmentsPage() {
               }}
               onTouchMove={isSelecting ? handleTouchMove : undefined}
             >
-              {/* Selection mode instruction */}
-              {isSelecting && (
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 bg-[var(--theme-error)]/10 border border-[var(--theme-error)]/20 text-[var(--theme-error)] px-3 py-1 rounded-full text-sm font-medium shadow-sm">
-                  Sürükleyerek zaman aralığı seçin
-                </div>
-              )}
               
 
               {/* Time slots - show all slots or closed message */}
@@ -1362,12 +1417,14 @@ export default function AppointmentsPage() {
                                 ? 'bg-[var(--theme-backgroundSecondary)] border-[var(--theme-border)] cursor-not-allowed opacity-50'
                                 : isClosed
                                   ? 'bg-[var(--theme-error)]/10 border-[var(--theme-error)] border-2 cursor-pointer hover:bg-[var(--theme-error)]/20'
-                                  : selectedTimeSlots.includes(timeSlot)
+                                  : calendarMode === 'blocking' && selectedTimeSlots.includes(timeSlot)
                                     ? 'bg-[var(--theme-error)]/20 border-[var(--theme-error)]/30 cursor-pointer'
-                                    : isSelecting && selectionStart === timeSlot
+                                    : calendarMode === 'blocking' && isSelecting && selectionStart === timeSlot
                                       ? 'bg-[var(--theme-error)]/30 border-[var(--theme-error)] border-2 cursor-crosshair'
-                                    : isSelecting
+                                    : calendarMode === 'blocking' && isSelecting
                                       ? 'cursor-crosshair hover:bg-[var(--theme-error)]/10'
+                                    : calendarMode === 'booking' && canBookForCustomers()
+                                      ? 'cursor-pointer hover:bg-[var(--theme-primary)]/10 border-l-2 border-l-transparent hover:border-l-[var(--theme-primary)]'
                                       : 'cursor-pointer hover:bg-[var(--theme-backgroundSecondary)]'
                             }`}
                         data-time-slot={timeSlot}
@@ -1402,13 +1459,13 @@ export default function AppointmentsPage() {
                                 ? "Geçmiş zaman dilimi - seçilemez"
                                 : isClosed
                                   ? `İşletme Kapalı: ${closure?.reason || 'Sebep belirtilmemiş'}`
-                                  : isMobile
-                                    ? isSelecting
-                                      ? "Sürükleyerek seçin, sayfayı kaydırabilirsiniz"
-                                      : "Kapatma için zaman aralığı seçmeye başlamak için dokunun ve sürükleyin"
-                                    : isSelecting 
-                                      ? "Seçimi bitirmek için fareyi bırakın, sayfayı kaydırabilirsiniz" 
-                                      : "Kapatma için zaman aralığı seçmeye başlamak için tıklayın ve sürükleyin"
+                                  : calendarMode === 'booking' && canBookForCustomers()
+                                    ? "Randevu almak için tıklayın"
+                                    : calendarMode === 'blocking'
+                                      ? isSelecting
+                                        ? "Bitiş saatini seçmek için tıklayın"
+                                        : "Başlangıç saatini seçmek için tıklayın"
+                                      : "Boş zaman dilimi"
                             }
                           >
                             {isPast && !isClosed && !hasAppointmentInSlot(timeSlot) && (
@@ -1416,11 +1473,14 @@ export default function AppointmentsPage() {
                                 <span className="truncate px-1 text-center leading-tight">Geçmiş saate randevu alınamaz</span>
                               </div>
                             )}
-                            {isSelecting && selectedTimeSlots.includes(timeSlot) && timeSlot !== selectionStart && (
+                            {calendarMode === 'blocking' && isSelecting && selectedTimeSlots.includes(timeSlot) && (
                               <div className="flex items-center justify-center h-full text-xs text-[var(--theme-error)] font-medium relative">
-                                <span className="truncate px-1">✓</span>
-                                {/* Visual connection line */}
-                                <div className="absolute inset-0 border-l-2 border-[var(--theme-error)] border-dashed"></div>
+                                <span className="truncate px-1">
+                                  {timeSlot === selectionStart ? "🚀" : "✓"}
+                                </span>
+                                {timeSlot !== selectionStart && (
+                                  <div className="absolute inset-0 border-l-2 border-[var(--theme-error)] border-dashed"></div>
+                                )}
                               </div>
                             )}
                             {isClosed && closure && (
@@ -1499,10 +1559,12 @@ export default function AppointmentsPage() {
                           </div>
 
                         </div>
-                        <div className='flex flex-col  h-full items-end justify-between'>
-                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ml-2 ${getStatusColor(appointment.status)}`}>
-                            {getStatusText(appointment.status)}
-                          </span><div className="flex items-center gap-2 text-xs">
+                        <div className='flex flex-col h-full items-end justify-between'>
+                          <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 ml-2 border ${getStatusColor(appointment.status)}`}>
+                            <span className="text-sm">{getStatusIcon(appointment.status)}</span>
+                            <span>{getStatusText(appointment.status)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
                             <span className="text-[var(--theme-success)] font-medium">
                               {appointment.price} {appointment.currency}
                             </span>
@@ -1660,19 +1722,22 @@ export default function AppointmentsPage() {
                               <div
                               key={appointment.id}
                               className={`absolute left-0 right-0 z-10 rounded-md cursor-pointer shadow-sm border transition-all hover:shadow-md ${
-                                appointment.status === 'CONFIRMED' ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-200' :
-                                appointment.status === 'COMPLETED' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-200' :
-                                appointment.status === 'CANCELED' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-900 dark:border-red-700 dark:text-red-200' :
-                                'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200'
+                                appointment.status === 'PENDING' ? 'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-800/30 dark:border-gray-600 dark:text-gray-200' :
+                                appointment.status === 'CONFIRMED' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200' :
+                                appointment.status === 'IN_PROGRESS' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200' :
+                                appointment.status === 'COMPLETED' ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-200' :
+                                appointment.status === 'CANCELED' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200' :
+                                appointment.status === 'NO_SHOW' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200' :
+                                'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-800/30 dark:border-gray-600 dark:text-gray-200'
                               }`}
                               style={{
                                 top: `${top}px`,
                                 height: `${height}px`
                               }}
                             >
-                              <div className="h-full w-full flex items-center justify-center">
+                              <div className="h-full w-full flex items-center justify-center p-1">
                                 <div className="text-xs leading-tight break-words overflow-hidden text-center">
-                                  {getCustomerDisplayName(appointment)}
+                                  <div className="font-medium">{getCustomerDisplayName(appointment)}</div>
                                 </div>
                               </div>
                             </div>
@@ -1750,12 +1815,15 @@ export default function AppointmentsPage() {
                         {dayAppointments.slice(0, 2).map((apt) => (
                           <div
                             key={apt.id}
-                            className={`text-xs p-0.5 rounded ${apt.status === 'CONFIRMED' ? 'bg-[var(--theme-info)]/20 text-[var(--theme-info)]' :
-                              apt.status === 'PENDING' ? 'bg-[var(--theme-warning)]/20 text-[var(--theme-warning)]' :
-                                apt.status === 'COMPLETED' ? 'bg-[var(--theme-success)]/20 text-[var(--theme-success)]' :
-                                  'bg-[var(--theme-foregroundMuted)]/20 text-[var(--theme-foregroundMuted)]'
+                            className={`text-xs p-1 rounded border ${apt.status === 'PENDING' ? 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600' :
+                              apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' :
+                                apt.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' :
+                                  apt.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700' :
+                                    apt.status === 'CANCELED' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' :
+                                      apt.status === 'NO_SHOW' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' :
+                                        'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600'
                               }`}
-                            title={`${formatTime(apt.startTime)} - ${getCustomerDisplayName(apt)}`}
+                            title={`${formatTime(apt.startTime)} - ${getCustomerDisplayName(apt)} - ${getStatusText(apt.status)}`}
                           >
                             <div className="font-bold truncate text-xs leading-tight">{formatTime(apt.startTime)}</div>
                             <div className="font-medium truncate text-xs leading-tight">{getCustomerDisplayName(apt)}</div>
@@ -1786,6 +1854,19 @@ export default function AppointmentsPage() {
         selectedTimeSlots={selectedTimeSlots}
         selectedDate={selectedDate}
         onClosureCreated={handleClosureCreated}
+      />
+
+      {/* Appointment Booking Dialog */}
+      <AppointmentBookingDialog
+        isOpen={appointmentBookingDialogOpen}
+        onClose={() => {
+          setAppointmentBookingDialogOpen(false);
+          setSelectedTimeSlotForBooking('');
+        }}
+        businessId={business?.id || ''}
+        selectedDate={selectedDate}
+        selectedTimeSlot={selectedTimeSlotForBooking}
+        onAppointmentCreated={handleAppointmentCreated}
       />
 
       {/* Closure Details Modal */}
@@ -2268,21 +2349,12 @@ export default function AppointmentsPage() {
                       {formatTime(selectedAppointment.startTime)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-[var(--theme-foregroundSecondary)]">Mevcut Durum:</span>
-                    <span className={`font-medium ${
-                      selectedAppointment.status === AppointmentStatus.COMPLETED ? 'text-green-600' :
-                      selectedAppointment.status === AppointmentStatus.CONFIRMED ? 'text-[var(--theme-success)]' :
-                      selectedAppointment.status === AppointmentStatus.CANCELED ? 'text-[var(--theme-error)]' :
-                      selectedAppointment.status === AppointmentStatus.NO_SHOW ? 'text-red-600' :
-                      'text-[var(--theme-foregroundMuted)]'
-                    }`}>
-                      {selectedAppointment.status === AppointmentStatus.CONFIRMED ? 'Onaylandı' :
-                       selectedAppointment.status === AppointmentStatus.COMPLETED ? 'Tamamlandı' :
-                       selectedAppointment.status === AppointmentStatus.CANCELED ? 'İptal Edildi' :
-                       selectedAppointment.status === AppointmentStatus.NO_SHOW ? 'Gelmedi' :
-                       selectedAppointment.status}
-                    </span>
+                    <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 ${getStatusColor(selectedAppointment.status)}`}>
+                      <span className="text-sm">{getStatusIcon(selectedAppointment.status)}</span>
+                      <span>{getStatusText(selectedAppointment.status)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2293,12 +2365,14 @@ export default function AppointmentsPage() {
                   Yeni Durum Seç:
                 </h4>
                 
-                {[AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED, AppointmentStatus.CANCELED, AppointmentStatus.NO_SHOW].map((status) => {
+                {[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS, AppointmentStatus.COMPLETED, AppointmentStatus.CANCELED, AppointmentStatus.NO_SHOW].map((status) => {
                   if (status === selectedAppointment.status) return null;
                   
                   const getStatusLabel = (status: AppointmentStatus) => {
                     switch (status) {
+                      case AppointmentStatus.PENDING: return 'Bekliyor';
                       case AppointmentStatus.CONFIRMED: return 'Onaylandı';
+                      case AppointmentStatus.IN_PROGRESS: return 'Devam Ediyor';
                       case AppointmentStatus.COMPLETED: return 'Tamamlandı';
                       case AppointmentStatus.CANCELED: return 'İptal Edildi';
                       case AppointmentStatus.NO_SHOW: return 'Gelmedi';
@@ -2308,11 +2382,13 @@ export default function AppointmentsPage() {
 
                   const getStatusColor = (status: AppointmentStatus) => {
                     switch (status) {
-                      case AppointmentStatus.CONFIRMED: return 'border-[var(--theme-success)] hover:bg-[var(--theme-success)]/10';
-                      case AppointmentStatus.COMPLETED: return 'border-green-500 hover:bg-green-50';
-                      case AppointmentStatus.CANCELED: return 'border-[var(--theme-error)] hover:bg-[var(--theme-error)]/10';
-                      case AppointmentStatus.NO_SHOW: return 'border-red-600 hover:bg-red-50';
-                      default: return 'border-[var(--theme-border)] hover:bg-[var(--theme-background)]';
+                      case AppointmentStatus.PENDING: return 'border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900/20';
+                      case AppointmentStatus.CONFIRMED: return 'border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20';
+                      case AppointmentStatus.IN_PROGRESS: return 'border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20';
+                      case AppointmentStatus.COMPLETED: return 'border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20';
+                      case AppointmentStatus.CANCELED: return 'border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20';
+                      case AppointmentStatus.NO_SHOW: return 'border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20';
+                      default: return 'border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/20';
                     }
                   };
 
@@ -2321,8 +2397,9 @@ export default function AppointmentsPage() {
                       key={status}
                       onClick={() => updateAppointmentStatus(selectedAppointment.id, status)}
                       disabled={updatingStatus}
-                      className={`w-full p-3 border-2 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getStatusColor(status)}`}
+                      className={`w-full p-3 border-2 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 ${getStatusColor(status)}`}
                     >
+                      <span className="text-lg">{getStatusIcon(status)}</span>
                       <span className="font-medium text-[var(--theme-foreground)]">
                         {getStatusLabel(status)}
                       </span>

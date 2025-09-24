@@ -18,10 +18,18 @@ const UsageProgressBar: React.FC<{
   icon?: React.ReactNode;
   colorScheme?: 'blue' | 'green' | 'purple' | 'amber' | 'red';
 }> = ({ current, limit, label, unit = '', icon, colorScheme = 'blue' }) => {
+  // Add null/undefined checks for current and limit
+  const safeCurrent = current ?? 0;
+  const safeLimit = limit ?? 0;
+  
+  // Handle infinite limits
+  const isInfiniteLimit = !isFinite(safeLimit);
+  
   // Handle division by zero - if limit is 0, show 0% instead of NaN%
-  const percentage = limit === 0 ? 0 : Math.min((current / limit) * 100, 100);
-  const isNearLimit = percentage >= 80;
-  const isAtLimit = percentage >= 100;
+  // For infinite limits, show 0% progress
+  const percentage = isInfiniteLimit ? 0 : (safeLimit === 0 ? 0 : Math.min((safeCurrent / safeLimit) * 100, 100));
+  const isNearLimit = isInfiniteLimit ? false : percentage >= 80;
+  const isAtLimit = isInfiniteLimit ? false : percentage >= 100;
 
   const colorClasses = {
     blue: {
@@ -75,16 +83,18 @@ const UsageProgressBar: React.FC<{
           <div>
             <h3 className={`font-bold ${colors.text} text-base sm:text-lg`}>{label}</h3>
             <p className="text-xs sm:text-sm text-gray-600">
-              {current.toLocaleString()}{unit} / {limit.toLocaleString()}{unit}
+              {safeCurrent.toLocaleString()}{unit} / {isInfiniteLimit ? '∞' : safeLimit.toLocaleString()}{unit}
             </p>
           </div>
         </div>
-        <div className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold ${
+        <div className={`px-2 sm:px-3 py-1 rounded-full font-bold ${
+          isInfiniteLimit ? 'text-base sm:text-lg' : 'text-xs sm:text-sm'
+        } ${
           isAtLimit ? 'bg-red-100 text-red-800' : 
           isNearLimit ? 'bg-amber-100 text-amber-800' : 
           'bg-green-100 text-green-800'
         }`}>
-          {isNaN(percentage) ? '0' : percentage.toFixed(0)}%
+          {isInfiniteLimit ? '∞' : `${isNaN(percentage) ? '0' : percentage.toFixed(0)}%`}
         </div>
       </div>
 
@@ -92,15 +102,15 @@ const UsageProgressBar: React.FC<{
         <div className="flex justify-between text-xs sm:text-sm text-gray-600">
           <span>Kullanım</span>
           <span className={`font-semibold ${
-            (limit - current) <= 0 ? 'text-red-600' : 'text-green-600'
+            isInfiniteLimit ? 'text-green-600' : (safeLimit - safeCurrent) <= 0 ? 'text-red-600' : 'text-green-600'
           }`}>
-            {limit === 0 ? '0' : (limit - current).toLocaleString()}{unit} kaldı
+            {isInfiniteLimit ? '∞' : (safeLimit === 0 ? '0' : (safeLimit - safeCurrent).toLocaleString())}{unit} kaldı
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
           <div 
             className={`${colors.progress} h-2 sm:h-3 rounded-full transition-all duration-700 ease-out`}
-            style={{ width: `${Math.min(percentage, 100)}%` }}
+            style={{ width: isInfiniteLimit ? '0%' : `${Math.min(percentage, 100)}%` }}
           />
         </div>
       </div>
@@ -308,6 +318,26 @@ export default function UsagePage() {
     maxServices: 0,
     storageGB: 0
   };
+
+  // Ensure all values are numbers, not undefined
+  const safeCurrentMonthValues = {
+    smssSent: Number(safeCurrentMonth.smssSent) || 0,
+    appointmentsCreated: Number(safeCurrentMonth.appointmentsCreated) || 0,
+    staffMembersActive: Number(safeCurrentMonth.staffMembersActive) || 0,
+    customersAdded: Number(safeCurrentMonth.customersAdded) || 0,
+    servicesActive: Number(safeCurrentMonth.servicesActive) || 0,
+    storageUsedMB: Number(safeCurrentMonth.storageUsedMB) || 0,
+    apiCallsCount: Number(safeCurrentMonth.apiCallsCount) || 0
+  };
+
+  const safePlanLimitsValues = {
+    smsQuota: Number(safePlanLimits.smsQuota) || 0,
+    maxStaffPerBusiness: Number(safePlanLimits.maxStaffPerBusiness) || 0,
+    maxAppointmentsPerDay: Number.POSITIVE_INFINITY, // Infinite daily appointments
+    maxCustomers: Number.POSITIVE_INFINITY, // Infinite customers
+    maxServices: Number.POSITIVE_INFINITY, // Infinite services
+    storageGB: Number(safePlanLimits.storageGB) || 0
+  };
   
   // Safe access for usage alerts with fallback values and optional chaining
   const safeUsageAlerts = {
@@ -372,8 +402,8 @@ export default function UsagePage() {
         {/* Usage Summary Cards - Mobile-first grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <UsageProgressBar
-            current={safeCurrentMonth.smssSent}
-            limit={safePlanLimits.smsQuota}
+            current={safeCurrentMonthValues.smssSent}
+            limit={safePlanLimitsValues.smsQuota}
             label="SMS Kullanımı"
             unit=" SMS"
             colorScheme="blue"
@@ -385,8 +415,8 @@ export default function UsagePage() {
           />
 
           <UsageProgressBar
-            current={safeCurrentMonth.staffMembersActive}
-            limit={safePlanLimits.maxStaffPerBusiness}
+            current={safeCurrentMonthValues.staffMembersActive}
+            limit={safePlanLimitsValues.maxStaffPerBusiness}
             label="Personel Sayısı"
             unit=" kişi"
             colorScheme="green"
@@ -398,8 +428,8 @@ export default function UsagePage() {
           />
 
           <UsageProgressBar
-            current={safeCurrentMonth.customersAdded}
-            limit={safePlanLimits.maxCustomers}
+            current={safeCurrentMonthValues.customersAdded}
+            limit={safePlanLimitsValues.maxCustomers}
             label="Müşteri Sayısı"
             unit=" müşteri"
             colorScheme="purple"
@@ -411,8 +441,8 @@ export default function UsagePage() {
           />
 
           <UsageProgressBar
-            current={safeCurrentMonth.servicesActive}
-            limit={safePlanLimits.maxServices}
+            current={safeCurrentMonthValues.servicesActive}
+            limit={safePlanLimitsValues.maxServices}
             label="Hizmet Sayısı"
             unit=" hizmet"
             colorScheme="amber"
@@ -424,8 +454,8 @@ export default function UsagePage() {
           />
 
           <UsageProgressBar
-            current={safeCurrentMonth.storageUsedMB}
-            limit={safePlanLimits.storageGB * 1024}
+            current={safeCurrentMonthValues.storageUsedMB}
+            limit={safePlanLimitsValues.storageGB * 1024}
             label="Depolama Alanı"
             unit=" MB"
             colorScheme="red"
@@ -439,8 +469,8 @@ export default function UsagePage() {
           {/* Daily Appointments - separate card */}
           <div className="sm:col-span-2 lg:col-span-1">
             <UsageProgressBar
-              current={Math.floor(safeCurrentMonth.appointmentsCreated / 30)} // Daily average
-              limit={safePlanLimits.maxAppointmentsPerDay}
+              current={Math.floor(safeCurrentMonthValues.appointmentsCreated / 30)} // Daily average
+              limit={safePlanLimitsValues.maxAppointmentsPerDay}
               label="Günlük Randevu"
               unit=" randevu"
               colorScheme="green"
@@ -511,28 +541,28 @@ export default function UsagePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-2xl border border-blue-200">
               <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-blue-600 mb-1">
-                {safeCurrentMonth.smssSent.toLocaleString()}
+                {safeCurrentMonthValues.smssSent.toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">SMS Gönderildi</div>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-green-50 rounded-2xl border border-green-200">
               <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-green-600 mb-1">
-                {safeCurrentMonth.appointmentsCreated.toLocaleString()}
+                {safeCurrentMonthValues.appointmentsCreated.toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">Randevu Oluştu</div>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-purple-50 rounded-2xl border border-purple-200">
               <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-1">
-                {safeCurrentMonth.customersAdded.toLocaleString()}
+                {safeCurrentMonthValues.customersAdded.toLocaleString()}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">Yeni Müşteri</div>
             </div>
             
             <div className="text-center p-3 sm:p-4 bg-amber-50 rounded-2xl border border-amber-200">
               <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-amber-600 mb-1">
-                {formatStorage(safeCurrentMonth.storageUsedMB)}
+                {formatStorage(safeCurrentMonthValues.storageUsedMB)}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">Depolama</div>
             </div>

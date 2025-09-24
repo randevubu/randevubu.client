@@ -4,8 +4,9 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
-import SubscriptionPlans from '../../../components/ui/SubscriptionPlans';
+import Pricing from '../../../components/features/Pricing';
 import PaymentForm from '../../../components/ui/PaymentForm';
+import Confetti from 'react-confetti';
 
 import { PaymentsService } from '../../../lib/services/payments';
 import { SubscriptionPlan } from '../../../types/subscription';
@@ -25,6 +26,8 @@ function SubscriptionContent() {
   const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [checkingBusiness, setCheckingBusiness] = useState(true);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
 
   
   const checkBusinessAccess = useCallback(async () => {
@@ -70,7 +73,7 @@ function SubscriptionContent() {
 
   useEffect(() => {
     if (isLoading) return;
-    
+
     if (!isAuthenticated) {
       router.push('/auth');
       return;
@@ -79,6 +82,32 @@ function SubscriptionContent() {
     // Check business via API to avoid infinite loops
     checkBusinessAccess();
   }, [user, isAuthenticated, isLoading, router, checkBusinessAccess]);
+
+  // Handle window dimensions for confetti
+  useEffect(() => {
+    const updateDimensions = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  // Handle confetti animation
+  useEffect(() => {
+    if (currentStep === 'success') {
+      setShowConfetti(true);
+      // Stop confetti after 5 seconds
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
 
   const handlePlanSelect = (plan: SubscriptionPlan) => {
     setSelectedPlan(plan);
@@ -287,52 +316,105 @@ function SubscriptionContent() {
     <div className="max-w-2xl mx-auto px-4 lg:px-6">
       <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl border border-gray-100 p-4 sm:p-8 lg:p-12 text-center">
         <div className="mb-6 sm:mb-8">
-          <div className="mx-auto flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-lg mb-4 sm:mb-6">
+          <div className="mx-auto flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-lg mb-4 sm:mb-6 animate-bounce">
             <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
             </svg>
           </div>
-          
+
           <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3 sm:mb-4">
-            Ödeme Başarılı! 🎉
+            🎉 Hoş Geldiniz! 🎉
           </h2>
           <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8 leading-relaxed px-2">
-            <span className="font-bold text-indigo-600">{selectedPlan?.displayName}</span> planına başarıyla kayıt oldunuz. 
-
-            Artık tüm özelliklerden faydalanabilirsiniz.
+            <span className="font-bold text-indigo-600">{selectedPlan?.displayName}</span> planınız aktifleştirildi!
+            <br />
+            Artık işletmenizi profesyonelce yönetmeye başlayabilirsiniz.
           </p>
         </div>
-        
+
         {paymentResponse && (
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-left">
-            <h3 className="font-bold text-green-900 mb-2 sm:mb-3 text-center text-sm sm:text-base">Ödeme Detayları</h3>
-            <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-green-800">
-              {(paymentResponse.data?.paymentId || paymentResponse.paymentId) && (
-                <p><span className="font-semibold">Ödeme ID:</span> {paymentResponse.data?.paymentId || paymentResponse.paymentId}</p>
-              )}
-              {paymentResponse.data?.subscriptionId && (
-                <p><span className="font-semibold">Abonelik ID:</span> {paymentResponse.data.subscriptionId}</p>
-              )}
-              {paymentResponse.conversationId && (
-                <p><span className="font-semibold">İşlem ID:</span> {paymentResponse.conversationId}</p>
-              )}
-              <p><span className="font-semibold">Durum:</span> {paymentResponse.data?.message || paymentResponse.status || 'Başarılı'}</p>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-green-500 rounded-full p-2 mr-3">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h3 className="font-bold text-green-900 text-sm sm:text-base">Aboneliğiniz Başarıyla Oluşturuldu</h3>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+              <div className="bg-white rounded-lg p-3 border border-green-200">
+                <div className="text-2xl mb-1">📅</div>
+                <div className="text-xs text-gray-600 mb-1">Başlangıç Tarihi</div>
+                <div className="font-semibold text-green-800 text-sm">
+                  {new Date().toLocaleDateString('tr-TR')}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-3 border border-green-200">
+                <div className="text-2xl mb-1">💰</div>
+                <div className="text-xs text-gray-600 mb-1">Aylık Ücret</div>
+                <div className="font-semibold text-green-800 text-sm">
+                  ₺{selectedPlan?.price?.toLocaleString('tr-TR')}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-3 border border-green-200">
+                <div className="text-2xl mb-1">🏢</div>
+                <div className="text-xs text-gray-600 mb-1">İşletme Sayısı</div>
+                <div className="font-semibold text-green-800 text-sm">
+                  {selectedPlan?.maxBusinesses === -1 ? 'Sınırsız' : selectedPlan?.maxBusinesses}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-3 border border-green-200">
+                <div className="text-2xl mb-1">👥</div>
+                <div className="text-xs text-gray-600 mb-1">Personel Sayısı</div>
+                <div className="font-semibold text-green-800 text-sm">
+                  {selectedPlan?.maxStaffPerBusiness === -1 ? 'Sınırsız' : selectedPlan?.maxStaffPerBusiness}
+                </div>
+              </div>
+            </div>
+
+            {paymentResponse.conversationId && (
+              <div className="mt-4 pt-4 border-t border-green-200">
+                <div className="text-xs text-green-700">
+                  <span className="font-semibold">İşlem Referans No:</span> {paymentResponse.conversationId}
+                </div>
+              </div>
+            )}
           </div>
         )}
-        
+
         <div className="space-y-3 sm:space-y-4">
           <button
             onClick={() => router.push('/dashboard')}
             className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
           >
-            Dashboard'a Git 📊
+            🚀 Hemen Başla - Dashboard'a Git
           </button>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => router.push('/dashboard/appointments')}
+              className="py-2 sm:py-3 px-4 sm:px-6 bg-green-100 text-green-800 hover:bg-green-200 font-medium text-xs sm:text-sm rounded-xl transition-colors"
+            >
+              📅 Randevu Oluştur
+            </button>
+            <button
+              onClick={() => router.push('/dashboard/customers')}
+              className="py-2 sm:py-3 px-4 sm:px-6 bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium text-xs sm:text-sm rounded-xl transition-colors"
+            >
+              👥 Müşteri Ekle
+            </button>
+          </div>
+
           <button
             onClick={handleStartOver}
-            className="w-full py-2 sm:py-3 px-4 sm:px-6 text-gray-600 hover:text-gray-800 font-medium text-sm sm:text-base transition-colors"
+            className="w-full py-2 sm:py-3 px-4 sm:px-6 text-gray-500 hover:text-gray-700 font-medium text-xs sm:text-sm transition-colors"
           >
-            Başka Plan Seç
+            Farklı Plan Seç
           </button>
         </div>
       </div>
@@ -393,6 +475,16 @@ function SubscriptionContent() {
 
   return (
     <div className="min-h-screen">
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <Confetti
+          width={windowDimensions.width}
+          height={windowDimensions.height}
+          recycle={false}
+          numberOfPieces={500}
+          gravity={0.3}
+        />
+      )}
       {/* Hero Section */}
       <section className="relative bg-white pt-16 sm:pt-20 pb-8 sm:pb-12">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
@@ -420,7 +512,7 @@ function SubscriptionContent() {
       <section className="pb-12 sm:pb-20">
         {currentStep === 'plans' && (
           <div className="max-w-7xl mx-auto px-4 lg:px-6">
-            <SubscriptionPlans onPlanSelect={handlePlanSelect} />
+            <Pricing onPlanSelect={handlePlanSelect} />
           </div>
         )}
         
@@ -434,7 +526,7 @@ function SubscriptionContent() {
                     <p className="text-sm sm:text-base text-indigo-800 font-semibold">{selectedPlan.displayName}</p>
                     <div className="space-y-1">
                       <p className="text-sm sm:text-base text-indigo-600">
-                        {selectedPlan.currency === 'TRY' ? '₺' : '$'}{selectedPlan.price} / {selectedPlan.billingInterval === 'monthly' ? 'ay' : selectedPlan.billingInterval}
+                        {selectedPlan.currency === 'TRY' ? '₺' : '$'}{selectedPlan.price} / {selectedPlan.billingInterval?.toLowerCase() === 'monthly' ? 'ay' : selectedPlan.billingInterval}
                       </p>
                     </div>
                   </div>

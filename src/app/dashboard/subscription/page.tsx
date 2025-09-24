@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { subscriptionService } from '../../../lib/services/subscription';
+import Pricing from '../../../components/features/Pricing';
 
 import { Business } from '../../../types/business';
 import { SubscriptionPlan, BusinessSubscription } from '../../../types/subscription';
@@ -17,7 +18,6 @@ export default function SubscriptionPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [business, setBusiness] = useState<Business | null>(null);
   const [subscription, setSubscription] = useState<BusinessSubscription | null>(null);
-  const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -50,71 +50,7 @@ export default function SubscriptionPage() {
         await loadSubscriptionData(businessResponse.data.businesses[0].id);
       }
 
-      // Load available plans
-      try {
-        const plansResponse = await subscriptionService.getSubscriptionPlans();
-        setAvailablePlans(plansResponse);
-      } catch (error) {
-        console.error('Failed to load plans, using mock data:', error);
-        // Fallback to mock plans with actual database plan IDs
-        const mockPlans: SubscriptionPlan[] = [
-          {
-            id: 'plan_1756732329431_jc8dg9ae7js', // Use actual database plan ID
-            name: 'starter',
-            displayName: 'Başlangıç Planı',
-            description: 'Küçük işletmeler için ideal',
-            price: 750,
-            currency: 'TRY',
-            billingInterval: 'monthly',
-            maxBusinesses: 1,
-            maxStaffPerBusiness: 3,
-            maxAppointmentsPerDay: 20,
-            features: ['Temel randevu yönetimi', 'Müşteri kayıtları', 'E-posta bildirimleri'],
-            isActive: true,
-            isPopular: false,
-            sortOrder: 1,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: 'plan_1756732329431_professional_monthly', // Use actual database plan ID
-            name: 'professional',
-            displayName: 'Profesyonel Plan',
-            description: 'Büyüyen işletmeler için',
-            price: 1250,
-            currency: 'TRY',
-            billingInterval: 'monthly',
-            maxBusinesses: 3,
-            maxStaffPerBusiness: 10,
-            maxAppointmentsPerDay: 50,
-            features: ['Gelişmiş raporlama', 'SMS bildirimleri', 'Çoklu lokasyon desteği'],
-            isActive: true,
-            isPopular: true,
-            sortOrder: 2,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: 'plan_1756732329431_enterprise_monthly', // Use actual database plan ID
-            name: 'enterprise',
-            displayName: 'Kurumsal Plan',
-            description: 'Büyük işletmeler için',
-            price: 2000,
-            currency: 'TRY',
-            billingInterval: 'monthly',
-            maxBusinesses: 10,
-            maxStaffPerBusiness: 50,
-            maxAppointmentsPerDay: 200,
-            features: ['API erişimi', 'Özel entegrasyonlar', '7/24 destek'],
-            isActive: true,
-            isPopular: false,
-            sortOrder: 3,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ];
-        setAvailablePlans(mockPlans);
-      }
+      // Note: Plans are now loaded directly by the Pricing component
       
     } catch (error) {
       console.error('Data loading failed:', error);
@@ -170,10 +106,7 @@ export default function SubscriptionPage() {
     }
   };
 
-  const getCurrentPlan = () => {
-    if (!subscription || !availablePlans.length) return null;
-    return availablePlans.find(plan => plan.id === subscription.planId);
-  };
+  // getCurrentPlan is no longer needed as the Pricing component handles plan data
 
   const getStatusColor = (status: SubscriptionStatus) => {
     switch (status) {
@@ -238,28 +171,33 @@ export default function SubscriptionPage() {
 
   const handleCancel = async () => {
     if (!subscription || !business) return;
-    
+
     try {
       setIsUpdating(true);
-      
+
       const response = await subscriptionService.cancelBusinessSubscription(business.id, subscription.id);
-      
+
       if (response.success) {
         setShowCancelModal(false);
         setCancelAtPeriodEnd(true); // Reset to default
-        
+
         // Reload data to show updated subscription status
         await loadData();
       } else {
         handleApiError(new Error(response.error?.message || 'Abonelik iptali başarısız'));
       }
-      
+
     } catch (error) {
       console.error('Cancellation failed:', error);
       handleApiError(error);
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handlePlanSelect = (plan: SubscriptionPlan) => {
+    setSelectedPlan(plan);
+    setShowUpgradeModal(true);
   };
 
   const formatDate = (date: Date) => {
@@ -292,7 +230,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  const currentPlan = getCurrentPlan();
+  // The Pricing component now handles fetching and displaying plans
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -316,7 +254,7 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            {currentPlan && subscription ? (
+            {subscription ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {/* Plan Card - Enhanced */}
                 <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-300">
@@ -331,14 +269,14 @@ export default function SubscriptionPage() {
                     </div>
                   </div>
                   
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-2 sm:mb-3">{currentPlan.displayName}</h3>
-                  <p className="text-blue-100 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">{currentPlan.description}</p>
-                  
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-2 sm:mb-3">Aktif Abonelik</h3>
+                  <p className="text-blue-100 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">Mevcut abonelik planınız</p>
+
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                    {formatPrice(currentPlan.price, currentPlan.currency)}
+                    Plan ID: {subscription.planId}
                   </div>
                   <div className="text-blue-200 text-xs sm:text-sm font-medium">
-                    / {currentPlan.billingInterval === 'monthly' ? 'ay' : 'yıl'}
+                    Durum: {getStatusText(subscription.status)}
                   </div>
                 </div>
 
@@ -354,15 +292,15 @@ export default function SubscriptionPage() {
                     <ul className="space-y-2 sm:space-y-3">
                       <li className="flex items-center text-xs sm:text-sm text-gray-700">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                        <span className="break-words">Maksimum {currentPlan.maxBusinesses} işletme</span>
+                        <span className="break-words">Abonelik aktif</span>
                       </li>
                       <li className="flex items-center text-xs sm:text-sm text-gray-700">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                        <span className="break-words">Maksimum {currentPlan.maxStaffPerBusiness} personel</span>
+                        <span className="break-words">Tüm özellikler dahil</span>
                       </li>
                       <li className="flex items-center text-xs sm:text-sm text-gray-700">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                        <span className="break-words">Günlük {currentPlan.maxAppointmentsPerDay} randevu</span>
+                        <span className="break-words">Premium destek</span>
                       </li>
                     </ul>
                   </div>
@@ -449,101 +387,30 @@ export default function SubscriptionPage() {
           </div>
         </div>
 
-        {/* Available Plans - Enhanced */}
+        {/* Available Plans - Using Pricing Component */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 mb-8 sm:mb-12">
           <div className="text-center mb-6 sm:mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Mevcut Planlar</h2>
             <p className="text-gray-600 text-base sm:text-lg">İhtiyaçlarınıza en uygun planı seçin</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {availablePlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative group transition-all duration-500 ${
-                  currentPlan?.id === plan.id
-                    ? 'transform scale-105' : 'hover:scale-105'
-                }`}
-              >
-                                 <div className={`relative bg-white rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl border-2 transition-all duration-300 ${
-                   currentPlan?.id === plan.id
-                     ? 'border-blue-500 shadow-2xl shadow-blue-500/25' 
-                     : 'border-gray-200 hover:border-blue-300 hover:shadow-2xl'
-                 }`}>
-                   {plan.isPopular && (
-                     <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2">
-                       <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 sm:px-6 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg">
-                         ⭐ Popüler
-                       </span>
-                     </div>
-                   )}
-                   
-                   <div className="text-center">
-                     <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">{plan.displayName}</h3>
-                     <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed">
-                       {plan.description}
-                     </p>
-                     
-                     <div className="mb-6 sm:mb-8">
-                       <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
-                         {formatPrice(plan.price, plan.currency)}
-                       </div>
-                       <div className="text-gray-500 text-sm sm:text-lg font-medium">
-                         / {plan.billingInterval === 'monthly' ? 'ay' : 'yıl'}
-                       </div>
-                     </div>
 
-                                         <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 text-left">
-                       <div className="flex items-center text-xs sm:text-sm text-gray-700">
-                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                         <span className="break-words">{plan.maxBusinesses} işletme</span>
-                       </div>
-                       <div className="flex items-center text-xs sm:text-sm text-gray-700">
-                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                         <span className="break-words">{plan.maxStaffPerBusiness} personel</span>
-                       </div>
-                       <div className="flex items-center text-xs sm:text-sm text-gray-700">
-                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                         <span className="break-words">Günlük {plan.maxAppointmentsPerDay} randevu</span>
-                       </div>
-                     </div>
-
-                                         {currentPlan?.id === plan.id ? (
-                       <div className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl font-bold text-center shadow-lg text-sm sm:text-base">
-                         ✓ Mevcut Plan
-                       </div>
-                     ) : (
-                       <button
-                         onClick={() => {
-                           setSelectedPlan(plan);
-                           setShowUpgradeModal(true);
-                         }}
-                         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
-                       >
-                         <span className="text-sm sm:text-base">{currentPlan ? 'Planı Değiştir' : 'Planı Seç'}</span>
-                       </button>
-                     )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Pricing onPlanSelect={handlePlanSelect} />
         </div>
 
         {/* Usage Statistics - Enhanced */}
-        {currentPlan && (
+        {subscription && (
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8">
             <div className="text-center mb-6 sm:mb-10">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Kullanım İstatistikleri</h2>
-              <p className="text-gray-600 text-base sm:text-lg">Plan limitlerinizi ve mevcut kullanımınızı takip edin</p>
+              <p className="text-gray-600 text-base sm:text-lg">Mevcut kullanımınızı takip edin</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 sm:p-6 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div>
                     <p className="text-xs sm:text-sm text-blue-600 font-semibold uppercase tracking-wide">Personel</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-800">2 / {currentPlan.maxStaffPerBusiness}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-blue-800">2 Aktif</p>
                   </div>
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,25 +418,13 @@ export default function SubscriptionPage() {
                     </svg>
                   </div>
                 </div>
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs sm:text-sm text-blue-700 mb-2">
-                    <span>Kullanım</span>
-                    <span>{Math.round((2 / currentPlan.maxStaffPerBusiness) * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-blue-200 rounded-full h-2 sm:h-3">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 sm:h-3 rounded-full transition-all duration-500 ease-out" 
-                      style={{ width: `${(2 / currentPlan.maxStaffPerBusiness) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
               </div>
 
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 sm:p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div>
-                    <p className="text-xs sm:text-sm text-green-600 font-semibold uppercase tracking-wide">Günlük Randevu</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-green-800">15 / {currentPlan.maxAppointmentsPerDay}</p>
+                    <p className="text-xs sm:text-sm text-green-600 font-semibold uppercase tracking-wide">Bu Ay Randevu</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-green-800">245 Tamamlandı</p>
                   </div>
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -577,39 +432,18 @@ export default function SubscriptionPage() {
                     </svg>
                   </div>
                 </div>
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs sm:text-sm text-green-700 mb-2">
-                    <span>Kullanım</span>
-                    <span>{Math.round((15 / currentPlan.maxAppointmentsPerDay) * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-green-200 rounded-full h-2 sm:h-3">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-green-600 h-2 sm:h-3 rounded-full transition-all duration-500 ease-out" 
-                      style={{ width: `${(15 / currentPlan.maxAppointmentsPerDay) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
               </div>
 
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 sm:p-6 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <div>
-                    <p className="text-xs sm:text-sm text-purple-600 font-semibold uppercase tracking-wide">Hizmetler</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-purple-800">8 / ∞</p>
+                    <p className="text-xs sm:text-sm text-purple-600 font-semibold uppercase tracking-wide">Müşteriler</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-purple-800">127 Kayıtlı</p>
                   </div>
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                     <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <div className="flex justify-between text-xs sm:text-sm text-purple-700 mb-2">
-                    <span>Kullanım</span>
-                    <span>80%</span>
-                  </div>
-                  <div className="w-full bg-purple-200 rounded-full h-2 sm:h-3">
-                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 sm:h-3 rounded-full transition-all duration-500 ease-out" style={{ width: '80%' }}></div>
                   </div>
                 </div>
               </div>
@@ -642,7 +476,7 @@ export default function SubscriptionPage() {
                   <div className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {formatPrice(selectedPlan.price, selectedPlan.currency)}
                     <span className="text-sm sm:text-lg font-normal text-gray-600 ml-2">
-                      / {selectedPlan.billingInterval === 'monthly' ? 'ay' : 'yıl'}
+                      / {selectedPlan.billingInterval?.toLowerCase() === 'monthly' ? 'ay' : 'yıl'}
                     </span>
                   </div>
                 </div>

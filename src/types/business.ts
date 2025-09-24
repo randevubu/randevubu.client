@@ -76,7 +76,23 @@ export interface Business {
       price: string;
       currency: string;
       billingInterval: string;
-      features: string[];
+      features: {
+        smsQuota: number;
+        apiAccess: boolean;
+        description: string[];
+        maxServices: number;
+        basicReports: boolean;
+        integrations: string[];
+        maxCustomers: number;
+        multiLocation: boolean;
+        customBranding: boolean;
+        advancedReports: boolean;
+        prioritySupport: boolean;
+        staffManagement: boolean;
+        smsNotifications: boolean;
+        appointmentBooking: boolean;
+        emailNotifications: boolean;
+      };
       limits: {
         maxBusinesses: number;
         maxStaffPerBusiness: number;

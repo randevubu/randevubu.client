@@ -104,5 +104,13 @@ export const servicesService = {
       `/api/v1/services/business/${businessId}/public`
     );
     return response.data;
+  },
+
+  // Get business services for appointment booking (staff/owner view)
+  getBusinessServices: async (businessId: string): Promise<ApiResponse<Service[]>> => {
+    const response = await apiClient.get<ApiResponse<Service[]>>(
+      `/api/v1/services/business/${businessId}`
+    );
+    return response.data;
   }
 };

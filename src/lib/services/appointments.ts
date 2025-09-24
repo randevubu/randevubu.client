@@ -24,6 +24,7 @@ export interface CreateAppointmentData {
   startTime: string; // HH:MM format
   staffId?: string;
   customerNotes?: string; // max 500 chars
+  customerId?: string; // NEW: for booking on behalf of customers
 }
 
 export interface TimeSlot {

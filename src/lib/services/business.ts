@@ -742,4 +742,10 @@ export const businessService = {
     const response = await apiClient.get<PublicStaffResponse>(`/api/v1/public/businesses/${businessId}/staff`);
     return response.data;
   },
+
+  // Get business staff (for business owners/staff - internal use)
+  getBusinessStaff: async (businessId: string): Promise<ApiResponse<any[]>> => {
+    const response = await apiClient.get<ApiResponse<any[]>>(`/api/v1/businesses/${businessId}/staff`);
+    return response.data;
+  },
 };

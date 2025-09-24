@@ -318,7 +318,20 @@ export default function TimeSelectionPage() {
 
       if (response.success && response.data) {
         const appointments = Array.isArray(response.data) ? response.data : [response.data];
-        return appointments.map(transformAppointment);
+        // Filter out canceled appointments and map to expected format
+        return appointments
+          .filter(apt => apt.status !== 'CANCELED')
+          .map(apt => ({
+            id: apt.id,
+            date: apt.date,
+            startTime: apt.startTime,
+            endTime: apt.endTime,
+            duration: apt.duration,
+            status: apt.status,
+            service: apt.service,
+            staff: apt.staff || {},
+            customer: apt.customer
+          } as AppointmentWithDetails));
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -453,9 +466,22 @@ export default function TimeSelectionPage() {
       });
 
       if (response.success && response.data) {
-        // Handle the API response structure - cast to the expected type
-        const appointments = (Array.isArray(response.data) ? response.data : response.data) as unknown as AppointmentWithDetails[];
-        console.log(`🔍 Found ${appointments.length} appointments for ${date}:`);
+        // Handle the API response structure and filter out canceled appointments
+        const allAppointments = Array.isArray(response.data) ? response.data : [response.data];
+        const appointments = allAppointments
+          .filter(apt => apt.status !== 'CANCELED')
+          .map(apt => ({
+            id: apt.id,
+            date: apt.date,
+            startTime: apt.startTime,
+            endTime: apt.endTime,
+            duration: apt.duration,
+            status: apt.status,
+            service: apt.service,
+            staff: apt.staff || {},
+            customer: apt.customer
+          } as AppointmentWithDetails));
+        console.log(`🔍 Found ${appointments.length} confirmed appointments for ${date} (filtered out canceled):`);
         appointments.forEach((apt, index) => {
           console.log(`📋 Appointment ${index + 1}:`, {
             id: apt.id,
@@ -463,6 +489,7 @@ export default function TimeSelectionPage() {
             startTime: apt.startTime,
             endTime: apt.endTime,
             duration: apt.duration,
+            status: apt.status,
             service: apt.service?.name
           });
         });
@@ -492,7 +519,8 @@ export default function TimeSelectionPage() {
 
     appointments.forEach(appointment => {
       try {
-        const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
+        // Use startTime for date comparison since the date field might be in different timezone
+        const appointmentDate = new Date(appointment.startTime).toISOString().split('T')[0];
         if (appointmentDate !== date) return;
 
         // Convert appointment times to Istanbul time for comparison
@@ -537,7 +565,8 @@ export default function TimeSelectionPage() {
 
     // Check if this slot falls within any existing appointment's duration
     const overlappingAppointment = appointments.find(apt => {
-      const appointmentDate = new Date(apt.date).toISOString().split('T')[0];
+      // Use startTime for date comparison since the date field might be in different timezone
+      const appointmentDate = new Date(apt.startTime).toISOString().split('T')[0];
       if (appointmentDate !== date) return false;
 
       const appointmentStartMinutes = parseTimeToMinutes(apt.startTime);
@@ -578,7 +607,8 @@ export default function TimeSelectionPage() {
     // Find the NEAREST next appointment after this slot
     const nextAppointments = appointments
       .filter(apt => {
-        const appointmentDate = new Date(apt.date).toISOString().split('T')[0];
+        // Use startTime for date comparison since the date field might be in different timezone
+        const appointmentDate = new Date(apt.startTime).toISOString().split('T')[0];
         if (appointmentDate !== date) return false;
 
         const appointmentStartMinutes = parseTimeToMinutes(apt.startTime);
@@ -848,21 +878,9 @@ export default function TimeSelectionPage() {
                             <span className="text-sm">Geçmiş Tarihe Randevu Alınamaz</span>
                           ) : !slot.available && slot.isOccupied && slot.appointment ? (
                             <div className="text-sm">
-                              <div className="flex items-center justify-between space-x-2">
-                                <div className='flex items-center space-x-2'>
-                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                  <span className="font-medium">Dolu</span>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                  <span className="text-xs text-[var(--theme-foregroundMuted)]">
-                                    {slot.appointment.service?.name || 'Randevu'}
-                                  </span>
-                                  {slot.appointment.customer && (
-                                    <span className="text-xs text-[var(--theme-foregroundMuted)]">
-                                      {slot.appointment.customer.firstName} {slot.appointment.customer.lastName}
-                                    </span>
-                                  )}
-                                </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <span className="font-medium">Dolu</span>
                               </div>
                             </div>
                           ) : !slot.available && slot.insufficientTime && slot.appointment ? (

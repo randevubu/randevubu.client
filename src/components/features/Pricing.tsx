@@ -6,7 +6,11 @@ import { useTranslations } from 'next-intl';
 import { PaymentsService } from '../../lib/services/payments';
 import { SubscriptionPlan } from '../../types/subscription';
 
-export default function Pricing() {
+interface PricingProps {
+  onPlanSelect?: (plan: SubscriptionPlan) => void;
+}
+
+export default function Pricing({ onPlanSelect }: PricingProps = {}) {
   const router = useRouter();
   const t = useTranslations('subscription');
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -30,33 +34,55 @@ export default function Pricing() {
   }, []);
 
   const handlePlanSelect = (planId: string) => {
-    router.push(`/subscription?plan=${planId}`);
+    if (onPlanSelect) {
+      const selectedPlan = plans.find(plan => plan.id === planId);
+      if (selectedPlan) {
+        onPlanSelect(selectedPlan);
+      }
+    } else {
+      router.push(`/subscription?plan=${planId}`);
+    }
   };
 
   // Helper function to get translated plan name
-  const getTranslatedPlanName = (planName: string) => {
+  const getTranslatedPlanName = (plan: SubscriptionPlan) => {
     try {
-      return t(`plans.${planName}.name`);
+      const translated = t(`plans.${plan.name}.name`);
+      // If translation returns the same key, it means translation doesn't exist
+      if (translated === `plans.${plan.name}.name`) {
+        return plan.displayName;
+      }
+      return translated;
     } catch {
-      return planName; // Fallback to original name if translation not found
+      return plan.displayName; // Fallback to displayName if translation not found
     }
   };
 
   // Helper function to get translated plan description
-  const getTranslatedPlanDescription = (planName: string) => {
+  const getTranslatedPlanDescription = (plan: SubscriptionPlan) => {
     try {
-      return t(`plans.${planName}.description`);
+      const translated = t(`plans.${plan.name}.description`);
+      // If translation returns the same key, it means translation doesn't exist
+      if (translated === `plans.${plan.name}.description`) {
+        return plan.description || '';
+      }
+      return translated;
     } catch {
-      return ''; // Fallback to empty string if translation not found
+      return plan.description || ''; // Fallback to plan description if translation not found
     }
   };
 
   // Helper function to get translated feature name
   const getTranslatedFeatureName = (feature: string) => {
     try {
-      return t(`features.${feature}`);
+      const translated = t(`features.${feature}`);
+      // If translation returns the same key, it means translation doesn't exist
+      if (translated === `features.${feature}`) {
+        return feature;
+      }
+      return translated;
     } catch {
-      return feature.replace(/_/g, ' ').replace(/^./, str => str.toUpperCase());
+      return feature;
     }
   };
 
@@ -92,7 +118,7 @@ export default function Pricing() {
 
   const sortedPlans = Array.isArray(plans) 
     ? plans
-        .filter(plan => plan.billingInterval === 'monthly') // Show only monthly plans
+        .filter(plan => plan.billingInterval?.toLowerCase() === 'monthly') // Show only monthly plans (case-insensitive)
         .sort((a, b) => a.sortOrder - b.sortOrder) 
     : [];
 
@@ -167,10 +193,10 @@ export default function Pricing() {
                   {/* Header */}
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-bold text-[var(--theme-cardForeground)] mb-2 transition-colors duration-300">
-                      {getTranslatedPlanName(plan.name)}
+                      {getTranslatedPlanName(plan)}
                     </h3>
                     <p className="text-[var(--theme-foregroundSecondary)] mb-6 transition-colors duration-300">
-                      {getTranslatedPlanDescription(plan.name) || plan.description || 'Perfect for your business needs'}
+                      {getTranslatedPlanDescription(plan) || 'Perfect for your business needs'}
                     </p>
                     
                     <div className="mb-6">
@@ -179,7 +205,7 @@ export default function Pricing() {
                           {plan.currency === 'TRY' ? '₺' : '$'}{plan.price.toLocaleString('tr-TR')}
                         </span>
                         <span className="text-xl text-[var(--theme-foregroundMuted)] ml-2 transition-colors duration-300">
-                          /{plan.billingInterval === 'monthly' ? t('ui.monthly') : t('ui.yearly')}
+                          /{plan.billingInterval?.toLowerCase() === 'monthly' ? t('ui.monthly') : t('ui.yearly')}
                         </span>
                       </div>
                     </div>
@@ -198,39 +224,238 @@ export default function Pricing() {
 
                   {/* Features */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                    {/* Hierarchical Feature Badges - Compact modern design */}
+                    {plan.price === 1500 && plan.currency === 'TRY' && (
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-[var(--theme-primary)]/15 to-[var(--theme-accent)]/15 rounded-full border border-[var(--theme-primary)]/20">
+                          <svg className="w-3.5 h-3.5 text-[var(--theme-primary)] mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-[var(--theme-primary)] text-xs font-semibold">
+                            Starter +
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                        {t('ui.maxBusinesses')}: {plan.maxBusinesses === -1 ? t('ui.unlimited') : plan.maxBusinesses}
-                      </span>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                    )}
+
+                    {plan.price === 3000 && plan.currency === 'TRY' && (
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-[var(--theme-accent)]/15 to-[var(--theme-success)]/15 rounded-full border border-[var(--theme-accent)]/20">
+                          <svg className="w-3.5 h-3.5 text-[var(--theme-accent)] mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-[var(--theme-accent)] text-xs font-semibold">
+                            Premium +
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                        {t('ui.maxStaff')}: {plan.maxStaffPerBusiness === -1 ? t('ui.unlimited') : plan.maxStaffPerBusiness}
-                      </span>
-                    </div>
-                    
-                    {plan.features && Array.isArray(plan.features) && plan.features.slice(0, 5).map((feature) => (
-                      <div key={feature} className="flex items-start space-x-3">
+                    )}
+
+                    {/* Staff Limit - Only show if not unlimited */}
+                    {plan.maxStaffPerBusiness !== -1 && (
+                      <div className="flex items-start space-x-3">
                         <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
                         <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
-                          {getTranslatedFeatureName(feature)}
+                          {plan.maxStaffPerBusiness} {t('ui.staffPerBusiness')}
                         </span>
                       </div>
-                    ))}
+                    )}
+                    
+                    {/* SMS Quota */}
+                    {plan.features?.smsQuota && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {plan.features.smsQuota.toLocaleString('tr-TR')} {t('ui.smsPerMonth')}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Unique Features - Only show distinctive features */}
+                    {plan.features?.apiAccess && !((plan.price === 1500 || plan.price === 3000) && plan.currency === 'TRY') && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.api_access')}
+                        </span>
+                      </div>
+                    )}
+
+                    {plan.features?.customBranding && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.custom_branding')}
+                        </span>
+                      </div>
+                    )}
+
+                    {plan.features?.multiLocation && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.multi_location')}
+                        </span>
+                      </div>
+                    )}
+
+                    {plan.features?.advancedReports && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.advanced_reporting')}
+                        </span>
+                      </div>
+                    )}
+
+                    {plan.features?.prioritySupport && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.priority_support')}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Core Features - Only show if they're not already covered by description */}
+                    {plan.features?.staffManagement && !plan.features?.description?.some(desc => 
+                      desc.toLowerCase().includes('staff') || desc.toLowerCase().includes('personel')
+                    ) && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.staff_management')}
+                        </span>
+                      </div>
+                    )}
+
+                    {plan.features?.appointmentBooking && !plan.features?.description?.some(desc => 
+                      desc.toLowerCase().includes('appointment') || desc.toLowerCase().includes('randevu')
+                    ) && (
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                          {t('features.appointment_booking')}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Description Features - Show specific features for starter plan, filtered features for others */}
+                    {plan.features?.description && Array.isArray(plan.features.description) && (
+                      <>
+                        {plan.price === 750 && plan.currency === 'TRY' ? (
+                          // Show specific features for starter plan (750 TRY)
+                          ['Sınırsız Randevu', 'Sınırsız Müşteri', 'Randevu Hatırlatma Mesajları', 'Müşteri Galeri Sistemi', 'Periyodik Randevu Takibi'].map((feature, featureIndex) => (
+                            <div key={featureIndex} className="flex items-start space-x-3">
+                              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                                {getTranslatedFeatureName(feature)}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          // Show filtered features for other plans
+                          plan.features.description
+                            .filter(feature => {
+                              const lowerFeature = feature.toLowerCase();
+                              // Filter out features that are already displayed above
+                              return !lowerFeature.includes('maksimum iş yeri') && 
+                                     !lowerFeature.includes('maximum workplace') &&
+                                     !lowerFeature.includes('unlimited customers') &&
+                                     !lowerFeature.includes('sınırsız müşteri') &&
+                                     !lowerFeature.includes('all starter features') &&
+                                     !lowerFeature.includes('all premium features') &&
+                                     !lowerFeature.includes('tüm başlangıç özellikleri') &&
+                                     !lowerFeature.includes('tüm premium özellikleri') &&
+                                     // Filter out SMS duplicates
+                                     !lowerFeature.includes('aylık') && !lowerFeature.includes('per month') &&
+                                     !lowerFeature.includes('sms') && !lowerFeature.includes('sms/ay') &&
+                                     // Filter out staff duplicates
+                                     !lowerFeature.includes('personel') && !lowerFeature.includes('staff') &&
+                                     !lowerFeature.includes('iş yeri') && !lowerFeature.includes('workplace') &&
+                                     // Filter out API duplicates
+                                     !lowerFeature.includes('api erişimi') && !lowerFeature.includes('api access') &&
+                                     !lowerFeature.includes('tam api') && !lowerFeature.includes('full api') &&
+                                     // Filter out branding duplicates
+                                     !lowerFeature.includes('özel markalama') && !lowerFeature.includes('custom branding') &&
+                                     !lowerFeature.includes('markalama ve temalar') && !lowerFeature.includes('branding and themes') &&
+                                     // Filter out reporting duplicates
+                                     !lowerFeature.includes('gelişmiş raporlama') && !lowerFeature.includes('advanced reporting') &&
+                                     !lowerFeature.includes('raporlama ve analitik') && !lowerFeature.includes('reporting and analytics') &&
+                                     // Filter out location duplicates
+                                     !lowerFeature.includes('çoklu lokasyon') && !lowerFeature.includes('multi location') &&
+                                     !lowerFeature.includes('lokasyon yönetimi') && !lowerFeature.includes('location management') &&
+                                     // Filter out specific features for premium plan
+                                     !(plan.price === 1500 && plan.currency === 'TRY' && (
+                                       lowerFeature.includes('unlimited appointments') || 
+                                       lowerFeature.includes('sınırsız randevu') ||
+                                       lowerFeature.includes('google calendar & outlook integration') ||
+                                       lowerFeature.includes('google takvim ve outlook entegrasyonu')
+                                     )) &&
+                                     // Filter out API access for premium and pro plans
+                                     !((plan.price === 1500 || plan.price === 3000) && plan.currency === 'TRY' && (
+                                       lowerFeature.includes('api access') ||
+                                       lowerFeature.includes('api erişimi') ||
+                                       lowerFeature.includes('full api access') ||
+                                       lowerFeature.includes('tam api erişimi')
+                                     ));
+                            })
+                            .slice(0, 3)
+                            .map((feature, featureIndex) => (
+                              <div key={featureIndex} className="flex items-start space-x-3">
+                                <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colorClasses[planColor as keyof typeof colorClasses].gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <span className="text-[var(--theme-cardForeground)] text-sm leading-relaxed transition-colors duration-300">
+                                  {getTranslatedFeatureName(feature)}
+                                </span>
+                              </div>
+                            ))
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

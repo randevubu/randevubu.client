@@ -10,8 +10,24 @@ export interface SubscriptionPlan {
   billingInterval: string;
   maxBusinesses: number;
   maxStaffPerBusiness: number;
-  maxAppointmentsPerDay: number;
-  features: string[];
+  maxAppointmentsPerDay?: number;
+  features: {
+    smsQuota: number;
+    apiAccess: boolean;
+    description: string[];
+    maxServices: number;
+    basicReports: boolean;
+    integrations: string[];
+    maxCustomers: number;
+    multiLocation: boolean;
+    customBranding: boolean;
+    advancedReports: boolean;
+    prioritySupport: boolean;
+    staffManagement: boolean;
+    smsNotifications: boolean;
+    appointmentBooking: boolean;
+    emailNotifications: boolean;
+  };
   isActive: boolean;
   isPopular: boolean;
   sortOrder: number;

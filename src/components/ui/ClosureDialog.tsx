@@ -104,9 +104,9 @@ export default function ClosureDialog({
     reason: '',
     startDate: generateDateTime(selectedDate, timeRange.startTime),
     endDate: generateDateTime(selectedDate, timeRange.endTime),
-    notifyCustomers: true,
-    notificationMessage: '',
-    notificationChannels: ['EMAIL'],
+    notifyCustomers: false,
+    notificationMessage: 'İşletmemiz tatil nedeniyle kapalı olacaktır. Randevunuzu yeniden planlamak için lütfen bizimle iletişime geçin.', // Default message
+    notificationChannels: ['SMS'], // Default to SMS only
     affectedServices: [],
     isRecurring: false,
     recurringPattern: undefined,
@@ -140,21 +140,20 @@ export default function ClosureDialog({
 
   // Generate default notification message based on closure type
   useEffect(() => {
-    if (formData.notifyCustomers && !formData.notificationMessage) {
-      const defaultMessages: Record<ClosureType, string> = {
-        [ClosureType.VACATION]: 'İşletmemiz tatil nedeniyle kapalı olacaktır. Randevunuzu yeniden planlamak için lütfen bizimle iletişime geçin.',
-        [ClosureType.MAINTENANCE]: 'Bakım çalışmaları nedeniyle geçici olarak kapalıyız. En kısa sürede hizmetinizde olacağız.',
-        [ClosureType.EMERGENCY]: 'Beklenmedik bir durum nedeniyle geçici olarak kapalıyız. Anlayışınız için teşekkür ederiz.',
-        [ClosureType.HOLIDAY]: 'Resmi tatil nedeniyle kapalıyız. Takip eden iş günü hizmetinizdeyiz.',
-        [ClosureType.STAFF_SHORTAGE]: 'Personel yetersizliği nedeniyle geçici olarak kapalıyız. En kısa sürede normal hizmetimize dönüyoruz.',
-        [ClosureType.OTHER]: 'İşletmemiz geçici olarak kapalı olacaktır. Randevularınız için alternatif tarih önerileri sunacağız.'
-      };
-      setFormData(prev => ({
-        ...prev,
-        notificationMessage: defaultMessages[formData.type]
-      }));
-    }
-  }, [formData.type, formData.notifyCustomers]);
+    const defaultMessages: Record<ClosureType, string> = {
+      [ClosureType.VACATION]: 'İşletmemiz tatil nedeniyle kapalı olacaktır. Randevunuzu yeniden planlamak için lütfen bizimle iletişime geçin.',
+      [ClosureType.MAINTENANCE]: 'Bakım çalışmaları nedeniyle geçici olarak kapalıyız. En kısa sürede hizmetinizde olacağız.',
+      [ClosureType.EMERGENCY]: 'Beklenmedik bir durum nedeniyle geçici olarak kapalıyız. Anlayışınız için teşekkür ederiz.',
+      [ClosureType.HOLIDAY]: 'Resmi tatil nedeniyle kapalıyız. Takip eden iş günü hizmetinizdeyiz.',
+      [ClosureType.STAFF_SHORTAGE]: 'Personel yetersizliği nedeniyle geçici olarak kapalıyız. En kısa sürede normal hizmetimize dönüyoruz.',
+      [ClosureType.OTHER]: 'İşletmemiz geçici olarak kapalı olacaktır. Randevularınız için alternatif tarih önerileri sunacağız.'
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      notificationMessage: defaultMessages[formData.type]
+    }));
+  }, [formData.type]);
 
   // Load impact preview when form changes (only when dialog is open)
   useEffect(() => {
@@ -287,9 +286,9 @@ export default function ClosureDialog({
       reason: '',
       startDate: generateDateTime(selectedDate, newTimeRange.startTime),
       endDate: generateDateTime(selectedDate, newTimeRange.endTime),
-      notifyCustomers: true,
-      notificationMessage: '',
-      notificationChannels: ['EMAIL'],
+      notifyCustomers: false,
+      notificationMessage: 'İşletmemiz tatil nedeniyle kapalı olacaktır. Randevunuzu yeniden planlamak için lütfen bizimle iletişime geçin.',
+      notificationChannels: ['SMS'],
       affectedServices: [],
       isRecurring: false,
       recurringPattern: undefined,
@@ -640,32 +639,41 @@ export default function ClosureDialog({
                   />
                 </button>
               </div>
-              
+
               {formData.notifyCustomers && (
                 <div className="space-y-4 border border-[var(--theme-border)] rounded-lg p-4 bg-[var(--theme-backgroundSecondary)]">
                   <div>
                     <label className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                       Bildirim Kanalları
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {NOTIFICATION_CHANNELS.map((channel) => (
-                        <button
-                          key={channel.value}
-                          type="button"
-                          onClick={() => toggleNotificationChannel(channel.value)}
-                          className={`p-2 border-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                            formData.notificationChannels.includes(channel.value)
-                              ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]'
-                              : 'border-[var(--theme-border)] hover:border-[var(--theme-primary)]/50 text-[var(--theme-foreground)] hover:bg-[var(--theme-card)]'
-                          }`}
-                        >
-                          <div className="text-sm mb-1">{channel.icon}</div>
-                          <div>{channel.label}</div>
-                        </button>
-                      ))}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleNotificationChannel('SMS')}
+                        className={`p-3 border-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          formData.notificationChannels.includes('SMS')
+                            ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]'
+                            : 'border-[var(--theme-border)] hover:border-[var(--theme-primary)]/50 text-[var(--theme-foreground)] hover:bg-[var(--theme-card)]'
+                        }`}
+                      >
+                        <div className="text-lg mb-1">📱</div>
+                        <div>SMS</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleNotificationChannel('PUSH')}
+                        className={`p-3 border-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          formData.notificationChannels.includes('PUSH')
+                            ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]'
+                            : 'border-[var(--theme-border)] hover:border-[var(--theme-primary)]/50 text-[var(--theme-foreground)] hover:bg-[var(--theme-card)]'
+                        }`}
+                      >
+                        <div className="text-lg mb-1">🔔</div>
+                        <div>Push Bildirim</div>
+                      </button>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label htmlFor="notificationMessage" className="block text-sm font-medium text-[var(--theme-foreground)] mb-1">
                       Bildirim Mesajı
@@ -694,6 +702,14 @@ export default function ClosureDialog({
                       <p className="mt-1 text-sm text-[var(--theme-error)]">{errors.notificationMessage}</p>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Show default message preview when notifications are disabled */}
+              {!formData.notifyCustomers && (
+                <div className="text-sm text-[var(--theme-foregroundSecondary)] bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-md p-3">
+                  <div className="text-xs text-[var(--theme-foregroundMuted)] mb-2">Varsayılan mesaj:</div>
+                  {formData.notificationMessage || 'Kapatma mesajı yükleniyor...'}
                 </div>
               )}
             </div>
@@ -859,7 +875,7 @@ export default function ClosureDialog({
                     Kapatılıyor...
                   </span>
                 ) : (
-                  `${formData.notifyCustomers ? 'Kapat ve Bildir' : 'Kapat'}`
+                  `${formData.notifyCustomers ? 'Kapat ve Bildir' : 'Zaman Aralığını Kapat'}`
                 )}
               </button>
             </div>

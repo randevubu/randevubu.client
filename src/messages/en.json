@@ -28,7 +28,11 @@
       "noAccess": "You don't have access to any business",
       "subscriptionRequired": "Subscription required for this feature",
       "limitReached": "You've reached your business limit",
-      "deletionNotAllowed": "This business cannot be deleted"
+      "deletionNotAllowed": "This business cannot be deleted",
+      "smsQuotaExceeded": "SMS quota exceeded. Upgrade your plan or wait for the next cycle.",
+      "staffLimitExceeded": "Staff limit reached. Upgrade your plan to add more staff members.",
+      "serviceLimitExceeded": "Service limit reached. Upgrade your plan to add more services.",
+      "customerLimitExceeded": "Customer limit reached. Upgrade your plan to add more customers."
     },
     "appointment": {
       "notFound": "Appointment not found",
@@ -139,6 +143,14 @@
       "premium": {
         "name": "Premium",
         "description": "Complete solution for established businesses and chains"
+      },
+      "starter": {
+        "name": "Starter Plan",
+        "description": "Perfect for small businesses just getting started"
+      },
+      "pro": {
+        "name": "Pro Package",
+        "description": "Professional solution for large businesses and salon chains"
       }
     },
     "features": {
@@ -159,7 +171,45 @@
       "api_access": "API access",
       "priority_support": "Priority support",
       "user_behavior_tracking": "User behavior tracking",
-      "advanced_reporting": "Advanced reporting"
+      "advanced_reporting": "Advanced reporting",
+      "Online appointment booking system": "Online appointment booking system",
+      "Up to 1 staff member": "Up to 1 staff member",
+      "Up to 5 staff members": "Up to 5 staff members",
+      "Up to 15 staff members": "Up to 15 staff members",
+      "Unlimited customers": "Unlimited customers",
+      "Email & SMS notifications": "Email & SMS notifications",
+      "1,000 SMS per month": "1,000 SMS per month",
+      "1,500 SMS per month": "1,500 SMS per month",
+      "3,000 SMS per month": "3,000 SMS per month",
+      "Basic reporting & analytics": "Basic reporting & analytics",
+      "Advanced reporting & analytics": "Advanced reporting & analytics",
+      "All Starter features": "All Starter features",
+      "All Premium features": "All Premium features",
+      "Multi-location management": "Multi-location management",
+      "Custom branding & themes": "Custom branding & themes",
+      "Google Calendar sync": "Google Calendar sync",
+      "WhatsApp integration": "WhatsApp integration",
+      "Google Calendar & Outlook integration": "Google Calendar & Outlook integration",
+      "Online payment processing": "Online payment processing",
+      "POS system integration": "POS system integration",
+      "Priority email & phone support": "Priority email & phone support",
+      "API access": "API access",
+      "Advanced customer segmentation": "Advanced customer segmentation",
+      "Automated marketing campaigns": "Automated marketing campaigns",
+      "Full API access": "Full API access",
+      "Advanced multi-location support": "Advanced multi-location support",
+      "CRM integration": "CRM integration",
+      "ERP system integration": "ERP system integration",
+      "Advanced analytics & reporting": "Advanced analytics & reporting",
+      "Custom integrations": "Custom integrations",
+      "Dedicated account manager": "Dedicated account manager",
+      "White-label solutions": "White-label solutions",
+      "Advanced automation workflows": "Advanced automation workflows",
+      "Priority phone & email support": "Priority phone & email support",
+      "Custom training sessions": "Custom training sessions",
+      "Unlimited appointments": "Unlimited appointments",
+      "Email support": "Email support",
+      "Mobile app access": "Mobile app access"
     },
     "ui": {
       "subscriptionPlans": "Subscription Plans",
@@ -176,6 +226,7 @@
       "unlimited": "Unlimited",
       "monthly": "month",
       "yearly": "year",
+      "smsPerMonth": "SMS/month",
       "allPlansBenefits": "Special Benefits for All Plans",
       "freeTrial": "15-day free trial",
       "cancelAnytime": "Cancel anytime",

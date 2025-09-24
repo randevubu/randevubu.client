@@ -106,7 +106,12 @@ export const ERROR_CODES = {
   // System
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
-  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+
+  // Usage Quotas
+  SMS_QUOTA_EXCEEDED: 'SMS_QUOTA_EXCEEDED',
+  STAFF_LIMIT_EXCEEDED: 'STAFF_LIMIT_EXCEEDED',
+  SERVICE_LIMIT_EXCEEDED: 'SERVICE_LIMIT_EXCEEDED',
+  CUSTOMER_LIMIT_EXCEEDED: 'CUSTOMER_LIMIT_EXCEEDED',
 
   // Validation
   VALIDATION_ERROR: 'VALIDATION_ERROR',
@@ -115,3 +120,29 @@ export const ERROR_CODES = {
 } as const;
 
 export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+
+// Quota error codes
+export const QUOTA_ERROR_CODES = [
+  'SMS_QUOTA_EXCEEDED',
+  'STAFF_LIMIT_EXCEEDED',
+  'SERVICE_LIMIT_EXCEEDED',
+  'CUSTOMER_LIMIT_EXCEEDED'
+] as const;
+
+// Check if error is a quota-related error
+export function isQuotaError(error: AxiosError<ApiErrorResponse>): boolean {
+  if (error.response?.status !== 403) return false;
+  const errorCode = error.response?.data?.code;
+  return errorCode ? QUOTA_ERROR_CODES.includes(errorCode as any) : false;
+}
+
+// Get quota error data for displaying quota exceeded dialog
+export function getQuotaErrorData(error: AxiosError<ApiErrorResponse>) {
+  if (!isQuotaError(error)) return null;
+
+  return {
+    code: error.response?.data?.code,
+    message: error.response?.data?.message,
+    details: error.response?.data?.details
+  };
+}
