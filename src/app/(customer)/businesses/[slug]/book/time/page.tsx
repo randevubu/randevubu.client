@@ -324,13 +324,17 @@ export default function TimeSelectionPage() {
           .map(apt => ({
             id: apt.id,
             date: apt.date,
-            startTime: apt.startTime,
-            endTime: apt.endTime,
+            startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
+            endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
             duration: apt.duration,
             status: apt.status,
-            service: apt.service,
-            staff: apt.staff || {},
-            customer: apt.customer
+            service: {
+              id: apt.serviceId,
+              name: 'Service',
+              duration: apt.duration
+            },
+            staff: { id: apt.staffId || 'unknown' },
+            customer: { id: apt.customerId, firstName: '', lastName: '' }
           } as AppointmentWithDetails));
       }
     } catch (error) {
@@ -473,13 +477,17 @@ export default function TimeSelectionPage() {
           .map(apt => ({
             id: apt.id,
             date: apt.date,
-            startTime: apt.startTime,
-            endTime: apt.endTime,
+            startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
+            endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
             duration: apt.duration,
             status: apt.status,
-            service: apt.service,
-            staff: apt.staff || {},
-            customer: apt.customer
+            service: {
+              id: apt.serviceId,
+              name: 'Service',
+              duration: apt.duration
+            },
+            staff: { id: apt.staffId || 'unknown' },
+            customer: { id: apt.customerId, firstName: '', lastName: '' }
           } as AppointmentWithDetails));
         console.log(`🔍 Found ${appointments.length} confirmed appointments for ${date} (filtered out canceled):`);
         appointments.forEach((apt, index) => {

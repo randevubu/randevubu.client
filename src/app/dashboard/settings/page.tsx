@@ -9,7 +9,7 @@ import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
 import ThemeSelector from '../../../components/ui/ThemeSelector';
 import BusinessHoursSettings from '../../../components/ui/BusinessHoursSettings';
 import { BusinessImageManager } from '../../../components/features/BusinessImageManager';
-import { StaffPrivacySettings } from '../../../components/features/StaffPrivacySettings';
+import { StaffPrivacySettingsComponent } from '../../../components/features/StaffPrivacySettings';
 import BusinessNotificationSettings from '../../../components/features/BusinessNotificationSettings';
 import { Business, UpdateBusinessData, BusinessType } from '../../../types/business';
 import { canAccessSettingsPage, canAccessSettingsSection } from '../../../lib/utils/permissions';
@@ -1026,7 +1026,7 @@ export default function SettingsPage() {
   const renderStaffSettings = () => (
     <div className="space-y-6">
       {/* Staff Privacy Settings */}
-      <StaffPrivacySettings 
+      <StaffPrivacySettingsComponent 
         onSettingsUpdated={() => {
           // Optionally reload business data or show success message
           console.log('Staff privacy settings updated');

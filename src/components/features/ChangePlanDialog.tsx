@@ -55,7 +55,11 @@ export default function ChangePlanDialog({
           selectedPlan.id
         );
         if (pricingResponse.success && pricingResponse.data) {
-          setPricingCalculation(pricingResponse.data);
+          setPricingCalculation({
+            amount: pricingResponse.data.pricing.totalAmount,
+            currency: pricingResponse.data.pricing.currency,
+            changeType: pricingResponse.data.changeType
+          });
         }
       } catch (error) {
         console.error('Failed to calculate pricing:', error);
@@ -71,7 +75,7 @@ export default function ChangePlanDialog({
           if (paymentResponse.success && paymentResponse.data) {
             setPaymentMethods(paymentResponse.data);
             // Auto-select first payment method if available
-            if (paymentResponse.data.length > 0) {
+            if (paymentResponse.data.length > 0 && paymentResponse.data[0].id) {
               setSelectedPaymentMethod(paymentResponse.data[0].id);
             }
           }

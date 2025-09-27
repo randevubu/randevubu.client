@@ -98,7 +98,8 @@ export function getStatusText(status: string): string {
 
 // Check if appointment is urgent (within next hour)
 export function isUrgent(appointment: Appointment): boolean {
-  const startTime = new Date(appointment.appointmentDate + 'T' + appointment.startTime).getTime();
+  const appointmentDate = appointment.date instanceof Date ? appointment.date : new Date(appointment.date);
+  const startTime = new Date(appointmentDate.toISOString().split('T')[0] + 'T' + appointment.startTime.toISOString().split('T')[1]).getTime();
   const now = Date.now();
   const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
 
@@ -107,7 +108,7 @@ export function isUrgent(appointment: Appointment): boolean {
 
 // Check if appointment is today
 export function isToday(appointment: Appointment): boolean {
-  const appointmentDate = new Date(appointment.appointmentDate);
+  const appointmentDate = appointment.date instanceof Date ? appointment.date : new Date(appointment.date);
   const today = new Date();
   
   return appointmentDate.toDateString() === today.toDateString();
@@ -115,7 +116,8 @@ export function isToday(appointment: Appointment): boolean {
 
 // Calculate time until appointment
 export function getTimeUntilAppointment(appointment: Appointment): number {
-  const startTime = new Date(appointment.appointmentDate + 'T' + appointment.startTime).getTime();
+  const appointmentDate = appointment.date instanceof Date ? appointment.date : new Date(appointment.date);
+  const startTime = new Date(appointmentDate.toISOString().split('T')[0] + 'T' + appointment.startTime.toISOString().split('T')[1]).getTime();
   const now = Date.now();
   return Math.max(0, startTime - now);
 }

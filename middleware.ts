@@ -6,8 +6,7 @@ import { locales, defaultLocale } from './src/i18n';
 const intlMiddleware = createIntlMiddleware({
   locales,
   defaultLocale,
-  localePrefix: 'as-needed', // Only add locale prefix when needed (non-default locales)
-  defaultLocaleRedirect: false // Don't redirect default locale to have prefix
+  localePrefix: 'as-needed' // Only add locale prefix when needed (non-default locales)
 });
 
 export function middleware(request: NextRequest) {

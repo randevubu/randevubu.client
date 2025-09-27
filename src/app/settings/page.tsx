@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Navbar, Footer } from '../../components';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,7 +10,7 @@ import { UpdateUserData } from '../../types/auth';
 import { useErrorTranslation } from '../../lib/hooks/useErrorTranslation';
 import toast from 'react-hot-toast';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { user, isAuthenticated, hasInitialized, logout, refreshUser } = useAuth();
   const { translateValidationError } = useErrorTranslation();
   const router = useRouter();
@@ -829,5 +829,20 @@ export default function SettingsPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--theme-background)] transition-colors duration-300">
+        <Navbar />
+        <div className="flex items-center justify-center pt-20">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[var(--theme-primary)]"></div>
+        </div>
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }

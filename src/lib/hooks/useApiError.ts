@@ -39,9 +39,11 @@ export function useApiError() {
             // Fallback to general validation error
             errorMessage = errorTranslations('validation.general');
           }
-        } else {
+        } else if (errorData.code) {
           // Translate error code using our translation system
           errorMessage = translateApiError(errorData.code, errorTranslations);
+        } else {
+          errorMessage = errorTranslations('system.internalError');
         }
       } else if (error.response?.data?.code) {
         // Handle legacy flat error structure

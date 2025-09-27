@@ -97,7 +97,7 @@ export default function PlanChangeFlow({
         setPreview(previewData);
 
         // Auto-select default payment method if available
-        const paymentMethods = response.data.paymentMethods || response.data.storedPaymentMethods || [];
+        const paymentMethods = response.data.paymentMethods || [];
         console.log('🔍 Available payment methods:', paymentMethods);
 
         if (paymentMethods && paymentMethods.length > 0) {
@@ -414,11 +414,11 @@ export default function PlanChangeFlow({
 
           {currentStep === 'confirmation' && preview && (
             <PlanChangeConfirmationStep
+              selectedPlan={tempSelectedPlan}
               preview={preview}
               selectedPaymentMethod={selectedPaymentMethod}
               onConfirm={handleConfirm}
               onBack={handleBack}
-              loading={loading}
             />
           )}
 

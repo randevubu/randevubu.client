@@ -78,7 +78,7 @@ export default function ExcelLikeTable({
         if (response.success && response.data) {
           const dailyRevenue: MonthlyData = {};
           
-          response.data.appointments.forEach(appointment => {
+          response.data.forEach(appointment => {
             // Only count completed appointments as revenue
             if (appointment.status === AppointmentStatus.COMPLETED) {
               const appointmentDate = new Date(appointment.date);

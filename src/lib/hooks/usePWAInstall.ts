@@ -104,7 +104,7 @@ export function usePWAInstall() {
         toast.success('Uygulama yükleniyor...');
         return true;
       } else {
-        toast.info('Yükleme iptal edildi');
+        toast('Yükleme iptal edildi', { icon: 'ℹ️' });
         return false;
       }
     } catch (error) {

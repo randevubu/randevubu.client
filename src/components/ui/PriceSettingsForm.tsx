@@ -17,8 +17,8 @@ export function PriceSettingsForm({ business, onSave, isSaving = false }: PriceS
   const [hideAllServicePrices, setHideAllServicePrices] = useState(
     business?.priceSettings?.hideAllServicePrices || false
   );
-  const [showPriceOnBooking, setShowPriceOnBooking] = useState(
-    business?.priceSettings?.showPriceOnBooking || true
+  const [showPriceOnBooking, setShowPriceOnBooking] = useState<boolean>(
+    business?.priceSettings?.showPriceOnBooking ?? true
   );
 
   // Update local state when business prop changes

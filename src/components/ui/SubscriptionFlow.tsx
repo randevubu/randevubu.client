@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import SubscriptionPlans from './SubscriptionPlans';
+import PlanSelectionStep from '../features/PlanSelectionStep';
 import PaymentForm from './PaymentForm';
 import { PaymentsService } from '../../lib/services/payments';
 import { SubscriptionPlan } from '../../types/subscription';
@@ -225,7 +225,10 @@ export default function SubscriptionFlow({ businessId, onSuccess, onError }: Sub
         {renderStepIndicator()}
         
         {currentStep === 'plans' && (
-          <SubscriptionPlans onPlanSelect={handlePlanSelect} />
+          <PlanSelectionStep 
+            currentSubscription={null}
+            onPlanSelected={handlePlanSelect} 
+          />
         )}
         
         {currentStep === 'payment' && selectedPlan && (

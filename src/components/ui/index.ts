@@ -6,7 +6,6 @@ export { default as BusinessHoursSettings } from './BusinessHoursSettings';
 // PWA and Notification Components
 export { default as NotificationSettings } from '../features/NotificationSettings';
 export { default as PWAInstallPrompt } from '../features/PWAInstallPrompt';
-export { default as NearestAppointmentWidget } from '../features/NearestAppointmentWidget';
 
 // Business Image Management
 export { BusinessImageManager } from '../features/BusinessImageManager';

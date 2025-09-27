@@ -15,7 +15,7 @@ interface StaffPrivacySettingsProps {
   onSettingsUpdated?: () => void;
 }
 
-export const StaffPrivacySettings: React.FC<StaffPrivacySettingsProps> = ({ 
+export const StaffPrivacySettingsComponent: React.FC<StaffPrivacySettingsProps> = ({ 
   onSettingsUpdated 
 }) => {
   const [settings, setSettings] = useState<StaffPrivacySettings>({
