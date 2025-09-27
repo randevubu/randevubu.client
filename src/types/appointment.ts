@@ -6,7 +6,7 @@ export interface Appointment {
   serviceId: string;
   staffId?: string;
   customerId: string;
-  date: Date;
+  date: string | Date;  // Business date - can be YYYY-MM-DD string or Date object
   startTime: Date;
   endTime: Date;
   duration: number;

@@ -94,7 +94,9 @@
       "invalidFileType": "Geçersiz dosya türü",
       "fileTooLarge": "Dosya çok büyük",
       "invalidUrl": "Geçersiz URL formatı",
-      "phoneNumber": "Lütfen geçerli bir telefon numarası girin"
+      "phoneNumber": "Lütfen geçerli bir telefon numarası girin",
+      "reminderTimingLimit": "Maksimum 5 hatırlatma zamanı seçilebilir",
+      "reminderTimingRequired": "En az bir hatırlatma zamanı seçilmelidir"
     },
     "system": {
       "internalError": "Sunucu hatası oluştu",

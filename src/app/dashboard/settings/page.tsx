@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { FormField } from '../../../components/ui/FormField';
@@ -11,6 +12,7 @@ import { BusinessImageManager } from '../../../components/features/BusinessImage
 import { StaffPrivacySettings } from '../../../components/features/StaffPrivacySettings';
 import BusinessNotificationSettings from '../../../components/features/BusinessNotificationSettings';
 import { Business, UpdateBusinessData, BusinessType } from '../../../types/business';
+import { canAccessSettingsPage, canAccessSettingsSection } from '../../../lib/utils/permissions';
 
 interface SettingsFormData {
   // Appearance Settings (theme now handled by ThemeSelector)
@@ -70,6 +72,7 @@ const autoLogoutOptions = [
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
@@ -119,7 +122,7 @@ export default function SettingsPage() {
     appointmentConfig: false
   });
 
-  const tabs = [
+  const allTabs = [
     { id: 'appearance', name: 'Görünüm', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4 4 4 0 004-4V5z' },
     { id: 'notifications', name: 'Hatırlatma Ayarları', icon: 'M15 17h5l-5 5v-5zM4.021 8.583a11.003 11.003 0 0114.99 0A7.5 7.5 0 0012 3c-2.31 0-4.438 1.04-5.832 2.712A7.48 7.48 0 014.02 8.583z' },
     { id: 'business', name: 'İşletme Ayarları', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
@@ -128,14 +131,26 @@ export default function SettingsPage() {
     { id: 'staff', name: 'Personel Ayarları', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
   ];
 
+  // Filter tabs based on user permissions
+  const tabs = allTabs.filter(tab => canAccessSettingsSection(user, tab.id));
+
   useEffect(() => {
-    if (user) {
+    if (user && canAccessSettingsPage(user)) {
       loadUserSettings();
       loadBusinessData();
       loadBusinessTypes();
       loadSectionPreferences();
+    } else if (user && !canAccessSettingsPage(user)) {
+      router.push('/dashboard');
     }
-  }, [user]);
+  }, [user, router]);
+
+  // Set the first available tab as active when tabs change
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.find(tab => tab.id === activeTab)) {
+      setActiveTab(tabs[0].id);
+    }
+  }, [tabs, activeTab]);
 
   const loadSectionPreferences = () => {
     try {
@@ -1110,6 +1125,17 @@ export default function SettingsPage() {
   );
 
   const renderTabContent = () => {
+    // Additional permission check to ensure user can access the current tab
+    if (!canAccessSettingsSection(user, activeTab)) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-[var(--theme-foregroundSecondary)]">
+            Bu bölüme erişim yetkiniz bulunmuyor.
+          </p>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'appearance':
         return renderAppearanceSettings();

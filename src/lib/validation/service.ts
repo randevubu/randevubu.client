@@ -104,7 +104,8 @@ export const validateServicePrice = (price: number): boolean => {
   return price >= 0 && price <= 10000;
 };
 
-export const validateCurrency = (currency: string): boolean => {
+export const validateCurrency = (currency: string | undefined): boolean => {
+  if (!currency) return false;
   const validCurrencies = ['TRY', 'USD', 'EUR', 'GBP'];
   return validCurrencies.includes(currency.toUpperCase());
 };

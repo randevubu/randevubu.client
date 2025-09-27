@@ -203,7 +203,7 @@ class NotificationService {
     }
   }
 
-  // Update notification settings
+  // Update notification settings (User Level)
   async updateSettings(settings: Partial<NotificationSettings>): Promise<void> {
     try {
       await apiClient.put('/api/v1/notifications/push/preferences', settings);
@@ -213,7 +213,7 @@ class NotificationService {
     }
   }
 
-  // Get notification settings
+  // Get notification settings (User Level)
   async getSettings(): Promise<NotificationSettings> {
     try {
       const response = await apiClient.get('/api/v1/notifications/push/preferences');
@@ -248,7 +248,7 @@ class NotificationService {
     }
 
     try {
-      // Don't include icon field - let the backend handle it or use its default
+      // Use business test endpoint for testing
       await apiClient.post('/api/v1/notifications/push/test', {
         title: data?.title || 'Test Notification',
         body: data?.body || 'This is a test push notification from your PWA!',

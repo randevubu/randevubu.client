@@ -721,6 +721,53 @@ export const businessService = {
     return response.data;
   },
 
+  // Get notification analytics
+  getNotificationAnalytics: async (params?: {
+    days?: number;
+  }): Promise<ApiResponse<{
+    period: {
+      days: number;
+      startDate: string;
+      endDate: string;
+    };
+    summary: {
+      totalAppointments: number;
+      remindedAppointments: number;
+      reminderCoverage: number;
+      noShowRate: number;
+      completionRate: number;
+    };
+    channelPerformance: {
+      [key: string]: {
+        sent: number;
+        delivered: number;
+        read: number;
+        failed: number;
+      };
+    };
+    reminderEffectiveness: {
+      withReminder: {
+        total: number;
+        noShow: number;
+        completed: number;
+        noShowRate: number;
+      };
+      withoutReminder: {
+        total: number;
+        noShow: number;
+        completed: number;
+        noShowRate: number;
+      };
+    };
+  }>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.days) queryParams.append('days', params.days.toString());
+
+    const url = `/api/v1/businesses/my-business/notification-analytics${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await apiClient.get<ApiResponse<any>>(url);
+    return response.data;
+  },
+
   // ================================
   // STAFF PRIVACY SETTINGS METHODS
   // ================================

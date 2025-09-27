@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
 import { Business } from '../../types/business';
-import { canViewBusinessStats, isAdmin } from '../../lib/utils/permissions';
+import { canViewBusinessStats, isAdmin, isStaff, isOwner, canViewNavigationItem } from '../../lib/utils/permissions';
 import { handleApiError } from '../../lib/utils/toast';
 import SubscriptionGuard from '../../components/features/SubscriptionGuard';
 import ProfileGuard from '../../components/features/ProfileGuard';
@@ -16,12 +16,21 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated, isLoading: authLoading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [business, setBusiness] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth');
+      return;
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
     if (user && canViewBusinessStats(user)) {
@@ -36,22 +45,33 @@ export default function DashboardLayout({
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await businessService.getMyBusiness();
-      
+      console.log('🏢 Dashboard Layout - getMyBusiness response:', response);
+      console.log('👤 Dashboard Layout - Current user:', user);
+
       if (!response.success) {
         setError(response.error?.message || 'İşletme bilgileri alınamadı.');
         return;
       }
 
       if (!response.data?.businesses || response.data.businesses.length === 0) {
-        setError('Henüz bir işletmeniz bulunmuyor.');
+        // For staff members, they might not have businesses in the response
+        // but they should still have access if they have STAFF or OWNER roles
+        if (user && (isStaff(user) || isOwner(user))) {
+          console.log('⚠️ Dashboard Layout - Staff/Owner user with no businesses in API response');
+          console.log('🔍 User roles:', user.roles);
+          setError('İşletme bilgileriniz yüklenemiyor. Lütfen işletme sahibi ile iletişime geçin.');
+        } else {
+          setError('Henüz bir işletmeniz bulunmuyor.');
+        }
         return;
       }
 
       const primaryBusiness = response.data.businesses[0];
+      console.log('✅ Dashboard Layout - Loaded business:', primaryBusiness.name);
       setBusiness(primaryBusiness);
-      
+
     } catch (error) {
       console.error('Business data loading failed:', error);
       handleApiError(error);
@@ -97,12 +117,14 @@ export default function DashboardLayout({
     );
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-[var(--theme-background)] flex items-center justify-center transition-colors duration-300">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-[var(--theme-foregroundSecondary)] font-medium transition-colors duration-300">Dashboard yükleniyor...</span>
+          <span className="text-[var(--theme-foregroundSecondary)] font-medium transition-colors duration-300">
+            Dashboard yükleniyor...
+          </span>
         </div>
       </div>
     );
@@ -178,26 +200,28 @@ export default function DashboardLayout({
 
           {/* Navigation */}
           <nav className="flex-1 px-6 py-4 space-y-2">
-            {navigationItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-300 ${
-                    isActive
-                      ? 'bg-[var(--theme-primary)]/20 text-[var(--theme-primary)]'
-                      : 'text-[var(--theme-foregroundSecondary)] hover:bg-[var(--theme-backgroundSecondary)] hover:text-[var(--theme-foreground)]'
-                  }`}
-                >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                  </svg>
-                  {item.name}
-                </Link>
-              );
-            })}
+            {navigationItems
+              .filter((item) => canViewNavigationItem(user, item.id))
+              .map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-300 ${
+                      isActive
+                        ? 'bg-[var(--theme-primary)]/20 text-[var(--theme-primary)]'
+                        : 'text-[var(--theme-foregroundSecondary)] hover:bg-[var(--theme-backgroundSecondary)] hover:text-[var(--theme-foreground)]'
+                    }`}
+                  >
+                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    {item.name}
+                  </Link>
+                );
+              })}
           </nav>
 
           {/* User Profile */}
@@ -244,7 +268,9 @@ export default function DashboardLayout({
               </button>
               <div className="flex-1 text-center lg:text-left lg:flex-none">
                 <h1 className="text-lg sm:text-xl font-bold text-[var(--theme-foreground)] transition-colors duration-300">
-                  {navigationItems.find(item => item.href === pathname)?.name || 'Dashboard'}
+                  {navigationItems
+                    .filter((item) => canViewNavigationItem(user, item.id))
+                    .find(item => item.href === pathname)?.name || 'Dashboard'}
                 </h1>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-3">

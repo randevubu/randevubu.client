@@ -6,11 +6,12 @@ import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { subscriptionService } from '../../../lib/services/subscription';
 import Pricing from '../../../components/features/Pricing';
+import PlanChangeFlow from '../../../components/features/PlanChangeFlow';
 
 import { Business } from '../../../types/business';
 import { SubscriptionPlan, BusinessSubscription } from '../../../types/subscription';
 import { SubscriptionStatus } from '../../../types/enums';
-import { canViewBusinessStats } from '../../../lib/utils/permissions';
+import { canViewBusinessStats, canAccessSubscriptionPage } from '../../../lib/utils/permissions';
 import { handleApiError } from '../../../lib/utils/toast';
 
 export default function SubscriptionPage() {
@@ -20,7 +21,7 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<BusinessSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPlanChangeFlow, setShowPlanChangeFlow] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
@@ -28,14 +29,45 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (!isAuthenticated || !user) {
       router.push('/auth');
       return;
     }
 
+    // Check if user has permission to access this page
+    if (!canAccessSubscriptionPage(user)) {
+      router.push('/dashboard');
+      return;
+    }
+
     loadData();
   }, [user, isAuthenticated, authLoading, router]);
+
+  // Show access denied if user doesn't have permission
+  if (user && !canAccessSubscriptionPage(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Erişim Reddedildi</h1>
+            <p className="text-gray-600 mb-6">Bu sayfaya erişim yetkiniz bulunmuyor. Abonelik yönetimi sadece işletme sahipleri tarafından yapılabilir.</p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              ← Dashboard'a Dön
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const loadData = async () => {
     try {
@@ -138,34 +170,10 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handleUpgrade = async () => {
-    if (!selectedPlan || !business || !subscription) return;
-    
-    try {
-      setIsUpdating(true);
-      
-      const response = await subscriptionService.changeSubscriptionPlan(
-        business.id,
-        subscription.id,
-        selectedPlan.id
-      );
-      
-      if (response.success) {
-        setShowUpgradeModal(false);
-        setSelectedPlan(null);
-
-        
-        // Reload data
-        await loadData();
-      } else {
-        handleApiError(new Error(response.error?.message || 'Plan değişikliği başarısız'));
-      }
-      
-    } catch (error) {
-      console.error('Upgrade failed:', error);
-      handleApiError(error);
-    } finally {
-      setIsUpdating(false);
+  const handlePlanChangeSuccess = async () => {
+    // Reload subscription data after successful plan change
+    if (business) {
+      await loadSubscriptionData(business.id);
     }
   };
 
@@ -197,7 +205,7 @@ export default function SubscriptionPage() {
 
   const handlePlanSelect = (plan: SubscriptionPlan) => {
     setSelectedPlan(plan);
-    setShowUpgradeModal(true);
+    setShowPlanChangeFlow(true);
   };
 
   const formatDate = (date: Date) => {
@@ -208,7 +216,13 @@ export default function SubscriptionPage() {
     }).format(new Date(date));
   };
 
-  const formatPrice = (price: number, currency: string) => {
+  const formatPrice = (price: number, currency: string | undefined) => {
+    if (!currency) {
+      return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY'
+      }).format(price);
+    }
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currency.toUpperCase()
@@ -273,7 +287,7 @@ export default function SubscriptionPage() {
                   <p className="text-blue-100 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">Mevcut abonelik planınız</p>
 
                   <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                    Plan ID: {subscription.planId}
+                    {subscription.plan?.displayName || subscription.planId}
                   </div>
                   <div className="text-blue-200 text-xs sm:text-sm font-medium">
                     Durum: {getStatusText(subscription.status)}
@@ -333,7 +347,7 @@ export default function SubscriptionPage() {
                 {/* Action Buttons - Enhanced */}
                 <div className="space-y-3 sm:space-y-4">
                   <button
-                    onClick={() => setShowUpgradeModal(true)}
+                    onClick={() => setShowPlanChangeFlow(true)}
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
                   >
                     <div className="flex items-center justify-center">
@@ -377,7 +391,7 @@ export default function SubscriptionPage() {
                   İşletmenizi büyütmek ve daha fazla özellik kullanmak için bir plan seçin
                 </p>
                 <button
-                  onClick={() => setShowUpgradeModal(true)}
+                  onClick={() => setShowPlanChangeFlow(true)}
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg text-lg"
                 >
                   Plan Seç ve Başla
@@ -452,68 +466,18 @@ export default function SubscriptionPage() {
         )}
       </div>
 
-      {/* Enhanced Upgrade Modal */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 max-w-lg w-full mx-2 sm:mx-4 shadow-2xl transform transition-all duration-300">
-            <div className="text-center mb-4 sm:mb-6">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-2">
-                {selectedPlan ? `${selectedPlan.displayName} Planına Geç` : 'Plan Seç'}
-              </h3>
-              <p className="text-gray-600 text-sm sm:text-base">Abonelik planınızı güncelleyin</p>
-            </div>
-            
-            {selectedPlan && (
-              <div className="space-y-4 sm:space-y-6">
-                <div className="p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200">
-                  <h4 className="font-bold text-gray-900 mb-2 sm:mb-3 text-base sm:text-lg">{selectedPlan.displayName}</h4>
-                  <p className="text-gray-700 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">{selectedPlan.description}</p>
-                  <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    {formatPrice(selectedPlan.price, selectedPlan.currency)}
-                    <span className="text-sm sm:text-lg font-normal text-gray-600 ml-2">
-                      / {selectedPlan.billingInterval?.toLowerCase() === 'monthly' ? 'ay' : 'yıl'}
-                    </span>
-                  </div>
-                </div>
-
-
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <button
-                onClick={() => {
-                  setShowUpgradeModal(false);
-                  setSelectedPlan(null);
-          
-                }}
-                className="flex-1 px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-2xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 font-medium active:scale-95 touch-manipulation"
-              >
-                İptal
-              </button>
-              <button
-                onClick={handleUpgrade}
-                disabled={isUpdating}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
-              >
-                {isUpdating ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    <span className="text-sm sm:text-base">İşleniyor...</span>
-                  </div>
-                ) : (
-                  'Onayla'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Professional Plan Change Flow */}
+      <PlanChangeFlow
+        isOpen={showPlanChangeFlow}
+        onClose={() => {
+          setShowPlanChangeFlow(false);
+          setSelectedPlan(null);
+        }}
+        selectedPlan={selectedPlan}
+        currentSubscription={subscription}
+        businessId={business?.id || ''}
+        onSuccess={handlePlanChangeSuccess}
+      />
 
       {/* Enhanced Cancel Modal */}
       {showCancelModal && (

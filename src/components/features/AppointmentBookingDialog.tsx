@@ -47,6 +47,7 @@ export default function AppointmentBookingDialog({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
+  const [business, setBusiness] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showQuotaDialog, setShowQuotaDialog] = useState(false);
@@ -80,10 +81,17 @@ export default function AppointmentBookingDialog({
   useEffect(() => {
     if (isOpen) {
       checkPermissions();
+      loadBusiness();
       loadServices();
-      loadStaff();
     }
   }, [isOpen, businessId]);
+
+  // Load staff after business data is available
+  useEffect(() => {
+    if (isOpen && business) {
+      loadStaff();
+    }
+  }, [isOpen, business]);
 
   useEffect(() => {
     setFormData(prev => ({
@@ -98,6 +106,18 @@ export default function AppointmentBookingDialog({
     // Check if user can book for other customers
     const hasPermission = user && (isOwner(user) || isStaff(user) || hasRole(user, 'MANAGER'));
     setCanBookForOthers(!!hasPermission);
+  };
+
+  const loadBusiness = async () => {
+    try {
+      const response = await businessService.getBusinessById(businessId);
+      if (response.success && response.data) {
+        setBusiness(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load business:', error);
+      // Don't show error for business loading as it's not critical
+    }
   };
 
   const loadServices = async () => {
@@ -119,7 +139,28 @@ export default function AppointmentBookingDialog({
     try {
       const response = await businessService.getBusinessStaff(businessId);
       if (response.success && response.data) {
-        setStaff(response.data || []);
+        // Ensure staffList is an array
+        let staffList = Array.isArray(response.data) ? response.data : [];
+        
+        // Debug: Log the staff list to see what we're getting
+        console.log('Staff list from API:', staffList);
+        console.log('Business owner ID:', business?.ownerId);
+        console.log('Current user ID:', user?.id);
+        
+        // If no staff members returned, add the business owner as a staff member
+        if (staffList.length === 0 && business?.ownerId && user?.id === business.ownerId && user) {
+          // Use the business owner's actual ID as the staff ID
+          staffList = [{
+            id: business.ownerId, // Use the actual business owner ID
+            firstName: user.firstName || 'Business',
+            lastName: user.lastName || 'Owner',
+            userId: business.ownerId,
+            isOwner: true
+          }];
+          console.log('Added business owner as staff member:', staffList[0]);
+        }
+        
+        setStaff(staffList);
       }
     } catch (error) {
       console.error('Failed to load staff:', error);
@@ -148,8 +189,30 @@ export default function AppointmentBookingDialog({
     setSubmitting(true);
 
     try {
+      // Use selected staff ID or find business owner's staff ID
+      let staffId = formData.staffId && formData.staffId.trim() !== '' 
+        ? formData.staffId 
+        : null;
+
+      // If no staff selected, find the business owner's staff record
+      if (!staffId && business?.ownerId) {
+        const ownerStaffRecord = staff.find((staffMember: any) => 
+          staffMember.userId === business.ownerId || staffMember.id === business.ownerId || staffMember.isOwner
+        );
+        staffId = ownerStaffRecord?.id || null;
+      }
+
+      // If we still don't have a staffId, we need to provide one
+      if (!staffId) {
+        console.error('No staff ID found - this will cause backend validation error');
+        handleApiError(new Error('Personel seçimi gerekli. Lütfen bir personel seçin.'));
+        setSubmitting(false);
+        return;
+      }
+
       const appointmentData: ExtendedCreateAppointmentData = {
         ...formData,
+        staffId, // Always include staffId since backend requires it
         // Include customerId only if booking for someone else
         ...(selectedCustomer && { customerId: selectedCustomer.id })
       };

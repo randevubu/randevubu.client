@@ -1,5 +1,5 @@
 import { apiClient } from '../api';
-import { BusinessSubscription, SubscriptionPlan, CreateBusinessSubscriptionData, UpdateBusinessSubscriptionData } from '../../types/subscription';
+import { BusinessSubscription, SubscriptionPlan, CreateBusinessSubscriptionData, UpdateBusinessSubscriptionData, ChangePlanData, ChangePlanResponse, PaymentMethod, AddPaymentMethodData, PlanChangePreview } from '../../types/subscription';
 
 export interface SubscriptionServiceResponse<T> {
   success: boolean;
@@ -214,21 +214,143 @@ export class SubscriptionService {
   }
 
   /**
-   * Upgrade/downgrade subscription plan
+   * Change subscription plan with enhanced options and payment handling
    */
-  async changeSubscriptionPlan(
-    businessId: string, 
-    subscriptionId: string, 
-    newPlanId: string
-  ): Promise<SubscriptionServiceResponse<BusinessSubscription>> {
+  async changePlan(
+    businessId: string,
+    subscriptionId: string,
+    changePlanData: ChangePlanData
+  ): Promise<SubscriptionServiceResponse<{data: ChangePlanResponse; message: string}>> {
     try {
-      const requestData: any = { newPlanId };
+      const response = await apiClient.post(`/api/v1/businesses/${businessId}/subscription/${subscriptionId}/change-plan`, changePlanData);
+      return {
+        success: true,
+        data: {
+          data: response.data.data,
+          message: response.data.message
+        }
+      };
+    } catch (error: any) {
+      console.error('Failed to change subscription plan:', error);
 
-      const response = await apiClient.post(`/api/v1/businesses/${businessId}/subscription/${subscriptionId}/change-plan`, requestData);
+      // Enhanced error handling for payment scenarios
+      const errorMessage = error.response?.data?.message || 'Abonelik planı değiştirilemedi';
+      const errorCode = error.response?.data?.code;
+
+      return {
+        success: false,
+        error: {
+          message: errorMessage,
+          code: errorCode
+        }
+      };
+    }
+  }
+
+  /**
+   * Get available payment methods for the business
+   */
+  async getPaymentMethods(businessId: string): Promise<SubscriptionServiceResponse<PaymentMethod[]>> {
+    try {
+      const response = await apiClient.get(`/api/v1/businesses/${businessId}/payment-methods`);
+      return {
+        success: true,
+        data: response.data.data || []
+      };
+    } catch (error: any) {
+      console.error('Failed to fetch payment methods:', error);
+      return {
+        success: false,
+        error: {
+          message: error.response?.data?.message || 'Ödeme yöntemleri alınamadı',
+          code: error.response?.data?.code
+        }
+      };
+    }
+  }
+
+  /**
+   * Add new payment method for the business
+   */
+  async addPaymentMethod(
+    businessId: string,
+    paymentData: AddPaymentMethodData
+  ): Promise<SubscriptionServiceResponse<PaymentMethod>> {
+    try {
+      const response = await apiClient.post(`/api/v1/businesses/${businessId}/payment-methods`, paymentData);
       return {
         success: true,
         data: response.data.data
       };
+    } catch (error: any) {
+      console.error('Failed to add payment method:', error);
+      return {
+        success: false,
+        error: {
+          message: error.response?.data?.message || 'Ödeme yöntemi eklenemedi',
+          code: error.response?.data?.code
+        }
+      };
+    }
+  }
+
+  /**
+   * Calculate plan change preview with pricing and validation
+   */
+  async calculatePlanChange(
+    businessId: string,
+    subscriptionId: string,
+    newPlanId: string
+  ): Promise<SubscriptionServiceResponse<PlanChangePreview>> {
+    try {
+      const response = await apiClient.post(`/api/v1/businesses/${businessId}/subscription/${subscriptionId}/calculate-change`, {
+        newPlanId
+      });
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Failed to calculate plan change:', error);
+      return {
+        success: false,
+        error: {
+          message: error.response?.data?.message || 'Plan değişikliği hesaplanamadı',
+          code: error.response?.data?.code
+        }
+      };
+    }
+  }
+
+  /**
+   * @deprecated Use changePlan instead
+   * Legacy method for changing subscription plan (simplified version)
+   */
+  async changeSubscriptionPlan(
+    businessId: string,
+    subscriptionId: string,
+    newPlanId: string
+  ): Promise<SubscriptionServiceResponse<BusinessSubscription>> {
+    try {
+      const changePlanData: ChangePlanData = {
+        newPlanId,
+        effectiveDate: 'immediate',
+        prorationPreference: 'prorate'
+      };
+
+      const response = await this.changePlan(businessId, subscriptionId, changePlanData);
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          data: response.data.subscription
+        };
+      } else {
+        return {
+          success: false,
+          error: response.error
+        };
+      }
     } catch (error: any) {
       console.error('Failed to change subscription plan:', error);
       return {

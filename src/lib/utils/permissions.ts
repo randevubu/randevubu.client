@@ -242,26 +242,121 @@ export function hasBusinessAccessFromAPI(user: User | null, businesses: any[]): 
 
 /**
  * Check if user has business but no active subscription using API data
+ * This should only apply to OWNER role - staff members don't manage subscriptions
  */
 export function hasBusinessNoSubscriptionFromAPI(user: User | null, businesses: any[], subscriptions?: BusinessSubscription[]): boolean {
   if (!user) return false;
-  
+
   // User must have business access
   if (!hasBusinessAccessFromAPI(user, businesses)) return false;
-  
+
+  // Only owners should see subscription buttons - staff should see dashboard
+  if (!isOwner(user)) return false;
+
   // User must not have active subscription
   return !hasActiveSubscription(subscriptions);
 }
 
 /**
  * Check if user has both business and active subscription using API data
+ * OR if user is staff/manager (they should always see dashboard regardless of subscription)
  */
 export function hasBusinessAndSubscriptionFromAPI(user: User | null, businesses: any[], subscriptions?: BusinessSubscription[]): boolean {
   if (!user) return false;
-  
+
   // User must have business access
   if (!hasBusinessAccessFromAPI(user, businesses)) return false;
-  
-  // User must have active subscription
-  return hasActiveSubscription(subscriptions);
+
+  // Staff and managers should always see dashboard - they don't manage subscriptions
+  if (isStaff(user) || hasRole(user, 'MANAGER')) {
+    return true;
+  }
+
+  // For owners, check subscription status
+  if (isOwner(user)) {
+    return hasActiveSubscription(subscriptions);
+  }
+
+  return false;
+}
+
+/**
+ * Dashboard page access permissions for different roles
+ */
+
+// Check if user can access subscription management page
+export function canAccessSubscriptionPage(user: User | null): boolean {
+  if (!user) return false;
+  // Only owners and admins can manage subscriptions
+  return isOwner(user) || isAdmin(user);
+}
+
+// Check if user can access usage analytics page
+export function canAccessUsagePage(user: User | null): boolean {
+  if (!user) return false;
+  // Only owners and admins can view usage analytics
+  return isOwner(user) || isAdmin(user);
+}
+
+// Check if user can access staff management page
+export function canAccessStaffPage(user: User | null): boolean {
+  if (!user) return false;
+  // Only owners and admins can manage staff
+  return isOwner(user) || isAdmin(user);
+}
+
+// Check if user can access business settings page
+export function canAccessSettingsPage(user: User | null): boolean {
+  if (!user) return false;
+  // Staff, owners and admins can access settings (but staff will see limited sections)
+  return isStaff(user) || isOwner(user) || isAdmin(user);
+}
+
+// Check if user can access specific settings sections
+export function canAccessSettingsSection(user: User | null, sectionId: string): boolean {
+  if (!user) return false;
+
+  // Admins can access everything
+  if (isAdmin(user)) return true;
+
+  // Owners can access everything except some restricted sections
+  if (isOwner(user)) return true;
+
+  // Staff can only access certain sections
+  if (isStaff(user)) {
+    const staffAllowedSections = [
+      'appearance',     // Theme and language preferences
+      'notifications',  // Personal notification settings
+      'staff',         // Their own working hours and availability
+      'appointments',  // Appointment settings that affect their work
+    ];
+    return staffAllowedSections.includes(sectionId);
+  }
+
+  return false;
+}
+
+// Check if navigation item should be visible to user
+export function canViewNavigationItem(user: User | null, itemId: string): boolean {
+  if (!user) return false;
+
+  switch (itemId) {
+    case 'subscription':
+      return canAccessSubscriptionPage(user);
+    case 'usage':
+      return canAccessUsagePage(user);
+    case 'staff':
+      return canAccessStaffPage(user);
+    case 'settings':
+      return canAccessSettingsPage(user);
+    // These pages are accessible to all dashboard users (staff, owners, admins)
+    case 'overview':
+    case 'appointments':
+    case 'customers':
+    case 'services':
+    case 'reports':
+      return canViewBusinessStats(user);
+    default:
+      return false;
+  }
 }

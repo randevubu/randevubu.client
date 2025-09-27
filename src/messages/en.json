@@ -94,7 +94,9 @@
       "invalidFileType": "Invalid file type",
       "fileTooLarge": "File is too large",
       "invalidUrl": "Invalid URL format",
-      "phoneNumber": "Please enter a valid phone number"
+      "phoneNumber": "Please enter a valid phone number",
+      "reminderTimingLimit": "Maximum 5 reminder times allowed",
+      "reminderTimingRequired": "At least one reminder time must be selected"
     },
     "system": {
       "internalError": "Internal server error occurred",

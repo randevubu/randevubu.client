@@ -131,20 +131,22 @@ export class PushNotificationService {
         return existingRegistration;
       }
 
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+      // Try to register our custom service worker with push support
+      const registration = await navigator.serviceWorker.register('/sw-custom.js', {
+        scope: '/',
+        updateViaCache: 'none' // Always check for updates
       });
 
       console.log('Service Worker registered:', registration);
+
+      // Wait for the service worker to be ready
+      await navigator.serviceWorker.ready;
+      console.log('Service Worker is ready');
+
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
-      // In development mode, PWA might be disabled, so we'll try to continue without SW
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Service Worker registration failed in development mode, continuing without SW');
-        throw new Error('Service Worker not available in development mode');
-      }
-      throw new Error('Failed to register service worker');
+      throw new Error(`Failed to register service worker: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

@@ -112,7 +112,16 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
     if (!settings) return;
 
     // Update local state optimistically
-    const updatedSettings = { ...settings, ...updates };
+    const updatedSettings = { ...settings };
+    Object.keys(updates).forEach(key => {
+      const value = updates[key as keyof BusinessNotificationSettingsData];
+      if (value === undefined && key === 'quietHours') {
+        // When quietHours is undefined, remove it from local state
+        updatedSettings.quietHours = null;
+      } else {
+        (updatedSettings as any)[key] = value;
+      }
+    });
     setSettings(updatedSettings);
 
     try {
@@ -159,7 +168,12 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
         finalUpdates.reminderChannels = currentChannels;
       }
 
-      const response = await businessService.updateBusinessNotificationSettings(finalUpdates);
+      // Clean undefined values from finalUpdates to avoid sending null
+      const cleanedUpdates = Object.fromEntries(
+        Object.entries(finalUpdates).filter(([_, value]) => value !== undefined)
+      );
+
+      const response = await businessService.updateBusinessNotificationSettings(cleanedUpdates);
       if (response.success && response.data) {
         // Update with the complete response from backend
         setSettings(response.data);
@@ -313,11 +327,13 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
   const handleQuietHoursToggle = (enabled: boolean) => {
     if (!settings) return;
 
-    const quietHours = enabled
-      ? { start: '22:00', end: '08:00' }
-      : null;
-
-    updateSettings({ quietHours });
+    if (enabled) {
+      updateSettings({ quietHours: { start: '22:00', end: '08:00' } });
+    } else {
+      // When disabling, send an update without the quietHours field
+      // The backend will handle removing it
+      updateSettings({ quietHours: undefined } as any);
+    }
   };
 
   const handleQuietHoursChange = (field: 'start' | 'end', value: string) => {
@@ -513,6 +529,24 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                     className="px-2 py-1 text-xs bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] rounded hover:bg-[var(--theme-primaryHover)] disabled:opacity-50"
                   >
                     İzin Ver
+                  </button>
+                )}
+                {pushNotifications.isSupported && pushNotifications.isSubscribed && settings.pushEnabled && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await pushNotifications.unsubscribe();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await pushNotifications.subscribe();
+                        showSuccessToast('Abonelik yenilendi');
+                      } catch (error) {
+                        showErrorToast('Yenileme başarısız');
+                      }
+                    }}
+                    disabled={pushNotifications.isLoading}
+                    className="px-2 py-1 text-xs bg-[var(--theme-warning)] text-white rounded hover:opacity-90 disabled:opacity-50"
+                  >
+                    🔄 Yenile
                   </button>
                 )}
               </div>

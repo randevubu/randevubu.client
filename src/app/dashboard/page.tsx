@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
 import { Business } from '../../types/business';
-import { canViewBusinessStats, isAdmin } from '../../lib/utils/permissions';
+import { canViewBusinessStats, isAdmin, canViewNavigationItem } from '../../lib/utils/permissions';
 import { handleApiError } from '../../lib/utils/toast';
 
 export default function DashboardPage() {
@@ -182,7 +182,9 @@ export default function DashboardPage() {
         </div>
         <div className="p-4 sm:p-6">
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            {navigationItems.map((item) => (
+            {navigationItems
+              .filter((item) => canViewNavigationItem(user, item.id))
+              .map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
@@ -190,21 +192,21 @@ export default function DashboardPage() {
                 >
                   {/* Background gradient overlay */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                  
+
                   {/* Icon */}
                   <div className={`relative z-10 w-6 h-6 mx-auto mb-2 rounded-md bg-gradient-to-br ${item.color} flex items-center justify-center shadow-sm`}>
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                     </svg>
                   </div>
-                  
+
                   {/* Label */}
                   <div className="relative z-10 text-center">
                     <span className={`text-[10px] leading-tight font-medium ${item.textColor} group-hover:text-[var(--theme-foreground)] transition-colors duration-300`}>
                       {item.name}
                     </span>
                   </div>
-                  
+
                   {/* Hover effect */}
                   <div className="absolute inset-0 bg-[var(--theme-primary)]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                 </Link>

@@ -77,6 +77,7 @@ export default function AppointmentsPage() {
 
   // View mode state
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -324,19 +325,24 @@ export default function AppointmentsPage() {
     });
   };
 
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('tr-TR', {
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+    // Convert to Istanbul timezone (same logic as booking page)
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Istanbul',
       hour: '2-digit',
-      minute: '2-digit'
-    });
+      minute: '2-digit',
+      hour12: false
+    }).format(dateObj);
   };
 
   // Generate time slots based on business hours
   const generateTimeSlots = (date?: string) => {
     const targetDate = date || selectedDate;
-    
+
     if (!business?.businessHours) {
-      // Fallback to default slots if no business hours data
+      // Fallback to default business hours if no business hours data
       const slots = [];
       for (let hour = 8; hour < 22; hour++) {
         slots.push(`${hour.toString().padStart(2, '0')}:00`);
@@ -351,8 +357,7 @@ export default function AppointmentsPage() {
     const businessHours = getBusinessHoursForDate(business, targetDate);
 
     if (!businessHours.isOpen || !businessHours.openTime || !businessHours.closeTime) {
-      // If business is closed on selected day, show a message instead of empty slots
-      // We'll still return empty array but add a visual indicator in the UI
+      // If business is closed on selected day, show empty schedule
       return [];
     }
 
@@ -568,13 +573,20 @@ export default function AppointmentsPage() {
     if (!appointments || !Array.isArray(appointments)) {
       return [];
     }
+
     return appointments.filter(apt => {
-      // Use the startTime field to get the actual appointment date in local timezone
+      // Use startTime to determine the appointment date
+      // Convert startTime to the business timezone and get the date
+      const businessTimezone = business?.timezone || 'Europe/Istanbul';
       const appointmentDate = new Date(apt.startTime);
-      const localDateString = appointmentDate.getFullYear() + '-' + 
-        String(appointmentDate.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(appointmentDate.getDate()).padStart(2, '0');
-      return localDateString === date;
+      const appointmentDateString = new Intl.DateTimeFormat('en-CA', {
+        timeZone: businessTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(appointmentDate);
+
+      return appointmentDateString === date;
     });
   };
 
@@ -775,18 +787,25 @@ export default function AppointmentsPage() {
     if (!appointments || !Array.isArray(appointments)) {
       return [];
     }
-    // Format the target date in local timezone
-    const targetDateString = date.getFullYear() + '-' + 
-      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-      String(date.getDate()).padStart(2, '0');
+    // Format the target date in business timezone
+    const businessTimezone = business?.timezone || 'Europe/Istanbul';
+    const targetDateString = new Intl.DateTimeFormat('en-CA', {
+      timeZone: businessTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(date);
     
     return appointments.filter(apt => {
-      // Use the startTime field to get the actual appointment date in local timezone
+      // Use the business timezone to get the actual appointment date
       const appointmentDate = new Date(apt.startTime);
-      const localDateString = appointmentDate.getFullYear() + '-' + 
-        String(appointmentDate.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(appointmentDate.getDate()).padStart(2, '0');
-      return localDateString === targetDateString;
+      const businessDateString = new Intl.DateTimeFormat('en-CA', {
+        timeZone: businessTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(appointmentDate);
+      return businessDateString === targetDateString;
     });
   };
 
@@ -1714,6 +1733,7 @@ export default function AppointmentsPage() {
                             const slotsToSpan = Math.ceil(durationInMinutes / 15);
 
                             if (startIndex === -1) return null;
+
 
                             const top = startIndex * 40; // 40px per slot
                             const height = slotsToSpan * 40;

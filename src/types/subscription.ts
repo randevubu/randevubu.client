@@ -39,6 +39,7 @@ export interface BusinessSubscription {
   id: string;
   businessId: string;
   planId: string;
+  plan?: SubscriptionPlan; // Include full plan data when available
   status: SubscriptionStatus;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
@@ -93,4 +94,107 @@ export interface UpdateBusinessSubscriptionData {
   status?: SubscriptionStatus;
   cancelAtPeriodEnd?: boolean;
   metadata?: Record<string, any>;
+}
+
+export interface ChangePlanData {
+  newPlanId: string;
+  paymentMethodId?: string;
+  billingCycle?: 'monthly' | 'yearly';
+  effectiveDate?: 'immediate' | 'next_billing_cycle';
+  prorationPreference?: 'prorate' | 'none';
+}
+
+export interface PaymentInfo {
+  amount: number;
+  currency: string;
+  paymentId: string;
+  paymentMethodId: string;
+  status: string;
+}
+
+export interface PaymentMethod {
+  id?: string; // Frontend expects this
+  paymentMethodId?: string; // Backend provides this
+  type?: 'card' | 'bank';
+  brand?: string;
+  cardBrand?: string; // Backend field
+  last4?: string;
+  lastFourDigits?: string; // Backend field
+  holderName?: string;
+  cardHolderName?: string; // Backend field
+  expireMonth?: number;
+  expiryMonth?: string; // Backend field
+  expireYear?: number;
+  expiryYear?: string; // Backend field
+  makeDefault?: boolean;
+  isDefault?: boolean; // Backend field
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+export interface AddPaymentMethodData {
+  cardHolderName: string;
+  cardNumber: string;
+  expireMonth: string;
+  expireYear: string;
+  cvc: string;
+  makeDefault?: boolean;
+}
+
+export interface PlanChangePreview {
+  changeType: 'upgrade' | 'downgrade' | 'same';
+  currentPlan: {
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+  };
+  newPlan: {
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+  };
+  pricing: {
+    prorationAmount: number;
+    totalAmount: number;
+    currency: string;
+    effectiveDate: 'immediate' | 'next_billing_cycle';
+    nextBillingDate: string;
+  };
+  paymentRequired: boolean;
+  paymentMethods: PaymentMethod[];
+  limitations?: string[];
+  canProceed: boolean;
+}
+
+export interface ChangePlanResponse {
+  id: string;
+  businessId: string;
+  planId: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  canceledAt?: string;
+  trialStart?: string;
+  trialEnd?: string;
+  autoRenewal: boolean;
+  paymentMethodId?: string;
+  nextBillingDate: string;
+  failedPaymentCount: number;
+  metadata: {
+    source: string;
+    changedAt: string;
+    changedBy: string;
+    createdAt: string;
+    changeType: 'upgrade' | 'downgrade' | 'change';
+    effectiveDate: 'immediate' | 'next_billing_cycle';
+    previousPlanId: string;
+    prorationAmount?: number;
+    prorationPreference: 'prorate' | 'none';
+  };
+  paymentInfo?: PaymentInfo;
+  createdAt: string;
+  updatedAt: string;
 }

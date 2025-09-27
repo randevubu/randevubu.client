@@ -46,7 +46,7 @@ export const staffService = {
 
   // Remove staff member
   removeStaff: async (staffId: string): Promise<ApiResponse<any>> => {
-    const response = await apiClient.delete<ApiResponse<any>>(`/api/v1/staff/${staffId}`);
+    const response = await apiClient.delete<ApiResponse<any>>(`/api/v1/staff/member/${staffId}`);
     return response.data;
   },
 

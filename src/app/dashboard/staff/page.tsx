@@ -1,15 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { staffService, StaffWithUser, StaffInviteRequest, StaffInviteVerificationRequest, StaffRole } from '../../../lib/services/staff';
-import { canViewBusinessStats } from '../../../lib/utils/permissions';
+import { canViewBusinessStats, canAccessStaffPage } from '../../../lib/utils/permissions';
 import { handleApiError } from '../../../lib/utils/toast';
+import { useErrorTranslations } from '../../../lib/utils/translations';
+import { formatPhoneForAPI, formatPhoneForDisplay } from '../../../lib/utils/phone';
 import toast from 'react-hot-toast';
 
 export default function StaffPage() {
   const { user } = useAuth();
+  const errorTranslations = useErrorTranslations();
+  const router = useRouter();
   const [staff, setStaff] = useState<StaffWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -24,6 +29,8 @@ export default function StaffPage() {
     permissions: {}
   });
   const [isInviting, setIsInviting] = useState(false);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
   
   // Verification states
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -35,13 +42,62 @@ export default function StaffPage() {
   const [selectedStaff, setSelectedStaff] = useState<StaffWithUser | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
+  // Confirmation dialog states
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+  const [confirmMessage, setConfirmMessage] = useState('');
+
   useEffect(() => {
-    if (user && canViewBusinessStats(user)) {
+    if (user && canAccessStaffPage(user)) {
       loadBusinessData();
+    } else if (user && !canAccessStaffPage(user)) {
+      router.push('/dashboard');
     } else {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, router]);
+
+  // Show access denied if user doesn't have permission
+  if (user && !canAccessStaffPage(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Erişim Reddedildi</h1>
+            <p className="text-gray-600 mb-6">Bu sayfaya erişim yetkiniz bulunmuyor. Personel yönetimi sadece işletme sahipleri tarafından yapılabilir.</p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              ← Dashboard'a Dön
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle click outside to close country dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+
+    if (isCountryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCountryDropdownOpen]);
 
   const loadBusinessData = async () => {
     try {
@@ -52,8 +108,7 @@ export default function StaffPage() {
         await loadStaff(business.id);
       }
     } catch (error) {
-      console.error('Failed to load business data:', error);
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
     } finally {
       setIsLoading(false);
     }
@@ -68,8 +123,7 @@ export default function StaffPage() {
         setStaff([]);
       }
     } catch (error) {
-      console.error('Failed to load staff:', error);
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
       setStaff([]);
     }
   };
@@ -77,9 +131,14 @@ export default function StaffPage() {
   const handleInviteStaff = async () => {
     if (!businessId) return;
 
+    // Format phone number to international format (+90...)
+    // Since we now have the country code separated, we need to add +90 prefix
+    const formattedPhoneNumber = `+90${inviteForm.phoneNumber.replace(/\s/g, '')}`;
+
     const inviteData: StaffInviteRequest = {
       businessId,
-      ...inviteForm
+      ...inviteForm,
+      phoneNumber: formattedPhoneNumber
     };
 
     try {
@@ -93,8 +152,7 @@ export default function StaffPage() {
         toast.success('SMS kodu gönderildi!');
       }
     } catch (error) {
-      console.error('Failed to invite staff:', error);
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
     } finally {
       setIsInviting(false);
     }
@@ -124,8 +182,7 @@ export default function StaffPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to verify invitation:', error);
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
     } finally {
       setIsVerifying(false);
     }
@@ -146,6 +203,27 @@ export default function StaffPage() {
     setShowDetailsModal(true);
   };
 
+  const showConfirmation = (message: string, action: () => void) => {
+    setConfirmMessage(message);
+    setConfirmAction(() => action);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirm = () => {
+    if (confirmAction) {
+      confirmAction();
+    }
+    setShowConfirmDialog(false);
+    setConfirmAction(null);
+    setConfirmMessage('');
+  };
+
+  const handleCancel = () => {
+    setShowConfirmDialog(false);
+    setConfirmAction(null);
+    setConfirmMessage('');
+  };
+
   const handleUpdateStaffStatus = async (staffId: string, isActive: boolean) => {
     try {
       const response = await staffService.updateStaff(staffId, { isActive });
@@ -157,29 +235,25 @@ export default function StaffPage() {
         setShowDetailsModal(false);
       }
     } catch (error) {
-      console.error('Failed to update staff status:', error);
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
     }
   };
 
   const handleRemoveStaff = async (staffId: string) => {
-    if (!confirm('Bu personeli tamamen silmek istediğinizden emin misiniz?')) {
-      return;
-    }
-
-    try {
-      const response = await staffService.removeStaff(staffId);
-      if (response.success) {
-        toast.success('Personel başarıyla silindi');
-        if (businessId) {
-          await loadStaff(businessId);
+    showConfirmation('Bu personeli tamamen silmek istediğinizden emin misiniz?', async () => {
+      try {
+        const response = await staffService.removeStaff(staffId);
+        if (response.success) {
+          toast.success('Personel başarıyla silindi');
+          if (businessId) {
+            await loadStaff(businessId);
+          }
+          setShowDetailsModal(false);
         }
-        setShowDetailsModal(false);
+      } catch (error) {
+        handleApiError(error, errorTranslations);
       }
-    } catch (error) {
-      console.error('Failed to remove staff:', error);
-      handleApiError(error);
-    }
+    });
   };
 
   if (!canViewBusinessStats(user)) {
@@ -398,14 +472,69 @@ export default function StaffPage() {
                 <label className="block text-sm font-medium text-[var(--theme-foregroundSecondary)] mb-2">
                   Telefon Numarası *
                 </label>
-                <input
-                  type="tel"
-                  value={inviteForm.phoneNumber}
-                  onChange={(e) => setInviteForm({ ...inviteForm, phoneNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--theme-border)] rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                  placeholder="+905551234567"
-                  required
-                />
+                <div className="relative" ref={countryDropdownRef}>
+                  <div className="flex rounded-lg border border-[var(--theme-border)] bg-[var(--theme-background)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)] focus-within:border-[var(--theme-primary)] transition-all duration-300">
+                    <div 
+                      className="flex items-center px-3 py-2 border-r border-[var(--theme-border)] bg-[var(--theme-muted)] rounded-l-lg cursor-pointer hover:bg-[var(--theme-mutedHover)] transition-colors duration-200"
+                      onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                    >
+                      <span className="text-lg mr-2">🇹🇷</span>
+                      <span className="text-[var(--theme-foreground)] font-medium">+90</span>
+                      <svg 
+                        className={`w-4 h-4 ml-2 text-[var(--theme-foregroundMuted)] transition-transform duration-200 ${isCountryDropdownOpen ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    <input
+                      type="tel"
+                      value={inviteForm.phoneNumber}
+                      onChange={(e) => {
+                        // Remove any non-digit characters and limit to 10 digits (without country code)
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        
+                        // Format as XXX XXX XX XX (without the leading 0)
+                        let formatted = '';
+                        if (digits.length <= 3) {
+                          formatted = digits;
+                        } else if (digits.length <= 6) {
+                          formatted = digits.slice(0, 3) + ' ' + digits.slice(3);
+                        } else if (digits.length <= 8) {
+                          formatted = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+                        } else {
+                          formatted = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6, 8) + ' ' + digits.slice(8);
+                        }
+                        
+                        setInviteForm({ ...inviteForm, phoneNumber: formatted });
+                      }}
+                      className="flex-1 px-3 py-2 text-[var(--theme-foreground)] placeholder-[var(--theme-foregroundMuted)] focus:outline-none bg-transparent transition-colors duration-300 rounded-r-lg"
+                      placeholder="555 123 45 67"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Dropdown */}
+                  {isCountryDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-full bg-[var(--theme-background)] border border-[var(--theme-border)] rounded-lg shadow-lg z-10 overflow-hidden">
+                      <div 
+                        className="flex items-center px-3 py-2 hover:bg-[var(--theme-muted)] cursor-pointer transition-colors duration-200"
+                        onClick={() => setIsCountryDropdownOpen(false)}
+                      >
+                        <span className="text-lg mr-3">🇹🇷</span>
+                        <div className="flex-1">
+                          <div className="text-[var(--theme-foreground)] font-medium">Turkey</div>
+                          <div className="text-sm text-[var(--theme-foregroundMuted)]">+90</div>
+                        </div>
+                        <svg className="w-4 h-4 text-[var(--theme-primary)]" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -640,6 +769,49 @@ export default function StaffPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--theme-card)] rounded-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-[var(--theme-border)]">
+              <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">Onay Gerekli</h3>
+            </div>
+            
+            <div className="p-6">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-[var(--theme-warning)]/20 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[var(--theme-warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-[var(--theme-foreground)] leading-relaxed">
+                    {confirmMessage}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-[var(--theme-backgroundSecondary)] border-t border-[var(--theme-border)] flex items-center justify-end space-x-3 rounded-b-xl">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-sm font-medium text-[var(--theme-foregroundSecondary)] bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg hover:bg-[var(--theme-backgroundSecondary)] transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="px-4 py-2 bg-[var(--theme-error)] text-white rounded-lg text-sm font-semibold hover:bg-[var(--theme-error)]/90 transition-colors"
+              >
+                Tamam
+              </button>
             </div>
           </div>
         </div>

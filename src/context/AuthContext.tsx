@@ -47,7 +47,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const shouldShowAuthenticatedUI = () => {
     if (!hasInitialized) {
       // During SSR/initial load, check cookie or server state to determine UI state
-      return getInitialAuthState() || getServerAuthState();
+      // Only show as authenticated if we have both cookie AND access token
+      return (getInitialAuthState() || getServerAuthState()) && !!accessToken;
     }
     return isAuthenticated;
   };
