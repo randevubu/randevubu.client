@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
-import { CreateBusinessData, BusinessType } from '../../types/business';
+import { CreateBusinessData, BusinessType, Business } from '../../types/business';
 import { debugBusinessCreationFlow } from '../../lib/utils/debugAuth';
 import { getAccessToken } from '../../lib/api';
 import { debugTokenState } from '../../lib/utils/tokenDebug';
 
 interface BusinessCreationFormProps {
-  onSuccess?: (business: any) => void;
+  onSuccess?: (business: Business) => void;
   onError?: (error: string) => void;
 }
 

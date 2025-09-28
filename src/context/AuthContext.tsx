@@ -47,9 +47,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const shouldShowAuthenticatedUI = () => {
     if (!hasInitialized) {
       // During SSR/initial load, check cookie or server state to determine UI state
-      // Only show as authenticated if we have both cookie AND access token
-      return (getInitialAuthState() || getServerAuthState()) && !!accessToken;
+      // Show as authenticated if we have auth cookies, even without access token in memory
+      return getInitialAuthState() || getServerAuthState();
     }
+    // After initialization, require actual authentication
     return isAuthenticated;
   };
 
@@ -63,10 +64,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // This will be handled by the client-side effect
       return false;
     }
-    
+
     // Check for auth hint cookie that backend should set
     // This is the standard approach used by major auth providers
-    return document.cookie.includes('hasAuth=1');
+    // Also check for accessToken cookie as fallback in case backend is setting it
+    return document.cookie.includes('hasAuth=1') ||
+           document.cookie.includes('accessToken=') ||
+           document.cookie.includes('refreshToken=');
   };
 
   // Get initial auth state from cookies (SSR-safe)
@@ -76,16 +80,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // This will be synced by the client-side effect
       return false;
     }
-    return document.cookie.includes('hasAuth=1');
+    return document.cookie.includes('hasAuth=1') ||
+           document.cookie.includes('accessToken=') ||
+           document.cookie.includes('refreshToken=');
   };
 
   // Get auth state from server headers (set by middleware)
   const getServerAuthState = (): boolean => {
     if (typeof window === 'undefined') return false;
-    
+
     // Check if we received auth state from server during initial load
     const metaTag = document.querySelector('meta[name="auth-state"]');
     return metaTag?.getAttribute('content') === 'authenticated';
+  };
+
+  // Try to read access token from cookie (fallback for production)
+  const getAccessTokenFromCookie = (): string | null => {
+    if (typeof window === 'undefined') return null;
+
+    const match = document.cookie.match(/accessToken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
   };
 
   // Auto-refresh token when it expires
@@ -298,16 +312,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // Wait for client-side hydration to complete
         await new Promise(resolve => setTimeout(resolve, 0));
-        
+
+        // Debug cookie state
+        if (typeof window !== 'undefined') {
+          console.log('🔍 Auth initialization debug:');
+          console.log('- Has hasAuth cookie:', document.cookie.includes('hasAuth=1'));
+          console.log('- Has accessToken cookie:', document.cookie.includes('accessToken='));
+          console.log('- Has refreshToken cookie:', document.cookie.includes('refreshToken='));
+          console.log('- Current access token in memory:', !!accessToken);
+        }
+
         // Only try refresh if we have auth session indicator
         // This completely avoids 400 requests on fresh visits
         if (getInitialAuthState() || getServerAuthState()) {
-          const token = await refreshToken(true);
-          if (token) {
-            const userProfile = await fetchUserProfile(token);
+          console.log('✅ Auth session detected, initializing...');
+          // Check if access token exists in cookie (production fallback)
+          const tokenFromCookie = getAccessTokenFromCookie();
+          if (tokenFromCookie && !accessToken) {
+            console.log('🍪 Found access token in cookie, setting in memory');
+            setAccessToken(tokenFromCookie);
+            setApiAccessToken(tokenFromCookie);
+            const userProfile = await fetchUserProfile(tokenFromCookie);
             setUser(userProfile);
+          } else {
+            console.log('🔄 No token in cookie or already in memory, trying refresh...');
+            // Try refresh token flow
+            const token = await refreshToken(true);
+            if (token) {
+              const userProfile = await fetchUserProfile(token);
+              setUser(userProfile);
+            }
           }
         } else {
+          console.log('❌ No auth session detected, user not logged in');
           // No auth session cookie - user is not logged in
           // Skip the API call entirely for clean network tab
         }

@@ -343,7 +343,7 @@ export class SubscriptionService {
       if (response.success && response.data) {
         return {
           success: true,
-          data: response.data as unknown as BusinessSubscription
+          data: response.data as unknown as BusinessSubscription 
         };
       } else {
         return {
