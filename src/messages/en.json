@@ -153,6 +153,14 @@
       "pro": {
         "name": "Pro Package",
         "description": "Professional solution for large businesses and salon chains"
+      },
+      "professional": {
+        "name": "Professional",
+        "description": "Professional solution for growing businesses and salons with multiple staff"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "Enterprise solution for large companies and salon chains"
       }
     },
     "features": {

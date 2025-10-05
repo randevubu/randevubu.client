@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../context/AuthContext';
+import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
 import { businessService } from '../../../lib/services/business';
 import { FormField } from '../../../components/ui/FormField';
 import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
@@ -11,6 +13,7 @@ import BusinessHoursSettings from '../../../components/ui/BusinessHoursSettings'
 import { BusinessImageManager } from '../../../components/features/BusinessImageManager';
 import { StaffPrivacySettingsComponent } from '../../../components/features/StaffPrivacySettings';
 import BusinessNotificationSettings from '../../../components/features/BusinessNotificationSettings';
+import { PushNotificationSettings } from '../../../components/features/PushNotificationSettings';
 import { Business, UpdateBusinessData, BusinessType } from '../../../types/business';
 import { canAccessSettingsPage, canAccessSettingsSection } from '../../../lib/utils/permissions';
 
@@ -73,24 +76,61 @@ const autoLogoutOptions = [
 export default function SettingsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
-  const [business, setBusiness] = useState<Business | null>(null);
-  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
-  const [businessLoading, setBusinessLoading] = useState(false);
-  const [businessData, setBusinessData] = useState<UpdateBusinessData>({
-    name: '',
-    description: '',
-    phone: '',
-    website: '',
-    address: '',
-    city: '',
-    state: '',
-    country: 'Turkey',
-    postalCode: '',
-    primaryColor: '#FF6B6B'
+
+  // Fetch business with TanStack Query
+  const { businesses, isLoading: businessLoading, refetch: refetchBusiness } = useMyBusiness();
+  const business = businesses[0] || null;
+
+  // Fetch business types with TanStack Query
+  const {
+    data: businessTypes = [],
+    isLoading: businessTypesLoading
+  } = useQuery({
+    queryKey: ['businessTypes'],
+    queryFn: async (): Promise<BusinessType[]> => {
+      const response = await businessService.getBusinessTypes();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    },
+    staleTime: 30 * 60 * 1000, // Business types rarely change, cache for 30 minutes
+    gcTime: 60 * 60 * 1000,
   });
+
+  // Initialize business data from the fetched business
+  const [businessData, setBusinessData] = useState<UpdateBusinessData>({
+    name: business?.name || '',
+    description: business?.description || '',
+    phone: business?.phone || '',
+    website: business?.website || '',
+    address: business?.address || '',
+    city: business?.city || '',
+    state: business?.state || '',
+    country: business?.country || 'Turkey',
+    postalCode: business?.postalCode || '',
+    primaryColor: business?.primaryColor || '#FF6B6B'
+  });
+
+  // Update businessData when business changes
+  useEffect(() => {
+    if (business) {
+      setBusinessData({
+        name: business.name || '',
+        description: business.description || '',
+        phone: business.phone || '',
+        website: business.website || '',
+        address: business.address || '',
+        city: business.city || '',
+        state: business.state || '',
+        country: business.country || 'Turkey',
+        postalCode: business.postalCode || '',
+        primaryColor: business.primaryColor || '#FF6B6B'
+      });
+    }
+  }, [business]);
   const [formData, setFormData] = useState<SettingsFormData>({
     // Appearance Settings (theme now handled by ThemeSelector)
     language: 'tr',
@@ -137,8 +177,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user && canAccessSettingsPage(user)) {
       loadUserSettings();
-      loadBusinessData();
-      loadBusinessTypes();
       loadSectionPreferences();
     } else if (user && !canAccessSettingsPage(user)) {
       router.push('/dashboard');
@@ -164,64 +202,19 @@ export default function SettingsPage() {
     }
   };
 
-  const loadUserSettings = async () => {
+  const loadUserSettings = () => {
     try {
-      setIsLoading(true);
-      
-      // Load user settings from localStorage or API
+      // Load user settings from localStorage
       const savedSettings = localStorage.getItem('userSettings');
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
         setFormData(prev => ({ ...prev, ...parsedSettings }));
       }
-      
+
       // Theme is now handled by ThemeContext
-      
     } catch (error) {
       console.error('Settings loading failed:', error);
       handleApiError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadBusinessData = async () => {
-    try {
-      setBusinessLoading(true);
-      const response = await businessService.getMyBusiness();
-      
-      if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
-        const businessInfo = response.data.businesses[0];
-        setBusiness(businessInfo);
-        setBusinessData({
-          name: businessInfo.name || '',
-          description: businessInfo.description || '',
-          phone: businessInfo.phone || '',
-          website: businessInfo.website || '',
-          address: businessInfo.address || '',
-          city: businessInfo.city || '',
-          state: businessInfo.state || '',
-          country: businessInfo.country || 'Turkey',
-          postalCode: businessInfo.postalCode || '',
-          primaryColor: businessInfo.primaryColor || '#FF6B6B'
-        });
-      }
-    } catch (error) {
-      console.error('Business loading failed:', error);
-      handleApiError(error);
-    } finally {
-      setBusinessLoading(false);
-    }
-  };
-
-  const loadBusinessTypes = async () => {
-    try {
-      const response = await businessService.getBusinessTypes();
-      if (response.success && response.data) {
-        setBusinessTypes(response.data);
-      }
-    } catch (error) {
-      console.error('Business types loading failed:', error);
     }
   };
 
@@ -278,7 +271,7 @@ export default function SettingsPage() {
       const response = await businessService.patchBusiness(business.id, cleanedData);
       if (response.success) {
         showSuccessToast('İşletme bilgileri güncellendi');
-        await loadBusinessData();
+        refetchBusiness();
       } else {
         handleApiError(response);
       }
@@ -293,17 +286,6 @@ export default function SettingsPage() {
   const handleCancel = () => {
     // No longer needed as all settings are always editable
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-gray-600">Ayarlar yükleniyor...</span>
-        </div>
-      </div>
-    );
-  }
 
   const renderAppearanceSettings = () => (
     <div className="space-y-6">
@@ -388,6 +370,25 @@ export default function SettingsPage() {
 
   const renderNotificationSettings = () => (
     <div className="space-y-6">
+      {/* Push Notification Settings */}
+      <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-6 border border-[var(--theme-border)] transition-colors duration-300">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-8 h-8 bg-[var(--theme-accent)]/10 rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-[var(--theme-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">Push Bildirimleri</h3>
+            <p className="text-sm text-[var(--theme-foregroundSecondary)] mt-1">
+              Tarayıcı push bildirimlerini yönetin
+            </p>
+          </div>
+        </div>
+
+        <PushNotificationSettings />
+      </div>
+
       {/* Business Notification Settings */}
       <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-6 border border-[var(--theme-border)] transition-colors duration-300">
         <div className="flex items-center space-x-3 mb-6">
@@ -397,9 +398,9 @@ export default function SettingsPage() {
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">İş Bildirimleri</h3>
+            <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">Randevu Hatırlatma Ayarları</h3>
             <p className="text-sm text-[var(--theme-foregroundSecondary)] mt-1">
-              Müşterilerinize gönderilecek randevu hatırlatma ayarlarını yönetin
+              Müşterilere gönderilecek randevu hatırlatma bildirimlerini yapılandırın. Push, SMS ve E-posta kanallarını, hatırlatma zamanlarını ve sessiz saatleri ayarlayın.
             </p>
           </div>
         </div>
@@ -720,7 +721,7 @@ export default function SettingsPage() {
                   businessId={business.id}
                   onHoursUpdated={() => {
                     // Reload business data to reflect changes
-                    loadBusinessData();
+                    refetchBusiness();
                   }}
                 />
               ) : (
@@ -1102,11 +1103,11 @@ export default function SettingsPage() {
             </div>
           </div>
           
-          <BusinessImageManager 
+          <BusinessImageManager
             businessId={business.id}
             onImagesUpdated={() => {
               // Reload business data to reflect changes
-              loadBusinessData();
+              refetchBusiness();
             }}
           />
         </>

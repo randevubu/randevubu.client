@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { businessService } from '../../lib/services/business';
-import { handleApiError } from '../../lib/utils/toast';
+import { handleApiError, showErrorToast } from '../../lib/utils/toast';
 import {
   EnhancedClosureData,
   NotificationChannel,
@@ -239,7 +239,24 @@ export default function ClosureDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check notification settings before full validation
+    if (formData.notifyCustomers) {
+      if (formData.notificationChannels.length === 0) {
+        showErrorToast('En az bir bildirim kanalı seçilmelidir');
+        return;
+      }
+      
+      if (!formData.notificationMessage.trim()) {
+        showErrorToast('Müşterilere bildirim gönderilirken bildirim mesajı gereklidir');
+        return;
+      }
+    }
+    
     if (!validateForm()) {
+      // Show a generic error toast for other validation issues
+      if (errors.general) {
+        showErrorToast(errors.general);
+      }
       return;
     }
 
@@ -338,10 +355,32 @@ export default function ClosureDialog({
   };
 
   const toggleNotificationChannel = (channel: NotificationChannel) => {
-    const channels = formData.notificationChannels.includes(channel)
+    const isRemoving = formData.notificationChannels.includes(channel);
+    const newChannels = isRemoving
       ? formData.notificationChannels.filter(c => c !== channel)
       : [...formData.notificationChannels, channel];
-    updateFormData({ notificationChannels: channels });
+    
+    // Prevent removing the last channel when notifications are enabled
+    if (formData.notifyCustomers && isRemoving && newChannels.length === 0) {
+      showErrorToast('En az bir bildirim kanalı seçilmelidir');
+      return;
+    }
+    
+    updateFormData({ notificationChannels: newChannels });
+  };
+
+  const handleNotifyCustomersToggle = () => {
+    const newNotifyValue = !formData.notifyCustomers;
+    
+    // If turning ON notifications and no channels selected, auto-select PUSH as default
+    if (newNotifyValue && formData.notificationChannels.length === 0) {
+      updateFormData({ 
+        notifyCustomers: newNotifyValue,
+        notificationChannels: ['PUSH'] as NotificationChannel[]
+      });
+    } else {
+      updateFormData({ notifyCustomers: newNotifyValue });
+    }
   };
 
   const toggleService = (serviceId: string) => {
@@ -400,7 +439,12 @@ export default function ClosureDialog({
   return (
     <div 
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={handleClose}
+      onClick={(e) => {
+        // Only close if clicking directly on the backdrop, not on any child elements
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
     >
       <div 
         className="bg-[var(--theme-card)] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[var(--theme-border)] transition-colors duration-300"
@@ -476,9 +520,6 @@ export default function ClosureDialog({
                   </button>
                 ))}
               </div>
-              {errors.general && (
-                <p className="mt-1 text-sm text-[var(--theme-error)]">{errors.general}</p>
-              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -627,7 +668,7 @@ export default function ClosureDialog({
                 </label>
                 <button
                   type="button"
-                  onClick={() => updateFormData({ notifyCustomers: !formData.notifyCustomers })}
+                  onClick={handleNotifyCustomersToggle}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 ${
                     formData.notifyCustomers ? 'bg-[var(--theme-primary)]' : 'bg-[var(--theme-border)]'
                   }`}

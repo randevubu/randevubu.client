@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../context/AuthContext';
-import { businessService } from '../../../lib/services/business';
+import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
 import { staffService, StaffWithUser, StaffInviteRequest, StaffInviteVerificationRequest, StaffRole } from '../../../lib/services/staff';
 import { canViewBusinessStats, canAccessStaffPage } from '../../../lib/utils/permissions';
 import { handleApiError } from '../../../lib/utils/toast';
@@ -15,9 +16,35 @@ export default function StaffPage() {
   const { user } = useAuth();
   const errorTranslations = useErrorTranslations();
   const router = useRouter();
-  const [staff, setStaff] = useState<StaffWithUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [businessId, setBusinessId] = useState<string | null>(null);
+
+  // Fetch business with TanStack Query
+  const { businesses } = useMyBusiness();
+  const business = businesses[0] || null;
+  const businessId = business?.id || null;
+
+  // Fetch staff with TanStack Query
+  const {
+    data: staff = [],
+    isLoading,
+    isError: staffHasError,
+    error: staffErrorObj,
+    refetch: refetchStaff
+  } = useQuery({
+    queryKey: ['staff', businessId],
+    queryFn: async (): Promise<StaffWithUser[]> => {
+      if (!businessId) return [];
+
+      const response = await staffService.getBusinessStaff(businessId, true);
+      if (response.success && response.data?.staff && Array.isArray(response.data.staff)) {
+        return response.data.staff;
+      }
+      return [];
+    },
+    enabled: !!businessId && !!user && canAccessStaffPage(user),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
   
   // Invite form states
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -46,16 +73,6 @@ export default function StaffPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
   const [confirmMessage, setConfirmMessage] = useState('');
-
-  useEffect(() => {
-    if (user && canAccessStaffPage(user)) {
-      loadBusinessData();
-    } else if (user && !canAccessStaffPage(user)) {
-      router.push('/dashboard');
-    } else {
-      setIsLoading(false);
-    }
-  }, [user, router]);
 
   // Show access denied if user doesn't have permission
   if (user && !canAccessStaffPage(user)) {
@@ -98,35 +115,6 @@ export default function StaffPage() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isCountryDropdownOpen]);
-
-  const loadBusinessData = async () => {
-    try {
-      const businessResponse = await businessService.getMyBusiness();
-      if (businessResponse.success && businessResponse.data?.businesses?.[0]) {
-        const business = businessResponse.data.businesses[0];
-        setBusinessId(business.id);
-        await loadStaff(business.id);
-      }
-    } catch (error) {
-      handleApiError(error, errorTranslations);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadStaff = async (businessId: string) => {
-    try {
-      const response = await staffService.getBusinessStaff(businessId, true);
-      if (response.success && response.data?.staff && Array.isArray(response.data.staff)) {
-        setStaff(response.data.staff);
-      } else {
-        setStaff([]);
-      }
-    } catch (error) {
-      handleApiError(error, errorTranslations);
-      setStaff([]);
-    }
-  };
 
   const handleInviteStaff = async () => {
     if (!businessId) return;
@@ -176,10 +164,8 @@ export default function StaffPage() {
         setVerificationCode('');
         setPendingInvite(null);
         resetInviteForm();
-        
-        if (businessId) {
-          await loadStaff(businessId);
-        }
+
+        refetchStaff();
       }
     } catch (error) {
       handleApiError(error, errorTranslations);
@@ -229,9 +215,7 @@ export default function StaffPage() {
       const response = await staffService.updateStaff(staffId, { isActive });
       if (response.success) {
         toast.success(isActive ? 'Personel aktifleştirildi' : 'Personel devre dışı bırakıldı');
-        if (businessId) {
-          await loadStaff(businessId);
-        }
+        refetchStaff();
         setShowDetailsModal(false);
       }
     } catch (error) {
@@ -245,9 +229,7 @@ export default function StaffPage() {
         const response = await staffService.removeStaff(staffId);
         if (response.success) {
           toast.success('Personel başarıyla silindi');
-          if (businessId) {
-            await loadStaff(businessId);
-          }
+          refetchStaff();
           setShowDetailsModal(false);
         }
       } catch (error) {

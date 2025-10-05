@@ -148,7 +148,7 @@ export default function BusinessesPage() {
                   href={`/businesses/${business.slug}`}
                   className="group block"
                 >
-                  <div className="bg-[var(--theme-card)] rounded-xl overflow-hidden shadow-lg border border-[var(--theme-border)] transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 group-hover:scale-[1.02]">
+                  <div className="bg-[var(--theme-card)] rounded-xl overflow-hidden shadow-lg border border-[var(--theme-border)] transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 group-hover:scale-[1.02] flex flex-col h-full">
                     {/* Business Image */}
                     <div className="relative h-32 overflow-hidden">
                       {business.coverImageUrl || business.logoUrl ? (
@@ -184,7 +184,7 @@ export default function BusinessesPage() {
                     </div>
 
                     {/* Business Info */}
-                    <div className="p-3">
+                    <div className="p-3 flex flex-col flex-grow">
                       <h3 className="text-sm font-bold text-[var(--theme-cardForeground)] mb-1 group-hover:text-[var(--theme-primary)] transition-colors duration-300 line-clamp-1">
                         {business.name}
                       </h3>
@@ -204,19 +204,8 @@ export default function BusinessesPage() {
                         <span className="line-clamp-1 text-xs">{business.city}, {business.state}</span>
                       </div>
 
-                      {/* Tags */}
-                      {business.tags && business.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {business.tags.slice(0, 1).map((tag) => (
-                            <span 
-                              key={tag}
-                              className="px-1 py-0.5 bg-[var(--theme-secondary)]/50 text-[var(--theme-foregroundSecondary)] text-xs rounded font-medium"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {/* Spacer to push button to bottom */}
+                      <div className="flex-grow"></div>
 
                       {/* CTA Button */}
                       <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] text-[var(--theme-primaryForeground)] py-2 px-3 rounded-lg text-center font-medium group-hover:from-[var(--theme-primaryHover)] group-hover:to-[var(--theme-accentHover)] transition-all duration-300 transform group-hover:scale-105 shadow-md">

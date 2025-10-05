@@ -127,7 +127,6 @@ export class PushNotificationService {
       // Check if service worker is already registered
       const existingRegistration = await navigator.serviceWorker.getRegistration('/');
       if (existingRegistration) {
-        console.log('Service Worker already registered:', existingRegistration);
         return existingRegistration;
       }
 
@@ -137,11 +136,8 @@ export class PushNotificationService {
         updateViaCache: 'none' // Always check for updates
       });
 
-      console.log('Service Worker registered:', registration);
-
       // Wait for the service worker to be ready
       await navigator.serviceWorker.ready;
-      console.log('Service Worker is ready');
 
       return registration;
     } catch (error) {
@@ -187,10 +183,8 @@ export class PushNotificationService {
       // 3. Check if already subscribed and unsubscribe first (to fix VAPID mismatch)
       const existingSubscription = await this.getCurrentSubscription();
       if (existingSubscription) {
-        console.log('Found existing subscription, unsubscribing first to prevent VAPID mismatch...');
         try {
           await this.unsubscribe();
-          console.log('Successfully unsubscribed from existing subscription');
         } catch (unsubscribeError) {
           console.warn('Failed to unsubscribe properly, continuing with new subscription:', unsubscribeError);
         }
@@ -212,10 +206,9 @@ export class PushNotificationService {
         applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey) as BufferSource
       });
 
-      console.log('Created new push subscription with current VAPID key');
-
       // 7. Send subscription to server
-      return await this.sendSubscriptionToServer(subscription);
+      const result = await this.sendSubscriptionToServer(subscription);
+      return result;
 
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);

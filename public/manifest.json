@@ -24,19 +24,5 @@
   ],
   "categories": ["business", "lifestyle", "productivity"],
   "lang": "tr",
-  "screenshots": [
-    {
-      "src": "/screenshot-desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "375x667",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
   "gcm_sender_id": "103953800507"
 }

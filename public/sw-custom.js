@@ -59,8 +59,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          // Cache successful API responses
-          if (response.ok) {
+          // Cache successful GET API responses only (Cache API doesn't support POST/PUT/DELETE)
+          if (response.ok && request.method === 'GET') {
             const responseClone = response.clone();
             caches.open(API_CACHE_NAME).then(cache => {
               cache.put(request, responseClone);
@@ -69,8 +69,15 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback to cache
-          return caches.match(request);
+          // Fallback to cache (only for GET requests)
+          if (request.method === 'GET') {
+            return caches.match(request);
+          }
+          // For non-GET requests, return a network error response
+          return new Response(JSON.stringify({ error: 'Network error' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
         })
     );
     return;
@@ -100,8 +107,8 @@ self.addEventListener('push', (event) => {
   let notificationData = {
     title: 'RandevuBu',
     body: 'Yeni bir bildiriminiz var',
-    icon: '/icon-192.png',
-    badge: '/badge-72.png',
+    icon: '/icon-192.svg',
+    badge: '/icon-192.svg',
     data: {}
   };
 

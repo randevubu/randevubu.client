@@ -75,10 +75,7 @@ export default function PlanChangePreviewStep({
     return (
       <div className="p-6 sm:p-8">
         <div className="text-center py-12">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-400 rounded-full animate-ping"></div>
-          </div>
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Plan Değişikliği Hesaplanıyor</h3>
           <p className="text-gray-500">Fiyatlandırma ve değişiklik detayları kontrol ediliyor...</p>
         </div>

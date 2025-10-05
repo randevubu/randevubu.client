@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { servicesService, MyServicesParams } from '../../../lib/services/services';
-import { Business } from '../../../types/business';
 import { Service } from '../../../types/service';
 import { canViewBusinessStats } from '../../../lib/utils/permissions';
 import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
 import { validateServiceForm, validateServiceField, CreateServiceSchema } from '../../../lib/validation/service';
 import { useValidationErrors } from '../../../lib/hooks/useValidationErrors';
 import { PriceSettingsForm } from '../../../components/ui';
+import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
+import { useServices } from '../../../lib/hooks/useServices';
 
 // Create Service Modal Component
 interface CreateServiceModalProps {
@@ -613,23 +614,40 @@ function DeleteConfirmationModal({ service, onConfirm, onCancel, isDeleting }: D
 
 export default function ServicesPage() {
   const { user } = useAuth();
-  const [business, setBusiness] = useState<Business | null>(null);
-  
-  // Services state
-  const [services, setServices] = useState<Service[]>([]);
-  const [servicesLoading, setServicesLoading] = useState(false);
-  const [servicesError, setServicesError] = useState<string | null>(null);
-  const [serviceFilters, setServiceFilters] = useState<MyServicesParams>({
-    page: 1,
-    limit: 50
-  });
+
+  // Fetch business data with TanStack Query
+  const { businesses, refetch: refetchBusiness } = useMyBusiness();
+  const business = businesses[0] || null;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
-  const [servicesPagination, setServicesPagination] = useState({
-    total: 0,
+
+  // Fetch services with TanStack Query
+  const {
+    services: allServices,
+    isLoading: servicesLoading,
+    isError: servicesHasError,
+    error: servicesErrorObj,
+    refetch: refetchServices
+  } = useServices({
+    businessId: business?.id,
     page: 1,
-    totalPages: 0
+    limit: 1000  // Load all services for client-side filtering
   });
+
+  const servicesError = servicesHasError ? (servicesErrorObj?.message || 'Hizmetler alınamadı.') : null;
+
+  // Filter services based on search query - memoized for performance
+  const filteredServices = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allServices;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    return allServices.filter(service =>
+      service.name.toLowerCase().includes(query) ||
+      service.description?.toLowerCase().includes(query)
+    );
+  }, [allServices, searchQuery]);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -645,115 +663,14 @@ export default function ServicesPage() {
   const [viewMode, setViewMode] = useState<'detailed' | 'compact'>('detailed');
   const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (user && canViewBusinessStats(user)) {
-      loadBusinessData();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (business && user && canViewBusinessStats(user)) {
-      loadServices();
-    }
-  }, [business, serviceFilters]);
-
-  useEffect(() => {
-    filterServices();
-  }, [services, searchQuery]);
-
-  const loadBusinessData = async () => {
-    try {
-      const response = await businessService.getMyBusiness();
-      
-      if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
-        const primaryBusiness = response.data.businesses[0];
-        
-        // Try to load price settings separately if not included in business data
-        try {
-          const priceSettingsResponse = await businessService.getPriceSettings();
-          if (priceSettingsResponse.success && priceSettingsResponse.data) {
-            primaryBusiness.priceSettings = priceSettingsResponse.data;
-          }
-        } catch (priceError) {
-          console.warn('Could not load price settings:', priceError);
-          // Set defaults if price settings endpoint doesn't exist
-          primaryBusiness.priceSettings = {
-            hideAllServicePrices: false,
-            showPriceOnBooking: true
-          };
-        }
-        
-        console.log('🔍 Loaded business data:', {
-          businessId: primaryBusiness.id,
-          priceSettings: primaryBusiness.priceSettings,
-          fullBusiness: primaryBusiness
-        });
-        setBusiness(primaryBusiness);
-      }
-    } catch (error) {
-      console.error('Business data loading failed:', error);
-      handleApiError(error);
-    }
-  };
-
-  const loadServices = async () => {
-    try {
-      setServicesLoading(true);
-      setServicesError(null);
-      
-      const params: MyServicesParams = { page: 1, limit: 1000 }; // Load all services for client-side filtering
-      if (business?.id) {
-        params.businessId = business.id;
-      }
-      
-      const response = await servicesService.getMyServices(params);
-      
-      if (!response.success) {
-        setServicesError(response.error?.message || 'Hizmetler alınamadı.');
-        return;
-      }
-
-      if (response.data) {
-        setServices(response.data.services);
-        setServicesPagination({
-          total: response.data.total,
-          page: response.data.page,
-          totalPages: response.data.totalPages
-        });
-      }
-      
-    } catch (error) {
-      console.error('Services loading failed:', error);
-      handleApiError(error);
-      setServicesError('Hizmetler yüklenirken bir hata oluştu.');
-    } finally {
-      setServicesLoading(false);
-    }
-  };
-
-  const filterServices = () => {
-    if (!searchQuery.trim()) {
-      setFilteredServices(services);
-      return;
-    }
-
-    const filtered = services.filter(service =>
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredServices(filtered);
-  };
-
   const toggleServiceStatus = async (service: Service) => {
     try {
       const newStatus = !service.isActive;
       const response = await servicesService.updateServiceStatus(service.id, newStatus);
-      
+
       if (response.success) {
-        // Update the service in the local state
-        setServices(prev => prev.map(s => 
-          s.id === service.id ? { ...s, isActive: newStatus } : s
-        ));
+        // Refetch services to get updated data
+        refetchServices();
         showSuccessToast(`Hizmet ${newStatus ? 'aktif' : 'pasif'} hale getirildi.`);
       } else {
         handleApiError(response);
@@ -776,8 +693,8 @@ export default function ServicesPage() {
       const response = await servicesService.deleteService(serviceToDelete.id);
       
       if (response.success) {
-        // Remove the service from the local state
-        setServices(prev => prev.filter(s => s.id !== serviceToDelete.id));
+        // Refetch services to get updated list
+        refetchServices();
         showSuccessToast('Hizmet başarıyla silindi.');
         setServiceToDelete(null);
       } else {
@@ -812,7 +729,7 @@ export default function ServicesPage() {
       const response = await servicesService.createServiceForBusiness(business.id, formData);
       
       if (response.success && response.data) {
-        setServices(prev => [response.data!, ...prev]);
+        refetchServices();
         setShowCreateModal(false);
         showSuccessToast('Hizmet başarıyla oluşturuldu.');
       } else {
@@ -838,10 +755,7 @@ export default function ServicesPage() {
       const response = await servicesService.updateService(serviceId, formData);
       
       if (response.success && response.data) {
-        // Update the service in the local state
-        setServices(prev => prev.map(s => 
-          s.id === serviceId ? response.data! : s
-        ));
+        refetchServices();
         setEditingService(null);
         showSuccessToast('Hizmet başarıyla güncellendi.');
       } else {
@@ -901,13 +815,8 @@ export default function ServicesPage() {
       console.log('💾 Save response:', response);
       
       if (response.success) {
-        // Update business data to reflect the new settings
-        setBusiness(prev => prev ? {
-          ...prev,
-          priceSettings: settings
-        } : null);
-        // Also reload business data to ensure we have the latest from server
-        await loadBusinessData();
+        // Refetch business data to get updated settings from server
+        refetchBusiness();
         showSuccessToast('Fiyat ayarları başarıyla kaydedildi.');
       } else {
         handleApiError(response);
@@ -1012,9 +921,9 @@ export default function ServicesPage() {
               </svg>
               Hizmetler
             </h3>
-            {(searchQuery ? filteredServices.length : servicesPagination.total) > 0 && (
+            {(searchQuery ? filteredServices.length : allServices.length) > 0 && (
               <span className="text-sm text-[var(--theme-foregroundMuted)]">
-                {searchQuery ? `${filteredServices.length} sonuç` : `${servicesPagination.total} hizmet`}
+                {searchQuery ? `${filteredServices.length} sonuç` : `${allServices.length} hizmet`}
               </span>
             )}
           </div>
@@ -1035,13 +944,13 @@ export default function ServicesPage() {
             <h3 className="mt-4 text-lg font-medium text-[var(--theme-foreground)]">Hata</h3>
             <p className="mt-2 text-sm text-[var(--theme-foregroundMuted)]">{servicesError}</p>
             <button
-              onClick={loadServices}
+              onClick={() => refetchServices()}
               className="mt-4 inline-flex items-center px-4 py-2 bg-[var(--theme-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--theme-primary)]/90"
             >
               Tekrar Dene
             </button>
           </div>
-        ) : (searchQuery ? filteredServices : services).length === 0 ? (
+        ) : (searchQuery ? filteredServices : allServices).length === 0 ? (
           <div className="p-8 text-center">
             <svg className="mx-auto h-12 w-12 text-[var(--theme-foregroundMuted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -1063,7 +972,7 @@ export default function ServicesPage() {
           </div>
         ) : viewMode === 'detailed' ? (
           <div className="divide-y divide-gray-200">
-            {(searchQuery ? filteredServices : services).map((service) => (
+            {(searchQuery ? filteredServices : allServices).map((service) => (
               <div key={service.id} className="p-4 sm:p-6 hover:bg-[var(--theme-backgroundSecondary)] transition-colors">
                 <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                   <div className="flex-1">
@@ -1120,7 +1029,7 @@ export default function ServicesPage() {
         ) : (
           /* Compact View */
           <div className="divide-y divide-gray-200">
-            {(searchQuery ? filteredServices : services).map((service) => {
+            {(searchQuery ? filteredServices : allServices).map((service) => {
               const isExpanded = expandedServices.has(service.id);
               return (
                 <div key={service.id} className="hover:bg-[var(--theme-backgroundSecondary)] transition-colors">

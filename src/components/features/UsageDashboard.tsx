@@ -88,7 +88,7 @@ export default function UsageDashboard({ businessId, compact = false }: UsageDas
         <div className="text-center py-8">
           <div className="text-red-500 mb-2">⚠️</div>
           <p className="text-[var(--theme-foregroundSecondary)] text-sm">
-            {error || 'Unable to load usage data'}
+            {error?.toString() || 'Unable to load usage data'}
           </p>
         </div>
       </div>

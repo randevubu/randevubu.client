@@ -153,6 +153,14 @@
       "pro": {
         "name": "Pro Paket",
         "description": "Büyük işletmeler ve salon zincirleri için profesyonel çözüm"
+      },
+      "professional": {
+        "name": "Profesyonel",
+        "description": "Büyüyen işletmeler ve çoklu personeli olan salonlar için profesyonel çözüm"
+      },
+      "enterprise": {
+        "name": "Kurumsal",
+        "description": "Büyük şirketler ve salon zincirleri için kurumsal çözüm"
       }
     },
     "features": {

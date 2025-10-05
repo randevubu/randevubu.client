@@ -30,7 +30,6 @@ export default function PlanChangeProcessingStep({
             <div className="relative">
               <div className="w-24 h-24 border-4 border-blue-200 rounded-full"></div>
               <div className="absolute top-0 left-0 w-24 h-24 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <div className="absolute top-0 left-0 w-24 h-24 border-4 border-blue-400 border-t-transparent rounded-full animate-ping opacity-20"></div>
             </div>
 
             {/* Processing Icon */}

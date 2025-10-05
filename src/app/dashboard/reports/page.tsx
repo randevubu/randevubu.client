@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../context/AuthContext';
 import { reportsService, BusinessOverviewReport, RevenueReport, FinancialReport } from '../../../lib/services/reports';
 import { handleApiError } from '../../../lib/utils/toast';
@@ -14,10 +15,6 @@ interface DateRange {
 
 export default function ReportsPage() {
   const { user } = useAuth();
-  const [overviewData, setOverviewData] = useState<BusinessOverviewReport | null>(null);
-  const [revenueData, setRevenueData] = useState<RevenueReport | null>(null);
-  const [financialData, setFinancialData] = useState<FinancialReport | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [activeFilter, setActiveFilter] = useState<string>('Bu Ay'); // Track active filter
   const [calculatorData, setCalculatorData] = useState<{ columns: RevenueColumn[]; monthlyData: MonthlyData }>({ columns: [], monthlyData: {} }); // Calculator table data
@@ -26,73 +23,91 @@ export default function ReportsPage() {
     endDate: new Date().toISOString().split('T')[0],
   });
 
+  const params = {
+    startDate: `${dateRange.startDate}T00:00:00.000Z`,
+    endDate: `${dateRange.endDate}T23:59:59.999Z`,
+  };
+
+  // Fetch overview report with TanStack Query
+  const { data: overviewData = null, isLoading: overviewLoading } = useQuery({
+    queryKey: ['businessOverview', params],
+    queryFn: async (): Promise<BusinessOverviewReport | null> => {
+      const response = await reportsService.getBusinessOverview(params);
+      if (response.success) {
+        return response.data ?? {
+          businessId: '',
+          businessName: 'İşletme',
+          totalAppointments: 0,
+          completedAppointments: 0,
+          canceledAppointments: 0,
+          noShowAppointments: 0,
+          totalRevenue: 0,
+          averageAppointmentValue: 0,
+          completionRate: 0,
+          cancellationRate: 0,
+          noShowRate: 0,
+          totalCustomers: 0,
+          newCustomers: 0,
+          returningCustomers: 0
+        };
+      }
+      return null;
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  // Fetch revenue report with TanStack Query
+  const { data: revenueData = null, isLoading: revenueLoading } = useQuery({
+    queryKey: ['revenueReport', params],
+    queryFn: async (): Promise<RevenueReport | null> => {
+      const response = await reportsService.getRevenueReport(params);
+      if (response.success) {
+        return response.data ?? {
+          totalRevenue: 0,
+          periodRevenue: 0,
+          revenueByDay: [],
+          revenueByService: []
+        };
+      }
+      return null;
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  // Fetch financial report with TanStack Query
+  const { data: financialData = null, isLoading: financialLoading } = useQuery({
+    queryKey: ['financialReport', params],
+    queryFn: async (): Promise<FinancialReport | null> => {
+      const response = await reportsService.getFinancialReport(params);
+      if (response.success) {
+        return response.data ?? {
+          totalRevenue: 0,
+          netProfit: 0,
+          expenses: 0,
+          profitMargin: 0,
+          revenueGrowth: 0,
+          avgTransactionValue: 0,
+          paymentMethods: [],
+          monthlyTrends: []
+        };
+      }
+      return null;
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = overviewLoading || revenueLoading || financialLoading;
+
   const tabs = [
     { id: 'overview', name: 'Genel' },
     { id: 'calculator', name: 'Günlük Defterim' },
   ];
-
-  useEffect(() => {
-    if (user) {
-      loadAllReports();
-    }
-  }, [user, dateRange]);
-
-  const loadAllReports = async () => {
-    try {
-      setIsLoading(true);
-      
-      const params = {
-        startDate: `${dateRange.startDate}T00:00:00.000Z`,
-        endDate: `${dateRange.endDate}T23:59:59.999Z`,
-      };
-
-      // Load all reports in parallel
-      const [overviewRes, revenueRes, financialRes] = await Promise.all([
-        reportsService.getBusinessOverview(params),
-        reportsService.getRevenueReport(params),
-        reportsService.getFinancialReport(params),
-      ]);
-
-      if (overviewRes.success) setOverviewData(overviewRes.data ?? {
-        businessId: '',
-        businessName: 'İşletme',
-        totalAppointments: 0,
-        completedAppointments: 0,
-        canceledAppointments: 0,
-        noShowAppointments: 0,
-        totalRevenue: 0,
-        averageAppointmentValue: 0,
-        completionRate: 0,
-        cancellationRate: 0,
-        noShowRate: 0,
-        totalCustomers: 0,
-        newCustomers: 0,
-        returningCustomers: 0
-      });
-      if (revenueRes.success) setRevenueData(revenueRes.data ?? {
-        totalRevenue: 0,
-        periodRevenue: 0,
-        revenueByDay: [],
-        revenueByService: []
-      });
-      if (financialRes.success) setFinancialData(financialRes.data ?? {
-        totalRevenue: 0,
-        netProfit: 0,
-        expenses: 0,
-        profitMargin: 0,
-        revenueGrowth: 0,
-        avgTransactionValue: 0,
-        paymentMethods: [],
-        monthlyTrends: []
-      });
-      
-    } catch (error) {
-      console.error('Reports loading failed:', error);
-      handleApiError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {

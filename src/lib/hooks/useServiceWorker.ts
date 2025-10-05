@@ -35,7 +35,12 @@ export function useServiceWorker() {
     // Register service worker
     const registerServiceWorker = async () => {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
+        // In development, use sw-custom.js to avoid stale build manifest errors
+        // In production, use the generated sw.js with workbox precaching
+        const swPath = process.env.NODE_ENV === 'development' ? '/sw-custom.js' : '/sw.js';
+        console.log('[useServiceWorker] Registering:', swPath);
+        
+        const registration = await navigator.serviceWorker.register(swPath, {
           scope: '/',
         });
 

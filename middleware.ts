@@ -24,8 +24,28 @@ export function middleware(request: NextRequest) {
   // Remove locale prefix from path for auth checking
   const pathWithoutLocale = path.replace(/^\/(en|tr)/, '') || '/';
 
-  // Get the auth cookie that indicates user session
-  const hasAuth = request.cookies.get('hasAuth')?.value === '1';
+  // Get auth cookies that indicate user session
+  const hasAuthCookie = request.cookies.get('hasAuth');
+  const refreshTokenCookie = request.cookies.get('refreshToken');
+  
+  // Check for authentication indicators using industry best practices:
+  // 1. Primary: hasAuth cookie (set by backend on login)
+  // 2. Fallback: refreshToken cookie (indicates valid session)
+  const hasAuth = (hasAuthCookie?.value === '1' || 
+                   hasAuthCookie?.value === 'true') && 
+                  !!refreshTokenCookie;
+
+  // Debug logging for troubleshooting
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [MIDDLEWARE] Auth check:', {
+      path: pathWithoutLocale,
+      hasAuthCookie: hasAuthCookie?.value,
+      hasRefreshToken: !!refreshTokenCookie,
+      hasAuth,
+      willRedirectFromAuth: pathWithoutLocale.startsWith('/auth') && hasAuth,
+      allCookies: request.cookies.getAll().map(c => `${c.name}=${c.value.substring(0, 20)}...`)
+    });
+  }
 
   // Create response based on intl middleware or create new one
   const response = intlResponse || NextResponse.next();
@@ -48,7 +68,19 @@ export function middleware(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (pathWithoutLocale.startsWith('/auth') && hasAuth) {
     const locale = path.startsWith('/en') ? '/en' : '';
-    return NextResponse.redirect(new URL(`${locale}/`, request.url));
+    const redirectUrl = `${locale}/`;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 [MIDDLEWARE] Redirecting authenticated user from auth page:', {
+        from: pathWithoutLocale,
+        to: redirectUrl,
+        hasAuth,
+        hasAuthCookie: hasAuthCookie?.value,
+        hasRefreshToken: !!refreshTokenCookie
+      });
+    }
+    
+    return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Note: Subscription checking is handled by SubscriptionGuard component

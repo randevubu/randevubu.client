@@ -41,7 +41,7 @@ export default function ChangePlanDialog({
     ? selectedPlan.price < currentSubscription.plan.price
     : false;
 
-  // Load payment methods and pricing calculation when dialog opens for upgrades
+  // Load payment methods and pricing calculation when dialog opens
   useEffect(() => {
     if (!isOpen || !selectedPlan || !currentSubscription || !businessId) return;
 
@@ -67,28 +67,26 @@ export default function ChangePlanDialog({
         setLoadingCalculation(false);
       }
 
-      // Load payment methods for upgrades
-      if (isUpgrade) {
-        setLoadingPaymentMethods(true);
-        try {
-          const paymentResponse = await subscriptionService.getPaymentMethods(businessId);
-          if (paymentResponse.success && paymentResponse.data) {
-            setPaymentMethods(paymentResponse.data);
-            // Auto-select first payment method if available
-            if (paymentResponse.data.length > 0 && paymentResponse.data[0].id) {
-              setSelectedPaymentMethod(paymentResponse.data[0].id);
-            }
+      // Load payment methods for both upgrades and downgrades (backend requires it)
+      setLoadingPaymentMethods(true);
+      try {
+        const paymentResponse = await subscriptionService.getPaymentMethods(businessId);
+        if (paymentResponse.success && paymentResponse.data) {
+          setPaymentMethods(paymentResponse.data);
+          // Auto-select first payment method if available
+          if (paymentResponse.data.length > 0 && paymentResponse.data[0].id) {
+            setSelectedPaymentMethod(paymentResponse.data[0].id);
           }
-        } catch (error) {
-          console.error('Failed to load payment methods:', error);
-        } finally {
-          setLoadingPaymentMethods(false);
         }
+      } catch (error) {
+        console.error('Failed to load payment methods:', error);
+      } finally {
+        setLoadingPaymentMethods(false);
       }
     };
 
     loadData();
-  }, [isOpen, selectedPlan, currentSubscription, businessId, isUpgrade]);
+  }, [isOpen, selectedPlan, currentSubscription, businessId]);
 
   // Set appropriate defaults based on upgrade/downgrade
   useEffect(() => {
@@ -118,16 +116,18 @@ export default function ChangePlanDialog({
       changePlanData.paymentMethodId = selectedPaymentMethod;
     }
 
+    // For downgrades, also include payment method if available (backend requires it)
+    if (isDowngrade && paymentMethods.length > 0) {
+      const defaultPaymentMethod = paymentMethods.find(m => m.isDefault) || paymentMethods[0];
+      changePlanData.paymentMethodId = defaultPaymentMethod.id || defaultPaymentMethod.paymentMethodId;
+    }
+
     onConfirm(changePlanData);
   };
 
   const canProceed = () => {
-    if (isUpgrade) {
-      // For upgrades, need payment method
-      return selectedPaymentMethod && !loadingPaymentMethods && !loadingCalculation;
-    }
-    // For downgrades, no payment method needed
-    return !loadingCalculation;
+    // Both upgrades and downgrades need payment methods (backend requirement)
+    return paymentMethods.length > 0 && !loadingPaymentMethods && !loadingCalculation;
   };
 
   const formatPrice = (price: number, currency: string | undefined) => {

@@ -286,9 +286,9 @@ export default function TimeSelectionPage() {
   const transformAppointment = (appointment: Appointment): AppointmentWithDetails => {
     return {
       id: appointment.id,
-      date: appointment.date instanceof Date ? appointment.date.toISOString().split('T')[0] : appointment.date,
-      startTime: appointment.startTime instanceof Date ? appointment.startTime.toISOString() : appointment.startTime,
-      endTime: appointment.endTime instanceof Date ? appointment.endTime.toISOString() : appointment.endTime,
+      date: appointment.date,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
       duration: appointment.duration,
       status: appointment.status,
       service: {
@@ -319,22 +319,23 @@ export default function TimeSelectionPage() {
       if (response.success && response.data) {
         const appointments = Array.isArray(response.data) ? response.data : [response.data];
         // Filter out canceled appointments and map to expected format
+        // Note: API already filters by date, so we assign the requested date to each appointment
         return appointments
           .filter(apt => apt.status !== 'CANCELED')
           .map(apt => ({
             id: apt.id,
-            date: apt.date,
-            startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
-            endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
+            date: date, // Use the requested date since API already filtered by it
+            startTime: apt.startTime,
+            endTime: apt.endTime,
             duration: apt.duration,
             status: apt.status,
             service: {
-              id: apt.serviceId,
+              id: apt.serviceId || 'unknown',
               name: 'Service',
               duration: apt.duration
             },
             staff: { id: apt.staffId || 'unknown' },
-            customer: { id: apt.customerId, firstName: '', lastName: '' }
+            customer: { id: apt.customerId || 'unknown', firstName: '', lastName: '' }
           } as AppointmentWithDetails));
       }
     } catch (error) {
@@ -477,8 +478,8 @@ export default function TimeSelectionPage() {
           .map(apt => ({
             id: apt.id,
             date: apt.date,
-            startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
-            endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
+            startTime: apt.startTime,
+            endTime: apt.endTime,
             duration: apt.duration,
             status: apt.status,
             service: {
@@ -527,17 +528,14 @@ export default function TimeSelectionPage() {
 
     appointments.forEach(appointment => {
       try {
-        // Use startTime for date comparison since the date field might be in different timezone
-        const appointmentDate = new Date(appointment.startTime).toISOString().split('T')[0];
-        if (appointmentDate !== date) return;
-
+        // API already filtered by date, so all appointments are for the requested date
         // Convert appointment times to Istanbul time for comparison
-        const appointmentStart = convertToIstanbulTime(appointment.startTime);
+        const appointmentStart = createIstanbulTimeSlot(date, appointment.startTime);
         const appointmentEnd = appointment.endTime ?
-          convertToIstanbulTime(appointment.endTime) :
+          createIstanbulTimeSlot(date, appointment.endTime) :
           new Date(appointmentStart.getTime() + (appointment.duration || 60) * 60000);
 
-        console.log(`📋 Original appointment: ${appointment.startTime} - ${appointment.endTime || 'calculated'}`);
+        console.log(`📋 Appointment: ${appointment.startTime} - ${appointment.endTime || 'calculated'}`);
         console.log(`📋 Istanbul time: ${appointmentStart.toLocaleString('tr-TR')} - ${appointmentEnd.toLocaleString('tr-TR')}`);
 
         // No buffer time - appointments can be scheduled back-to-back
@@ -573,16 +571,13 @@ export default function TimeSelectionPage() {
 
     // Check if this slot falls within any existing appointment's duration
     const overlappingAppointment = appointments.find(apt => {
-      // Use startTime for date comparison since the date field might be in different timezone
-      const appointmentDate = new Date(apt.startTime).toISOString().split('T')[0];
-      if (appointmentDate !== date) return false;
-
+      // API already filtered by date, so no need to check date again
+      // Just check if this slot time falls within the appointment's time range
       const appointmentStartMinutes = parseTimeToMinutes(apt.startTime);
       const appointmentEndMinutes = appointmentStartMinutes + apt.duration;
 
       console.log(`  🔍 Checking overlap: slot ${slotStartMinutes} vs appointment ${appointmentStartMinutes}-${appointmentEndMinutes}`);
       
-      // Check if this slot time falls within the appointment duration
       // The slot is occupied if it's within the appointment's time range
       return slotStartMinutes >= appointmentStartMinutes && slotStartMinutes < appointmentEndMinutes;
     });
@@ -615,10 +610,7 @@ export default function TimeSelectionPage() {
     // Find the NEAREST next appointment after this slot
     const nextAppointments = appointments
       .filter(apt => {
-        // Use startTime for date comparison since the date field might be in different timezone
-        const appointmentDate = new Date(apt.startTime).toISOString().split('T')[0];
-        if (appointmentDate !== date) return false;
-
+        // API already filtered by date, so just check if appointment starts after this slot
         const appointmentStartMinutes = parseTimeToMinutes(apt.startTime);
         // Only consider appointments that start after this slot
         return appointmentStartMinutes > slotStartMinutes;

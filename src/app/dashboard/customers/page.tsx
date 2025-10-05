@@ -1,23 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { customerService, Customer, CustomerDetails, GetCustomersParams, BanCustomerRequest } from '../../../lib/services/customers';
+import { Customer, CustomerDetails, BanCustomerRequest, UnbanCustomerRequest } from '../../../lib/services/customers';
 import { canViewBusinessStats } from '../../../lib/utils/permissions';
-import { handleApiError } from '../../../lib/utils/toast';
-import { useValidationErrors } from '../../../lib/hooks/useValidationErrors';
 import { banCustomerSchema } from '../../../lib/validation/customers';
+import { useCustomers, useCustomerDetails, useBanCustomer, useUnbanCustomer } from '../../../lib/hooks/useCustomers';
 
 export default function CustomersPage() {
   const { user } = useAuth();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetails | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showBanConfirmModal, setShowBanConfirmModal] = useState(false);
   const [banReason, setBanReason] = useState('');
@@ -25,7 +19,6 @@ export default function CustomersPage() {
   const [banIsTemporary, setBanIsTemporary] = useState(true);
   const [banNotifyCustomer, setBanNotifyCustomer] = useState(true);
   const [banAdditionalNotes, setBanAdditionalNotes] = useState('');
-  const [isBanning, setIsBanning] = useState(false);
   const [banErrors, setBanErrors] = useState<Record<string, string>>({});
   
   // Unban states
@@ -33,78 +26,44 @@ export default function CustomersPage() {
   const [unbanReason, setUnbanReason] = useState('');
   const [unbanNotifyCustomer, setUnbanNotifyCustomer] = useState(true);
   const [unbanRestoreAccess, setUnbanRestoreAccess] = useState(true);
-  const [isUnbanning, setIsUnbanning] = useState(false);
 
-  useEffect(() => {
-    if (user && canViewBusinessStats(user)) {
-      loadCustomers();
-    } else {
-      setIsLoading(false);
-    }
-  }, [user, currentPage, searchQuery]);
+  // TanStack Query hooks
+  const { data: customersData, isLoading, error } = useCustomers({
+    page: currentPage,
+    limit: 50,
+    search: searchQuery.trim() || undefined,
+  });
 
-  const loadCustomers = async () => {
-    try {
-      setIsLoading(true);
-      
-      const params: Partial<GetCustomersParams> = {
-        page: currentPage,
-        limit: 50
-      };
-      
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
-      }
+  const { data: selectedCustomer, isLoading: isLoadingDetails } = useCustomerDetails(selectedCustomerId);
 
-      const response = await customerService.getMyCustomers(params);
-      
-      if (response.success && response.data) {
-        console.log('Customer data:', response.data.customers);
-        setCustomers(response.data.customers);
-        setTotal(response.data.total);
-        setTotalPages(response.data.totalPages);
-      }
-      
-    } catch (error) {
-      console.error('Failed to load customers:', error);
-      handleApiError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const banCustomerMutation = useBanCustomer();
+  const unbanCustomerMutation = useUnbanCustomer();
+
+  // Extract data from query results
+  const customers = customersData?.customers || [];
+  const total = customersData?.total || 0;
+  const totalPages = customersData?.totalPages || 1;
+
+  // Check if user has permission to view customers
+  const canViewCustomers = user && canViewBusinessStats(user);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    loadCustomers();
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleCustomerClick = async (customerId: string) => {
-    try {
-      setIsLoadingDetails(true);
-      setShowDetailsModal(true);
-      
-      const response = await customerService.getCustomerDetails(customerId);
-      
-      if (response.success && response.data) {
-        setSelectedCustomer(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load customer details:', error);
-      handleApiError(error);
-      setShowDetailsModal(false);
-    } finally {
-      setIsLoadingDetails(false);
-    }
+  const handleCustomerClick = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    setShowDetailsModal(true);
   };
 
   const closeDetailsModal = () => {
     setShowDetailsModal(false);
-    setSelectedCustomer(null);
+    setSelectedCustomerId(null);
   };
 
   const handleBanClick = () => {
@@ -112,7 +71,7 @@ export default function CustomersPage() {
   };
 
   const handleBanConfirm = async () => {
-    if (!selectedCustomer) return;
+    if (!selectedCustomerId) return;
 
     const banData: BanCustomerRequest = {
       reason: banReason.trim(),
@@ -126,7 +85,6 @@ export default function CustomersPage() {
       banData.durationDays = parseInt(String(banDuration), 10);
     }
 
-
     // Validate the data
     try {
       banCustomerSchema.parse(banData);
@@ -137,31 +95,26 @@ export default function CustomersPage() {
       return;
     }
 
-    try {
-      setIsBanning(true);
-      
-      await customerService.banCustomer(selectedCustomer.id, banData);
-      
-      // Reset form and close modals
-      setBanReason('');
-      setBanDuration(30);
-      setBanIsTemporary(true);
-      setBanNotifyCustomer(true);
-      setBanAdditionalNotes('');
-      setBanErrors({});
-      setShowBanConfirmModal(false);
-      setShowDetailsModal(false);
-      setSelectedCustomer(null);
-      
-      // Reload customers list
-      loadCustomers();
-      
-    } catch (error) {
-      console.error('Failed to ban customer:', error);
-      handleApiError(error);
-    } finally {
-      setIsBanning(false);
-    }
+    banCustomerMutation.mutate(
+      { customerId: selectedCustomerId, banData },
+      {
+        onSuccess: () => {
+          // Reset form and close modals
+          setBanReason('');
+          setBanDuration(30);
+          setBanIsTemporary(true);
+          setBanNotifyCustomer(true);
+          setBanAdditionalNotes('');
+          setBanErrors({});
+          setShowBanConfirmModal(false);
+          setShowDetailsModal(false);
+          setSelectedCustomerId(null);
+        },
+        onError: () => {
+          // Error is handled by the mutation hook
+        },
+      }
+    );
   };
 
   const closeBanConfirmModal = () => {
@@ -179,36 +132,31 @@ export default function CustomersPage() {
   };
 
   const handleUnbanConfirm = async () => {
-    if (!selectedCustomer || !unbanReason.trim()) return;
+    if (!selectedCustomerId || !unbanReason.trim()) return;
 
-    try {
-      setIsUnbanning(true);
-      
-      const unbanData = {
-        reason: unbanReason.trim(),
-        notifyCustomer: unbanNotifyCustomer,
-        restoreAccess: unbanRestoreAccess
-      };
+    const unbanData: UnbanCustomerRequest = {
+      reason: unbanReason.trim(),
+      notifyCustomer: unbanNotifyCustomer,
+      restoreAccess: unbanRestoreAccess
+    };
 
-      await customerService.unbanCustomer(selectedCustomer.id, unbanData);
-      
-      // Reset form and close modals
-      setUnbanReason('');
-      setUnbanNotifyCustomer(true);
-      setUnbanRestoreAccess(true);
-      setShowUnbanConfirmModal(false);
-      setShowDetailsModal(false);
-      setSelectedCustomer(null);
-      
-      // Reload customers list
-      loadCustomers();
-      
-    } catch (error) {
-      console.error('Failed to unban customer:', error);
-      handleApiError(error);
-    } finally {
-      setIsUnbanning(false);
-    }
+    unbanCustomerMutation.mutate(
+      { customerId: selectedCustomerId, unbanData },
+      {
+        onSuccess: () => {
+          // Reset form and close modals
+          setUnbanReason('');
+          setUnbanNotifyCustomer(true);
+          setUnbanRestoreAccess(true);
+          setShowUnbanConfirmModal(false);
+          setShowDetailsModal(false);
+          setSelectedCustomerId(null);
+        },
+        onError: () => {
+          // Error is handled by the mutation hook
+        },
+      }
+    );
   };
 
   const closeUnbanConfirmModal = () => {
@@ -218,7 +166,7 @@ export default function CustomersPage() {
     setUnbanRestoreAccess(true);
   };
 
-  if (!canViewBusinessStats(user)) {
+  if (!canViewCustomers) {
     return (
       <div className="p-3 sm:p-6 bg-[var(--theme-background)] transition-colors duration-300">
         <div className="text-center py-8 sm:py-12">
@@ -857,17 +805,17 @@ export default function CustomersPage() {
             <div className="px-6 py-4 bg-[var(--theme-backgroundSecondary)] border-t border-[var(--theme-border)] flex items-center justify-end space-x-3 rounded-b-xl">
               <button
                 onClick={closeBanConfirmModal}
-                disabled={isBanning}
+                disabled={banCustomerMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-[var(--theme-foregroundSecondary)] bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg hover:bg-[var(--theme-backgroundSecondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 İptal
               </button>
               <button
                 onClick={handleBanConfirm}
-                disabled={isBanning || !banReason.trim() || Object.keys(banErrors).length > 0}
+                disabled={banCustomerMutation.isPending || !banReason.trim() || Object.keys(banErrors).length > 0}
                 className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isBanning ? (
+                {banCustomerMutation.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                     Engelleniyor...
@@ -954,17 +902,17 @@ export default function CustomersPage() {
             <div className="px-6 py-4 bg-[var(--theme-backgroundSecondary)] border-t border-[var(--theme-border)] flex items-center justify-end space-x-3 rounded-b-xl">
               <button
                 onClick={closeUnbanConfirmModal}
-                disabled={isUnbanning}
+                disabled={unbanCustomerMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-[var(--theme-foregroundSecondary)] bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg hover:bg-[var(--theme-backgroundSecondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 İptal
               </button>
               <button
                 onClick={handleUnbanConfirm}
-                disabled={isUnbanning || !unbanReason.trim()}
+                disabled={unbanCustomerMutation.isPending || !unbanReason.trim()}
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUnbanning ? (
+                {unbanCustomerMutation.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                     Engel Kaldırılıyor...

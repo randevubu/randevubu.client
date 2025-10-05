@@ -18,4 +18,7 @@ const nextConfig: NextConfig = {
 export default withNextIntl(withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
+  // Use custom service worker with push notification support
+  swSrc: "public/sw-custom.js",
+  swDest: "public/sw.js",
 })(nextConfig));

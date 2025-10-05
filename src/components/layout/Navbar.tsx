@@ -1,132 +1,31 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  isCustomerOnly, 
-  hasBusinessNoSubscriptionFromAPI, 
-  hasBusinessAndSubscriptionFromAPI, 
-  getPrimaryBusinessId,
-  isCustomer
+import { useMyBusiness } from '../../lib/hooks/useMyBusiness';
+import useClickOutside from '../../lib/hooks/useClickOutside';
+import {
+  hasBusinessAndSubscriptionFromAPI,
+  hasBusinessNoSubscriptionFromAPI,
+  isCustomer,
+  isCustomerOnly
 } from '../../lib/utils/permissions';
-import { subscriptionService } from '../../lib/services/subscription';
-import { BusinessSubscription } from '../../types/subscription';
 import ThemeSelector from '../ui/ThemeSelector';
-import { businessService } from '../../lib/services/business';
-import { Business } from '../../types/business';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [subscriptions, setSubscriptions] = useState<BusinessSubscription[]>([]);
-  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [businessesLoading, setBusinessesLoading] = useState(false);
   const { user, isAuthenticated, logout, hasInitialized, isLoading } = useAuth();
+  const { businesses, subscriptions, isLoading: businessesLoading } = useMyBusiness();
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Fetch businesses for the user (now includes subscription info)
-  useEffect(() => {
-    const fetchBusinesses = async () => {
-      if (!user || !hasInitialized || isLoading) return;
+  // For backward compatibility, also set subscriptionsLoading to match businessesLoading
+  const subscriptionsLoading = businessesLoading;
 
-      try {
-        setBusinessesLoading(true);
-        // Add timestamp to ensure fresh data
-        console.log('🔄 Fetching fresh business data...');
-        const response = await businessService.getMyBusiness();
-        if (response.success && response.data?.businesses) {
-          setBusinesses(response.data.businesses);
-          console.log('🏢 Fetched businesses:', response.data.businesses);
-          
-          // Extract subscriptions from business objects if available
-          const businessSubscriptions = response.data.businesses
-            .filter(business => business.subscription)
-            .map(business => {
-              const subscription = business.subscription!;
-              // Convert business subscription to full BusinessSubscription format
-              return {
-                id: subscription.id,
-                businessId: business.id,
-                planId: subscription.planId,
-                status: subscription.status as any,
-                currentPeriodStart: subscription.currentPeriodStart,
-                currentPeriodEnd: subscription.currentPeriodEnd,
-                cancelAtPeriodEnd: false,
-                createdAt: new Date(),
-                updatedAt: new Date()
-              } as BusinessSubscription;
-            });
-          
-          if (businessSubscriptions.length > 0) {
-            setSubscriptions(businessSubscriptions);
-            console.log('📱 Extracted subscriptions from business objects:', businessSubscriptions);
-          } else {
-            console.log('❌ No subscriptions found in business objects');
-            setSubscriptions([]);
-          }
-        } else {
-          setBusinesses([]);
-          setSubscriptions([]);
-          console.log('❌ No businesses found or API error');
-        }
-      } catch (error) {
-        console.error('Failed to fetch businesses:', error);
-        setBusinesses([]);
-        setSubscriptions([]);
-      } finally {
-        setBusinessesLoading(false);
-        setSubscriptionsLoading(false);
-      }
-    };
 
-    fetchBusinesses();
-  }, [user?.id, hasInitialized, isLoading]); // Use user.id instead of user object for more precise dependency
-
-  // Debug logging
-  useEffect(() => {
-    if (user && hasInitialized && !isLoading) {
-      const customerOnly = isCustomerOnly(user);
-      const businessNoSub = hasBusinessNoSubscriptionFromAPI(user, businesses, subscriptions);
-      const businessAndSub = hasBusinessAndSubscriptionFromAPI(user, businesses, subscriptions);
-      
-      console.log('🔍 Navbar Debug Info:', {
-        user: user.id,
-        username: user.firstName,
-        roles: user.roles?.map(r => r.name),
-        isAuthenticated,
-        hasInitialized,
-        isLoading,
-        businesses: businesses.map(b => ({ id: b.id, name: b.name })),
-        businessesLoading,
-        subscriptions: subscriptions.map(s => ({ id: s.id, status: s.status })),
-        subscriptionsLoading,
-        businessCount: businesses.length,
-        subscriptionCount: subscriptions.length,
-        // Decision logic
-        customerOnly,
-        businessNoSub,
-        businessAndSub,
-        showButtons: customerOnly ? 'Keşfet + İşletme Oluştur' : 
-                    businessNoSub ? 'Abonelik' :
-                    businessAndSub ? 'İşletmem' : 'None'
-      });
-    }
-  }, [user, isAuthenticated, hasInitialized, isLoading, businesses, businessesLoading, subscriptions, subscriptionsLoading]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  // Use custom hook for click outside behavior
+  useClickOutside(profileRef, () => setIsProfileOpen(false));
 
   return (
     <nav className="bg-[var(--theme-navbar)] backdrop-blur-xl border-b border-[var(--theme-border)] sticky top-0 z-50 transition-colors duration-300">
@@ -183,15 +82,25 @@ export default function Navbar() {
                   // Show loading state
                   <div className="hidden sm:block w-24 h-8 bg-[var(--theme-secondary)] animate-pulse rounded-lg"></div>
                 ) : hasBusinessAndSubscriptionFromAPI(user, businesses, subscriptions) ? (
-                  // User has business and subscription - show only İşletmem
-                  <Link 
-                    href="/dashboard" 
-                    className="hidden sm:inline-flex bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-xs sm:text-sm"
-                    title="İşletmem"
-                  >
-                    <span className="hidden md:inline">İşletmem</span>
-                    <span className="md:hidden">İşletme</span>
-                  </Link>
+                  // User has business and subscription - show both İşletmem and Randevu Al
+                  <>
+                    <Link 
+                      href="/businesses" 
+                      className="hidden sm:inline-flex bg-[var(--theme-accent)] text-white px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-accentHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-xs sm:text-sm"
+                      title="Randevu Al"
+                    >
+                      <span className="hidden md:inline">Randevu Al</span>
+                      <span className="md:hidden">Keşfet</span>
+                    </Link>
+                    <Link 
+                      href="/dashboard" 
+                      className="hidden sm:inline-flex bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-xs sm:text-sm"
+                      title="İşletmem"
+                    >
+                      <span className="hidden md:inline">İşletmem</span>
+                      <span className="md:hidden">İşletme</span>
+                    </Link>
+                  </>
                 ) : hasBusinessNoSubscriptionFromAPI(user, businesses, subscriptions) ? (
                   // User has business but no subscription - show only subscription button
                   <Link 
@@ -296,19 +205,33 @@ export default function Navbar() {
                             <div className="w-full h-12 bg-gray-200 animate-pulse rounded-xl"></div>
                           </div>
                         ) : hasBusinessAndSubscriptionFromAPI(user, businesses, subscriptions) ? (
-                          // User has business and subscription - show only İşletmem
-                          <Link 
-                            href="/dashboard" 
-                            className="flex items-center space-x-3 px-3 py-3 text-sm text-gray-900 hover:bg-purple-50 rounded-xl transition-all duration-200 group sm:hidden"
-                            onClick={() => setIsProfileOpen(false)}
-                          >
-                            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                              </svg>
-                            </div>
-                            <span className="font-semibold">İşletmem</span>
-                          </Link>
+                          // User has business and subscription - show both Randevu Al and İşletmem
+                          <>
+                            <Link 
+                              href="/businesses" 
+                              className="flex items-center space-x-3 px-3 py-3 text-sm text-gray-900 hover:bg-orange-50 rounded-xl transition-all duration-200 group sm:hidden"
+                              onClick={() => setIsProfileOpen(false)}
+                            >
+                              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                              </div>
+                              <span className="font-semibold">Randevu Al</span>
+                            </Link>
+                            <Link 
+                              href="/dashboard" 
+                              className="flex items-center space-x-3 px-3 py-3 text-sm text-gray-900 hover:bg-purple-50 rounded-xl transition-all duration-200 group sm:hidden"
+                              onClick={() => setIsProfileOpen(false)}
+                            >
+                              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                              </div>
+                              <span className="font-semibold">İşletmem</span>
+                            </Link>
+                          </>
                         ) : hasBusinessNoSubscriptionFromAPI(user, businesses, subscriptions) ? (
                           // User has business but no subscription - show only subscription button
                           <Link 

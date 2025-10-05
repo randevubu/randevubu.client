@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { businessService } from '../../lib/services/business';
 import { handleApiError, showSuccessToast, showErrorToast } from '../../lib/utils/toast';
 import { FormField } from '../ui/FormField';
-import usePushNotifications from '../../lib/hooks/usePushNotifications';
+import { usePushNotifications } from '../../context/PushNotificationContext';
 import useSMSCountdown from '../../lib/hooks/useSMSCountdown';
 import TestButton from '../ui/TestButton';
 import SMSCostWarning from '../ui/SMSCostWarning';
@@ -272,7 +272,7 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
   const handlePushTest = async () => {
     try {
       setIsPushTesting(true);
-      await pushNotifications.testNotification('Bu, push bildirim ayarlarınızın test mesajıdır.');
+      await pushNotifications.sendTestNotification();
 
       // Update last test time
       setTestState(prev => ({
@@ -489,7 +489,7 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                         if (!pushNotifications.isSubscribed && pushNotifications.isSupported) {
                           try {
                             console.log('Step 1: Subscribing to push notifications (User Level)...');
-                            await pushNotifications.subscribe();
+                            await pushNotifications.enableNotifications();
                             console.log('Step 1: Successfully subscribed to push notifications');
                           } catch (error) {
                             console.error('Step 1 failed: Could not subscribe to push notifications:', error);
@@ -502,7 +502,7 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                         if (pushNotifications.isSubscribed) {
                           try {
                             console.log('Unsubscribing from push notifications (User Level)...');
-                            await pushNotifications.unsubscribe();
+                            await pushNotifications.disableNotifications();
                             console.log('Successfully unsubscribed from push notifications');
                           } catch (error) {
                             console.warn('Failed to unsubscribe from push notifications:', error);
@@ -517,7 +517,7 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                         pushEnabled: enabled
                       });
                     }}
-                    disabled={isSaving || pushNotifications.isLoading || !pushNotifications.isSupported}
+                    disabled={isSaving || pushNotifications.isInitializing || !pushNotifications.isSupported}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-[var(--theme-backgroundSecondary)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--theme-primary)]/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--theme-primary)] peer-disabled:opacity-50"></div>
@@ -525,28 +525,10 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                 {pushNotifications.isSupported && pushNotifications.permission === 'default' && (
                   <button
                     onClick={pushNotifications.requestPermission}
-                    disabled={pushNotifications.isLoading}
+                    disabled={pushNotifications.isInitializing}
                     className="px-2 py-1 text-xs bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] rounded hover:bg-[var(--theme-primaryHover)] disabled:opacity-50"
                   >
                     İzin Ver
-                  </button>
-                )}
-                {pushNotifications.isSupported && pushNotifications.isSubscribed && settings.pushEnabled && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        await pushNotifications.unsubscribe();
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        await pushNotifications.subscribe();
-                        showSuccessToast('Abonelik yenilendi');
-                      } catch (error) {
-                        showErrorToast('Yenileme başarısız');
-                      }
-                    }}
-                    disabled={pushNotifications.isLoading}
-                    className="px-2 py-1 text-xs bg-[var(--theme-warning)] text-white rounded hover:opacity-90 disabled:opacity-50"
-                  >
-                    🔄 Yenile
                   </button>
                 )}
               </div>
@@ -742,7 +724,7 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                 <div className="space-y-2">
                   <TestButton
                     channel="PUSH"
-                    disabled={isPushTesting || isSaving || pushNotifications.isLoading || !pushNotifications.isSubscribed}
+                    disabled={isPushTesting || isSaving || pushNotifications.isInitializing || !pushNotifications.isSubscribed}
                     cooldown={0} // No cooldown for push
                     onTest={handlePushTest}
                     className="w-full justify-center"

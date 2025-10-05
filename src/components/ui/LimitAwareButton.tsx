@@ -25,27 +25,24 @@ export function LimitAwareButton({
   ...props
 }: LimitAwareButtonProps) {
   const {
-    limitsCheck,
     canSendSms,
     canAddStaff,
     canAddService,
-    canAddCustomer,
-    isLoading
+    canAddCustomer
   } = useUsageLimits(businessId);
 
   const actionLimits = {
-    sms: canSendSms(),
-    staff: canAddStaff(),
-    service: canAddService(),
-    customer: canAddCustomer()
+    sms: canSendSms,
+    staff: canAddStaff,
+    service: canAddService,
+    customer: canAddCustomer
   };
 
   const isAllowed = actionLimits[action];
-  const reason = limitsCheck?.[action]?.reason;
 
   const handleClick = () => {
-    if (!isAllowed && reason) {
-      onLimitReached?.(reason);
+    if (!isAllowed) {
+      onLimitReached?.('Limit reached for this action');
       return;
     }
     onClick?.();
@@ -55,15 +52,15 @@ export function LimitAwareButton({
     <div className="limit-aware-button-container">
       <button
         {...props}
-        disabled={!isAllowed || props.disabled || isLoading}
+        disabled={!isAllowed || props.disabled}
         onClick={handleClick}
         className={`${className} ${!isAllowed ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {children}
       </button>
-      {!isAllowed && showWarning && reason && (
+      {!isAllowed && showWarning && (
         <div className="text-red-500 text-sm mt-1">
-          {reason}
+          Limit reached for this action
         </div>
       )}
     </div>

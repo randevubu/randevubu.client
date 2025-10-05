@@ -33,9 +33,35 @@ export default function PlanChangeFlow({
   const [tempSelectedPlan, setTempSelectedPlan] = useState<SubscriptionPlan | null>(selectedPlan);
   const [preview, setPreview] = useState<PlanChangePreview | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [allPaymentMethods, setAllPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [changeResult, setChangeResult] = useState<any>(null);
+
+  // Load payment methods when dialog opens
+  useEffect(() => {
+    if (isOpen && businessId) {
+      loadPaymentMethods();
+    }
+  }, [isOpen, businessId]);
+
+  const loadPaymentMethods = async () => {
+    if (!businessId) return;
+
+    try {
+      const response = await subscriptionService.getPaymentMethods(businessId);
+      if (response.success && response.data) {
+        setAllPaymentMethods(response.data);
+        // Auto-select default payment method
+        const defaultMethod = response.data.find(m => m.isDefault || m.makeDefault) || response.data[0];
+        if (defaultMethod) {
+          setSelectedPaymentMethod(defaultMethod);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load payment methods:', error);
+    }
+  };
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -45,7 +71,6 @@ export default function PlanChangeFlow({
         // If a plan is pre-selected, go directly to preview
         setCurrentStep('preview');
         setPreview(null);
-        setSelectedPaymentMethod(null);
         setError(null);
         setChangeResult(null);
         loadPreview();
@@ -53,7 +78,6 @@ export default function PlanChangeFlow({
         // If no plan selected, start with plan selection
         setCurrentStep('plan-selection');
         setPreview(null);
-        setSelectedPaymentMethod(null);
         setError(null);
         setChangeResult(null);
       }
@@ -74,19 +98,11 @@ export default function PlanChangeFlow({
     setError(null);
 
     try {
-      console.log('🔄 Calculating plan change preview...', {
-        businessId,
-        subscriptionId: currentSubscription.id,
-        newPlanId: planToUse.id
-      });
-
       const response = await subscriptionService.calculatePlanChange(
         businessId,
         currentSubscription.id,
         planToUse.id
       );
-
-      console.log('📊 Plan change calculation response:', response);
 
       if (response.success && response.data) {
         const previewData = {
@@ -98,17 +114,12 @@ export default function PlanChangeFlow({
 
         // Auto-select default payment method if available
         const paymentMethods = response.data.paymentMethods || [];
-        console.log('🔍 Available payment methods:', paymentMethods);
 
         if (paymentMethods && paymentMethods.length > 0) {
           const defaultMethod = paymentMethods.find(m => m.makeDefault || m.isDefault) || paymentMethods[0];
-          console.log('🔍 Selected default payment method:', defaultMethod);
           setSelectedPaymentMethod(defaultMethod);
-        } else {
-          console.log('⚠️ No payment methods available');
         }
       } else {
-        console.error('❌ Plan change calculation failed:', response.error);
         setError(response.error?.message || 'Preview yüklenemedi');
 
         // Create a fallback preview for development
@@ -139,11 +150,10 @@ export default function PlanChangeFlow({
           canProceed: true // Override for development - in production this should be response.data.canProceed
         };
 
-        console.log('🔄 Using fallback preview:', fallbackPreview);
         setPreview(fallbackPreview);
       }
     } catch (err) {
-      console.error('❌ Plan change calculation error:', err);
+      console.error('Plan change calculation error:', err);
       setError('Beklenmeyen bir hata oluştu');
 
       // Create a fallback preview even on error
@@ -174,7 +184,6 @@ export default function PlanChangeFlow({
         canProceed: true
       };
 
-      console.log('🔄 Using fallback preview after error:', fallbackPreview);
       setPreview(fallbackPreview);
     } finally {
       setLoading(false);
@@ -187,7 +196,6 @@ export default function PlanChangeFlow({
   };
 
   const handlePlanSelected = (plan: SubscriptionPlan) => {
-    console.log('🔍 Plan selected:', plan);
     setTempSelectedPlan(plan);
     setCurrentStep('preview');
     setError(null);
@@ -208,7 +216,6 @@ export default function PlanChangeFlow({
   };
 
   const handlePaymentMethodSelected = (paymentMethod: PaymentMethod) => {
-    console.log('💳 Payment method selected:', paymentMethod);
     setSelectedPaymentMethod(paymentMethod);
     setCurrentStep('confirmation');
   };
@@ -227,41 +234,20 @@ export default function PlanChangeFlow({
         prorationPreference: 'prorate'
       };
 
-      // For upgrades, always require a payment method regardless of paymentRequired flag
-      if (preview.changeType === 'upgrade') {
-        const paymentMethodId = selectedPaymentMethod?.id || selectedPaymentMethod?.paymentMethodId;
-        if (selectedPaymentMethod && paymentMethodId) {
-          changePlanData.paymentMethodId = paymentMethodId;
-          console.log('✅ Payment method added to upgrade request:', paymentMethodId);
-        } else {
-          console.log('❌ No payment method selected for upgrade', { selectedPaymentMethod });
-          setError('Plan yükseltme için ödeme yöntemi gerekli. Lütfen önce bir ödeme yöntemi ekleyin.');
-          setCurrentStep('payment');
-          return;
-        }
+      // Backend requires paymentMethodId for all plan changes
+      // Try to get payment method ID from multiple sources
+      const paymentMethodId = selectedPaymentMethod?.id ||
+                              selectedPaymentMethod?.paymentMethodId ||
+                              allPaymentMethods[0]?.id ||
+                              allPaymentMethods[0]?.paymentMethodId;
+
+      if (!paymentMethodId) {
+        setError('Plan değiştirmek için ödeme yöntemi gerekli. Lütfen önce bir ödeme yöntemi ekleyin.');
+        setCurrentStep('payment');
+        return;
       }
 
-      // Handle payment method requirement for other cases where paymentRequired is explicitly true
-      if (preview.paymentRequired && !changePlanData.paymentMethodId) {
-        if (selectedPaymentMethod) {
-          const paymentMethodId = selectedPaymentMethod.id || selectedPaymentMethod.paymentMethodId;
-          if (paymentMethodId) {
-            changePlanData.paymentMethodId = paymentMethodId;
-          } else {
-            setError('Bu işlem için ödeme yöntemi gerekli. Lütfen önce bir ödeme yöntemi ekleyin.');
-            setCurrentStep('payment');
-            return;
-          }
-        } else {
-          setError('Bu işlem için ödeme yöntemi gerekli. Lütfen önce bir ödeme yöntemi ekleyin.');
-          setCurrentStep('payment');
-          return;
-        }
-      }
-
-      console.log('🔄 Executing plan change with data:', changePlanData);
-      console.log('🔍 Selected payment method:', selectedPaymentMethod);
-      console.log('🔍 Change type:', preview.changeType);
+      changePlanData.paymentMethodId = paymentMethodId;
 
       const response = await subscriptionService.changePlan(
         businessId,
@@ -281,7 +267,7 @@ export default function PlanChangeFlow({
         setCurrentStep('error');
       }
     } catch (err) {
-      console.error('❌ Plan change error:', err);
+      console.error('Plan change error:', err);
       setError('Beklenmeyen bir hata oluştu');
       setCurrentStep('error');
     } finally {

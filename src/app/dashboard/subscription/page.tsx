@@ -1,142 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../context/AuthContext';
-import { businessService } from '../../../lib/services/business';
-import { subscriptionService } from '../../../lib/services/subscription';
+import { useDashboardUser, useDashboardBusiness } from '../../../context/DashboardContext';
+import { useSubscription, useCancelSubscription } from '../../../lib/hooks/useSubscription';
 import Pricing from '../../../components/features/Pricing';
 import PlanChangeFlow from '../../../components/features/PlanChangeFlow';
 
-import { Business } from '../../../types/business';
-import { SubscriptionPlan, BusinessSubscription } from '../../../types/subscription';
+import { SubscriptionPlan } from '../../../types/subscription';
 import { SubscriptionStatus } from '../../../types/enums';
-import { canViewBusinessStats, canAccessSubscriptionPage } from '../../../lib/utils/permissions';
 import { handleApiError } from '../../../lib/utils/toast';
 
 export default function SubscriptionPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [business, setBusiness] = useState<Business | null>(null);
-  const [subscription, setSubscription] = useState<BusinessSubscription | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const user = useDashboardUser(); // DashboardGuard ensures user exists
+  const business = useDashboardBusiness(); // DashboardGuard ensures business exists
+
+  // TanStack Query hooks
+  const { subscription, isLoading: subscriptionLoading, refetch: refetchSubscription } = useSubscription();
+  const cancelSubscriptionMutation = useCancelSubscription();
+
+  // UI state
   const [showPlanChangeFlow, setShowPlanChangeFlow] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(true);
 
-  useEffect(() => {
-    if (authLoading) return;
+  // Loading state
+  const isLoading = subscriptionLoading;
 
-    if (!isAuthenticated || !user) {
-      router.push('/auth');
-      return;
-    }
-
-    // Check if user has permission to access this page
-    if (!canAccessSubscriptionPage(user)) {
-      router.push('/dashboard');
-      return;
-    }
-
-    loadData();
-  }, [user, isAuthenticated, authLoading, router]);
-
-  // Show access denied if user doesn't have permission
-  if (user && !canAccessSubscriptionPage(user)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-              <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Erişim Reddedildi</h1>
-            <p className="text-gray-600 mb-6">Bu sayfaya erişim yetkiniz bulunmuyor. Abonelik yönetimi sadece işletme sahipleri tarafından yapılabilir.</p>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              ← Dashboard'a Dön
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Load business data
-      const businessResponse = await businessService.getMyBusiness();
-      if (businessResponse.success && businessResponse.data?.businesses?.[0]) {
-        setBusiness(businessResponse.data.businesses[0]);
-        
-        // Load subscription data
-        await loadSubscriptionData(businessResponse.data.businesses[0].id);
-      }
-
-      // Note: Plans are now loaded directly by the Pricing component
-      
-    } catch (error) {
-      console.error('Data loading failed:', error);
-      handleApiError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadSubscriptionData = async (businessId: string) => {
-    try {
-      // Use the method that includes plan information
-      const response = await subscriptionService.getBusinessSubscriptionWithPlan(businessId);
-      if (response.success && response.data) {
-        setSubscription(response.data);
-        
-        // If the API response includes plan data, we can use it directly
-        // Otherwise, we'll use the availablePlans from the separate call
-        if (response.data.plan) {
-          console.log('Plan data included in subscription response:', response.data.plan);
-        }
-      } else {
-        // Fallback to mock data if API fails
-        console.log('Using mock subscription data');
-        const mockSubscription: BusinessSubscription = {
-          id: 'sub_123',
-          businessId,
-          planId: 'plan_1756732329431_jc8dg9ae7js', // Use actual database plan ID
-          status: SubscriptionStatus.ACTIVE,
-          currentPeriodStart: new Date('2024-01-01'),
-          currentPeriodEnd: new Date('2024-02-01'),
-          cancelAtPeriodEnd: false,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        };
-        setSubscription(mockSubscription);
-      }
-    } catch (error) {
-      console.error('Subscription loading failed:', error);
-      // Fallback to mock data
-      const mockSubscription: BusinessSubscription = {
-        id: 'sub_123',
-        businessId,
-        planId: 'plan_1756732329431_jc8dg9ae7js', // Use actual database plan ID
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodStart: new Date('2024-01-01'),
-        currentPeriodEnd: new Date('2024-02-01'),
-        cancelAtPeriodEnd: false,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
-      };
-      setSubscription(mockSubscription);
-    }
-  };
 
   // getCurrentPlan is no longer needed as the Pricing component handles plan data
 
@@ -170,36 +62,25 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handlePlanChangeSuccess = async () => {
+  const handlePlanChangeSuccess = () => {
     // Reload subscription data after successful plan change
-    if (business) {
-      await loadSubscriptionData(business.id);
-    }
+    refetchSubscription();
   };
 
   const handleCancel = async () => {
     if (!subscription || !business) return;
 
     try {
-      setIsUpdating(true);
+      await cancelSubscriptionMutation.mutateAsync({
+        businessId: business.id,
+        subscriptionId: subscription.id,
+      });
 
-      const response = await subscriptionService.cancelBusinessSubscription(business.id, subscription.id);
-
-      if (response.success) {
-        setShowCancelModal(false);
-        setCancelAtPeriodEnd(true); // Reset to default
-
-        // Reload data to show updated subscription status
-        await loadData();
-      } else {
-        handleApiError(new Error(response.error?.message || 'Abonelik iptali başarısız'));
-      }
-
+      setShowCancelModal(false);
+      setCancelAtPeriodEnd(true); // Reset to default
     } catch (error) {
       console.error('Cancellation failed:', error);
       handleApiError(error);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -230,22 +111,171 @@ export default function SubscriptionPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-400 rounded-full animate-ping"></div>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Abonelik Bilgileri Yükleniyor</h3>
-          <p className="text-gray-500">Lütfen bekleyin...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
-  // The Pricing component now handles fetching and displaying plans
+  return (
+    <SubscriptionPageContent
+      subscription={subscription}
+      business={business}
+      showPlanChangeFlow={showPlanChangeFlow}
+      setShowPlanChangeFlow={setShowPlanChangeFlow}
+      showCancelModal={showCancelModal}
+      setShowCancelModal={setShowCancelModal}
+      selectedPlan={selectedPlan}
+      setSelectedPlan={setSelectedPlan}
+      cancelAtPeriodEnd={cancelAtPeriodEnd}
+      setCancelAtPeriodEnd={setCancelAtPeriodEnd}
+      handlePlanChangeSuccess={handlePlanChangeSuccess}
+      handleCancel={handleCancel}
+      handlePlanSelect={handlePlanSelect}
+      formatDate={formatDate}
+      formatPrice={formatPrice}
+      getStatusColor={getStatusColor}
+      getStatusText={getStatusText}
+      cancelSubscriptionMutation={cancelSubscriptionMutation}
+    />
+  );
+}
 
+const LoadingSkeleton = () => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Current Subscription Skeleton */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 mb-8 sm:mb-12 animate-pulse">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+            <div>
+              <div className="h-8 w-48 bg-gray-300 rounded mb-2"></div>
+              <div className="h-5 w-64 bg-gray-300 rounded"></div>
+            </div>
+            <div className="h-10 w-24 bg-gray-300 rounded-2xl"></div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {/* Plan Card Skeleton */}
+            <div className="bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl p-4 sm:p-6 lg:p-8">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-400 rounded-xl"></div>
+                <div className="h-4 w-20 bg-gray-400 rounded"></div>
+              </div>
+              <div className="h-6 w-32 bg-gray-400 rounded mb-2"></div>
+              <div className="h-4 w-48 bg-gray-400 rounded mb-4"></div>
+              <div className="h-10 w-40 bg-gray-400 rounded mb-2"></div>
+              <div className="h-4 w-32 bg-gray-400 rounded"></div>
+            </div>
+
+            {/* Features Skeleton */}
+            <div className="space-y-4 sm:space-y-6">
+              <div className="bg-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200">
+                <div className="h-5 w-32 bg-gray-300 rounded mb-3"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                </div>
+              </div>
+              <div className="bg-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200">
+                <div className="h-5 w-32 bg-gray-300 rounded mb-3"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Skeleton */}
+            <div className="space-y-3 sm:space-y-4">
+              <div className="h-12 w-full bg-gray-300 rounded-2xl"></div>
+              <div className="h-12 w-full bg-gray-300 rounded-2xl"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Available Plans Skeleton */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 mb-8 sm:mb-12 animate-pulse">
+          <div className="text-center mb-6 sm:mb-10">
+            <div className="h-8 w-48 bg-gray-300 rounded mx-auto mb-3"></div>
+            <div className="h-6 w-64 bg-gray-300 rounded mx-auto"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-gray-100 rounded-2xl p-6 border border-gray-200">
+                <div className="h-6 w-32 bg-gray-300 rounded mb-4"></div>
+                <div className="h-10 w-40 bg-gray-300 rounded mb-4"></div>
+                <div className="space-y-2 mb-6">
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded"></div>
+                </div>
+                <div className="h-12 w-full bg-gray-300 rounded-2xl"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Usage Statistics Skeleton */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 animate-pulse">
+          <div className="text-center mb-6 sm:mb-10">
+            <div className="h-8 w-48 bg-gray-300 rounded mx-auto mb-3"></div>
+            <div className="h-6 w-64 bg-gray-300 rounded mx-auto"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-8 w-24 bg-gray-300 rounded"></div>
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-300 rounded-2xl"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+interface SubscriptionPageContentProps {
+  subscription: any;
+  business: any;
+  showPlanChangeFlow: boolean;
+  setShowPlanChangeFlow: (show: boolean) => void;
+  showCancelModal: boolean;
+  setShowCancelModal: (show: boolean) => void;
+  selectedPlan: SubscriptionPlan | null;
+  setSelectedPlan: (plan: SubscriptionPlan | null) => void;
+  cancelAtPeriodEnd: boolean;
+  setCancelAtPeriodEnd: (value: boolean) => void;
+  handlePlanChangeSuccess: () => void;
+  handleCancel: () => void;
+  handlePlanSelect: (plan: SubscriptionPlan) => void;
+  formatDate: (date: Date) => string;
+  formatPrice: (price: number, currency: string | undefined) => string;
+  getStatusColor: (status: SubscriptionStatus) => string;
+  getStatusText: (status: SubscriptionStatus) => string;
+  cancelSubscriptionMutation: any;
+}
+
+const SubscriptionPageContent = ({
+  subscription,
+  business,
+  showPlanChangeFlow,
+  setShowPlanChangeFlow,
+  showCancelModal,
+  setShowCancelModal,
+  selectedPlan,
+  setSelectedPlan,
+  cancelAtPeriodEnd,
+  setCancelAtPeriodEnd,
+  handlePlanChangeSuccess,
+  handleCancel,
+  handlePlanSelect,
+  formatDate,
+  formatPrice,
+  getStatusColor,
+  getStatusText,
+  cancelSubscriptionMutation,
+}: SubscriptionPageContentProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -411,59 +441,6 @@ export default function SubscriptionPage() {
           <Pricing onPlanSelect={handlePlanSelect} />
         </div>
 
-        {/* Usage Statistics - Enhanced */}
-        {subscription && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8">
-            <div className="text-center mb-6 sm:mb-10">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Kullanım İstatistikleri</h2>
-              <p className="text-gray-600 text-base sm:text-lg">Mevcut kullanımınızı takip edin</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 sm:p-6 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <div>
-                    <p className="text-xs sm:text-sm text-blue-600 font-semibold uppercase tracking-wide">Personel</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-blue-800">2 Aktif</p>
-                  </div>
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 sm:p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <div>
-                    <p className="text-xs sm:text-sm text-green-600 font-semibold uppercase tracking-wide">Bu Ay Randevu</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-green-800">245 Tamamlandı</p>
-                  </div>
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 sm:p-6 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <div>
-                    <p className="text-xs sm:text-sm text-purple-600 font-semibold uppercase tracking-wide">Müşteriler</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-purple-800">127 Kayıtlı</p>
-                  </div>
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Professional Plan Change Flow */}
@@ -535,10 +512,10 @@ export default function SubscriptionPage() {
               </button>
               <button
                 onClick={handleCancel}
-                disabled={isUpdating}
+                disabled={cancelSubscriptionMutation.isPending}
                 className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 sm:px-6 py-3 rounded-2xl hover:from-red-600 hover:to-pink-600 disabled:opacity-50 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
               >
-                {isUpdating ? (
+                {cancelSubscriptionMutation.isPending ? (
                   <div className="flex items-center justify-center">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                     <span className="text-sm sm:text-base">İşleniyor...</span>
@@ -553,4 +530,4 @@ export default function SubscriptionPage() {
       )}
     </div>
   );
-}
+};

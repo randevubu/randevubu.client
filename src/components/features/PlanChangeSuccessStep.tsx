@@ -56,8 +56,6 @@ export default function PlanChangeSuccessStep({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            {/* Success pulse animation */}
-            <div className="absolute top-0 left-0 w-24 h-24 bg-green-200 rounded-full animate-ping opacity-20"></div>
           </div>
         </div>
 

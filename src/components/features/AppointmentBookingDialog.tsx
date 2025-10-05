@@ -109,6 +109,12 @@ export default function AppointmentBookingDialog({
   };
 
   const loadBusiness = async () => {
+    // Don't attempt to load if businessId is invalid
+    if (!businessId || businessId.trim() === '') {
+      console.warn('Cannot load business: invalid businessId');
+      return;
+    }
+
     try {
       const response = await businessService.getBusinessById(businessId);
       if (response.success && response.data) {
@@ -121,6 +127,12 @@ export default function AppointmentBookingDialog({
   };
 
   const loadServices = async () => {
+    // Don't attempt to load if businessId is invalid
+    if (!businessId || businessId.trim() === '') {
+      console.warn('Cannot load services: invalid businessId');
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await servicesService.getBusinessServices(businessId);
@@ -136,17 +148,23 @@ export default function AppointmentBookingDialog({
   };
 
   const loadStaff = async () => {
+    // Don't attempt to load if businessId is invalid
+    if (!businessId || businessId.trim() === '') {
+      console.warn('Cannot load staff: invalid businessId');
+      return;
+    }
+
     try {
       const response = await businessService.getBusinessStaff(businessId);
       if (response.success && response.data) {
         // Ensure staffList is an array
         let staffList = Array.isArray(response.data) ? response.data : [];
-        
+
         // Debug: Log the staff list to see what we're getting
         console.log('Staff list from API:', staffList);
         console.log('Business owner ID:', business?.ownerId);
         console.log('Current user ID:', user?.id);
-        
+
         // If no staff members returned, add the business owner as a staff member
         if (staffList.length === 0 && business?.ownerId && user?.id === business.ownerId && user) {
           // Use the business owner's actual ID as the staff ID
@@ -159,7 +177,7 @@ export default function AppointmentBookingDialog({
           }];
           console.log('Added business owner as staff member:', staffList[0]);
         }
-        
+
         setStaff(staffList);
       }
     } catch (error) {
@@ -177,7 +195,7 @@ export default function AppointmentBookingDialog({
     }
 
     // Check if creating new customer and quota is exceeded
-    if (selectedCustomer === null && !canAddCustomer()) {
+    if (selectedCustomer === null && !canAddCustomer) {
       setQuotaError({
         code: 'CUSTOMER_LIMIT_EXCEEDED',
         message: 'Müşteri limitiniz dolmuş. Daha fazla müşteri eklemek için paketinizi yükseltin.'
@@ -325,7 +343,7 @@ export default function AppointmentBookingDialog({
                 />
 
                 {/* Show warning when customer limits are reached */}
-                {!canAddCustomer() && !selectedCustomer && (
+                {!canAddCustomer && !selectedCustomer && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-start">
                       <div className="text-yellow-600 mr-2 mt-0.5">⚠️</div>

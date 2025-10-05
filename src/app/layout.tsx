@@ -6,8 +6,10 @@ import { QueryProvider } from "../context/QueryProvider";
 import { AuthProvider } from "../context/AuthContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { LocaleProvider } from "../context/LocaleContext";
+import { PushNotificationProvider } from "../context/PushNotificationContext";
 import { Toaster } from "react-hot-toast";
 import { type Locale } from '../i18n';
+import { ServiceWorkerInitializer } from "../components/ServiceWorkerInitializer";
 import "../styles/globals.css";
 import "../styles/mobile-enhancements.css";
 
@@ -69,32 +71,35 @@ export default async function RootLayout({
             <QueryProvider>
               <ThemeProvider>
                 <AuthProvider>
-                  {children}
-                  <Toaster
-                    position="top-right"
-                    toastOptions={{
-                      duration: 4000,
-                      style: {
-                        background: 'var(--theme-card)',
-                        color: 'var(--theme-cardForeground)',
-                        border: '1px solid var(--theme-border)',
-                      },
-                      success: {
-                        duration: 3000,
-                        iconTheme: {
-                          primary: 'var(--theme-success)',
-                          secondary: 'var(--theme-background)',
+                  <PushNotificationProvider>
+                    <ServiceWorkerInitializer />
+                    {children}
+                    <Toaster
+                      position="top-right"
+                      toastOptions={{
+                        duration: 4000,
+                        style: {
+                          background: 'var(--theme-card)',
+                          color: 'var(--theme-cardForeground)',
+                          border: '1px solid var(--theme-border)',
                         },
-                      },
-                      error: {
-                        duration: 5000,
-                        iconTheme: {
-                          primary: 'var(--theme-error)',
-                          secondary: 'var(--theme-background)',
+                        success: {
+                          duration: 3000,
+                          iconTheme: {
+                            primary: 'var(--theme-success)',
+                            secondary: 'var(--theme-background)',
+                          },
                         },
-                      },
-                    }}
-                  />
+                        error: {
+                          duration: 5000,
+                          iconTheme: {
+                            primary: 'var(--theme-error)',
+                            secondary: 'var(--theme-background)',
+                          },
+                        },
+                      }}
+                    />
+                  </PushNotificationProvider>
                 </AuthProvider>
               </ThemeProvider>
             </QueryProvider>

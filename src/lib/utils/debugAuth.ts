@@ -1,25 +1,27 @@
-import { decodeJWT } from './jwt';
+import { parseJWT } from './jwt';
 import { getAccessToken } from '../api';
 
 export function debugAuthState(context: string) {
   console.log(`\n🔍 DEBUG AUTH STATE - ${context}`);
   console.log('================================');
-  
+
   // Check current token in memory
   const currentToken = getAccessToken();
   console.log('Current token in memory:', currentToken ? currentToken.substring(0, 20) + '...' : 'null');
-  
+
   if (currentToken) {
-    const decoded = decodeJWT(currentToken);
-    console.log('Token contents:', decoded);
-    console.log('Token expires:', new Date(decoded.exp * 1000).toLocaleString());
-    console.log('Time until expiry:', Math.round((decoded.exp * 1000 - Date.now()) / 1000 / 60), 'minutes');
-    
-    // Check if token contains role information
-    if (decoded.roles) {
-      console.log('🔑 Roles in JWT:', decoded.roles);
-    } else {
-      console.log('⚠️  No roles found in JWT - roles likely fetched via API');
+    const decoded = parseJWT(currentToken);
+    if (decoded && decoded.exp) {
+      console.log('Token contents:', decoded);
+      console.log('Token expires:', new Date(decoded.exp * 1000).toLocaleString());
+      console.log('Time until expiry:', Math.round((decoded.exp * 1000 - Date.now()) / 1000 / 60), 'minutes');
+
+      // Check if token contains role information
+      if (decoded.roles) {
+        console.log('🔑 Roles in JWT:', decoded.roles);
+      } else {
+        console.log('⚠️  No roles found in JWT - roles likely fetched via API');
+      }
     }
   }
   

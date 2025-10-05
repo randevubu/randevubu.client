@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useRef, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import { authService } from '../../lib/services/auth';
-import { AxiosError } from 'axios';
-import { ApiError } from '../../types/api';
-import { formatPhoneForDisplay, formatPhoneForAPI } from '../../lib/utils/phone';
 import { useApiError } from '../../lib/hooks/useApiError';
-import { useCommonTranslations } from '../../lib/utils/translations';
+import { authService } from '../../lib/services/auth';
+import { formatPhoneForAPI, formatPhoneForDisplay } from '../../lib/utils/phone';
 import { VerificationPurpose } from '../../types/enums';
 
 type AuthStep = 'phone' | 'otp' | 'register';
@@ -22,9 +21,60 @@ export default function PhoneAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
 
-  const { login } = useAuth();
-  const { handleError, handleSuccess } = useApiError();
-  const commonT = useCommonTranslations();
+  const { login, isAuthenticated, hasInitialized } = useAuth();
+  const { handleError } = useApiError();
+  // const commonT = useCommonTranslations();
+  const router = useRouter();
+  const hasRedirected = useRef(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
+  // Handle redirect in useEffect to avoid setState during render
+  useEffect(() => {
+    if (isAuthenticated && !hasRedirected.current) {
+      hasRedirected.current = true;
+      setShouldRedirect(true);
+      toast.success('Zaten giriş yapmışsınız, yönlendiriliyorsunuz...', { duration: 2000 });
+      router.replace('/');
+    }
+  }, [isAuthenticated, router]);
+
+  // Show loading while checking authentication
+  if (!hasInitialized) {
+    return (
+      <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)] transition-colors duration-300">
+        <div className="text-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-6">
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-6 h-6 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[var(--theme-foregroundSecondary)]">Kimlik doğrulanıyor...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen if redirecting
+  if (shouldRedirect) {
+    return (
+      <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)] transition-colors duration-300">
+        <div className="text-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-6">
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-6 h-6 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[var(--theme-foregroundSecondary)]">Yönlendiriliyor...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +93,7 @@ export default function PhoneAuth() {
       
       if (response.success) {
         setStep('otp');
-        handleSuccess('Doğrulama kodu gönderildi');
+        toast.success('Doğrulama kodu gönderildi');
       } else {
         // This case might not be an AxiosError, so we need to handle it differently
         handleError(new Error('API returned unsuccessful response') as any);
@@ -65,11 +115,11 @@ export default function PhoneAuth() {
     const formattedPhoneNumber = formatPhoneForAPI(phoneNumber);
     
     const result = await login(formattedPhoneNumber, otp);
-    
+
     if (result.success) {
-      handleSuccess('Giriş başarılı! Yönlendiriliyorsunuz...');
-      // Login successful - redirect to home page
-      window.location.href = '/';
+      toast.success('Giriş başarılı!');
+      // TEMPORARILY DISABLED: Login successful - redirect to home page
+      // window.location.href = '/';
     }
     // Note: Error handling is done inside the login function in AuthContext
     setIsLoading(false);
@@ -87,7 +137,7 @@ export default function PhoneAuth() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      handleSuccess('Kayıt başarılı! Dashboard\'a yönlendiriliyorsunuz...');
+      toast.success('Kayıt başarılı! Dashboard\'a yönlendiriliyorsunuz...');
       window.location.href = '/dashboard';
     } catch (error) {
       handleError(error as any);

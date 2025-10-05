@@ -1,25 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import ClosureDialog from '../../../components/ui/ClosureDialog';
+import { getStatusColor, getStatusIcon, getStatusText } from '@/src/lib/utils/appointmentHelpers';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AppointmentBookingDialog from '../../../components/features/AppointmentBookingDialog';
+import ClosureDialog from '../../../components/ui/ClosureDialog';
 import { useAuth } from '../../../context/AuthContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { MyAppointmentsParams, appointmentService } from '../../../lib/services/appointments';
-import { businessService } from '../../../lib/services/business';
-import { servicesService } from '../../../lib/services/services';
-import { canViewBusinessStats, isStaff, isOwner, hasRole } from '../../../lib/utils/permissions';
+import { useAppointments } from '../../../lib/hooks/useAppointments';
+import { useClosures } from '../../../lib/hooks/useClosures';
+import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
+import { useServices } from '../../../lib/hooks/useServices';
+import { MyAppointmentsParams } from '../../../lib/services/appointments';
+import { getBusinessHoursForDate } from '../../../lib/utils/businessHours';
+import { hasRole, isOwner, isStaff } from '../../../lib/utils/permissions';
 import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
 import { Appointment, AppointmentStatus } from '../../../types';
-import { Business } from '../../../types/business';
-import { Service } from '../../../types/service';
-import { getBusinessHoursForDate } from '../../../lib/utils/businessHours';
+
 
 export default function AppointmentsPage() {
   const { user } = useAuth();
   const { actualMode, variant, setMode } = useTheme();
-  const [business, setBusiness] = useState<Business | null>(null);
-  const [services, setServices] = useState<Service[]>([]);
   const [expandedAppointment, setExpandedAppointment] = useState<string | null>(null);
 
   // Closure dialog state
@@ -33,6 +33,7 @@ export default function AppointmentsPage() {
   
   // Selection state
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [hasDragged, setHasDragged] = useState(false);
   
   // Closure details modal state
   const [selectedClosure, setSelectedClosure] = useState<any | null>(null);
@@ -40,15 +41,13 @@ export default function AppointmentsPage() {
   
   // Delete confirmation dialog state
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [isDeletingClosure, setIsDeletingClosure] = useState(false);
-  
+
   // Closure management modal
   const [showClosureManagementModal, setShowClosureManagementModal] = useState(false);
   
   // Appointment status update dialog
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Appointment booking dialog state
   const [appointmentBookingDialogOpen, setAppointmentBookingDialogOpen] = useState(false);
@@ -57,22 +56,9 @@ export default function AppointmentsPage() {
   // Calendar mode state
   const [calendarMode, setCalendarMode] = useState<'booking' | 'blocking'>('booking');
 
-  // Appointments state
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
-  const [appointmentsError, setAppointmentsError] = useState<string | null>(null);
-
-  // Closures state
-  const [closures, setClosures] = useState<any[]>([]);
-  const [closuresLoading, setClosuresLoading] = useState(false);
   const [appointmentFilters, setAppointmentFilters] = useState<MyAppointmentsParams>({
     page: 1,
     limit: 50
-  });
-  const [appointmentsPagination, setAppointmentsPagination] = useState({
-    total: 0,
-    page: 1,
-    totalPages: 0
   });
 
   // View mode state
@@ -94,24 +80,80 @@ export default function AppointmentsPage() {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
+  // Fetch business data
+  const { businesses, isLoading: businessLoading } = useMyBusiness();
+  const business = businesses[0] || null;
+
+  // Calculate date range based on view mode
+  const dateRangeParams = useMemo(() => {
+    if (viewMode === 'daily') {
+      return { date: selectedDate };
+    } else if (viewMode === 'weekly') {
+      const endDate = new Date(weekStart);
+      endDate.setDate(weekStart.getDate() + 6);
+      return {
+        dateFrom: weekStart.toISOString().split('T')[0],
+        dateTo: endDate.toISOString().split('T')[0]
+      };
+    } else if (viewMode === 'monthly') {
+      const endDate = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+      return {
+        dateFrom: monthStart.toISOString().split('T')[0],
+        dateTo: endDate.toISOString().split('T')[0]
+      };
+    }
+    return {};
+  }, [viewMode, selectedDate, weekStart, monthStart]);
+
+  // Fetch services
+  const { services } = useServices({ businessId: business?.id });
+
+  // Fetch appointments
+  const {
+    appointments,
+    pagination: appointmentsPagination,
+    isLoading: appointmentsLoading,
+    isError: appointmentsHasError,
+    error: appointmentsErrorObj,
+    refetch: refetchAppointments,
+    updateAppointmentStatus,
+    isUpdatingStatus: updatingStatus
+  } = useAppointments({
+    businessId: business?.id,
+    ...appointmentFilters,
+    ...dateRangeParams
+  });
+
+  const appointmentsError = appointmentsHasError ? (appointmentsErrorObj?.message || 'Randevular alınamadı.') : null;
+
+  // Fetch closures
+  const { closures, isLoading: closuresLoading, refetch: refetchClosures, deleteClosure, isDeletingClosure } = useClosures();
+  
+  // Debug: Log closures data
+  useEffect(() => {
+    console.log('📋 Closures data:', closures);
+    console.log('📋 Number of closures:', closures?.length || 0);
+    if (closures && closures.length > 0) {
+      console.log('📋 First closure:', closures[0]);
+      console.log('📋 Closure times in local timezone:');
+      console.log('  Start:', new Date(closures[0].startDate).toLocaleString('tr-TR'));
+      console.log('  End:', new Date(closures[0].endDate).toLocaleString('tr-TR'));
+    }
+    console.log('📅 Current selected date:', selectedDate);
+    console.log('📅 Current view mode:', viewMode);
+  }, [closures, selectedDate, viewMode]);
+
   // Detect mobile device
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
     };
-    
+
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-    
+
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
-
-
-  useEffect(() => {
-    if (user && canViewBusinessStats(user)) {
-      loadBusinessData();
-    }
-  }, [user]);
 
   // Prevent page scroll on mobile, allow only time slots container to scroll
   useEffect(() => {
@@ -134,13 +176,6 @@ export default function AppointmentsPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (business && user && canViewBusinessStats(user)) {
-      loadServices();
-      loadAppointmentsForCurrentView();
-    }
-  }, [business, user]);
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -150,195 +185,8 @@ export default function AppointmentsPage() {
     };
   }, [hoverTimeout]);
 
-  useEffect(() => {
-    if (business && user && canViewBusinessStats(user)) {
-      loadAppointmentsForCurrentView();
-      loadClosures();
-    }
-  }, [business, appointmentFilters, viewMode, selectedDate, weekStart, monthStart]);
-
-  const loadAppointmentsForCurrentView = () => {
-    if (viewMode === 'daily') {
-      loadAppointments();
-    } else if (viewMode === 'weekly') {
-      const endDate = new Date(weekStart);
-      endDate.setDate(weekStart.getDate() + 6);
-      loadAppointments({
-        start: weekStart.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
-      });
-    } else if (viewMode === 'monthly') {
-      const endDate = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
-      loadAppointments({
-        start: monthStart.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
-      });
-    }
-  };
-
-  const loadBusinessData = async () => {
-    try {
-      const response = await businessService.getMyBusiness();
-
-      if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
-        const primaryBusiness = response.data.businesses[0];
-        setBusiness(primaryBusiness);
-      }
-    } catch (error) {
-      console.error('Business data loading failed:', error);
-      handleApiError(error);
-    }
-  };
-
-  const loadAppointments = async (dateRange?: { start: string; end: string }) => {
-    try {
-      setAppointmentsLoading(true);
-      setAppointmentsError(null);
-
-      const params: any = { ...appointmentFilters };
-      if (business?.id) {
-        params.businessId = business.id;
-      }
-
-      // Set date range based on view mode
-      if (dateRange) {
-        params.dateFrom = dateRange.start;
-        params.dateTo = dateRange.end;
-      } else {
-        params.date = selectedDate;
-      }
-
-      const response = await appointmentService.getBusinessOwnerAppointments(params);
-
-      if (!response.success) {
-        setAppointmentsError(response.error?.message || 'Randevular alınamadı.');
-        return;
-      }
-
-      if (response.data) {
-        setAppointments(response.data.appointments);
-        setAppointmentsPagination({
-          total: response.data.total,
-          page: response.data.page,
-          totalPages: response.data.totalPages
-        });
-      }
-
-    } catch (error) {
-      console.error('Appointments loading failed:', error);
-      handleApiError(error);
-      setAppointmentsError('Randevular yüklenirken bir hata oluştu.');
-    } finally {
-      setAppointmentsLoading(false);
-    }
-  };
-
-  const loadServices = async () => {
-    try {
-      if (business?.id) {
-        const response = await servicesService.getMyServices({ businessId: business.id });
-        if (response.success && response.data) {
-          setServices(response.data.services);
-        }
-      }
-    } catch (error) {
-      console.error('Services loading failed:', error);
-    }
-  };
-
-  const loadClosures = async () => {
-    try {
-      setClosuresLoading(true);
-      // Load all closures (active and inactive) so users can see and restore inactive ones
-      const response = await businessService.getClosures();
-      if (response.success && response.data) {
-        setClosures(response.data);
-      }
-    } catch (error) {
-      console.error('Closures loading failed:', error);
-    } finally {
-      setClosuresLoading(false);
-    }
-  };
-
-  // Utility functions
-  const getStatusColor = (status: AppointmentStatus) => {
-    switch (status) {
-      case AppointmentStatus.PENDING:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600';
-      case AppointmentStatus.CONFIRMED:
-        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
-      case AppointmentStatus.IN_PROGRESS:
-        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
-      case AppointmentStatus.COMPLETED:
-        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700';
-      case AppointmentStatus.CANCELED:
-        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
-      case AppointmentStatus.NO_SHOW:
-        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600';
-    }
-  };
-
-  const getStatusIcon = (status: AppointmentStatus) => {
-    switch (status) {
-      case AppointmentStatus.PENDING:
-        return '⏳';
-      case AppointmentStatus.CONFIRMED:
-        return '✅';
-      case AppointmentStatus.IN_PROGRESS:
-        return '🔄';
-      case AppointmentStatus.COMPLETED:
-        return '✔️';
-      case AppointmentStatus.CANCELED:
-        return '❌';
-      case AppointmentStatus.NO_SHOW:
-        return '👻';
-      default:
-        return '❓';
-    }
-  };
-
-  const getStatusText = (status: AppointmentStatus) => {
-    switch (status) {
-      case AppointmentStatus.PENDING:
-        return 'Bekliyor';
-      case AppointmentStatus.CONFIRMED:
-        return 'Onaylandı';
-      case AppointmentStatus.COMPLETED:
-        return 'Tamamlandı';
-      case AppointmentStatus.CANCELED:
-        return 'İptal Edildi';
-      case AppointmentStatus.NO_SHOW:
-        return 'Gelmedi';
-      default:
-        return status;
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-    // Convert to Istanbul timezone (same logic as booking page)
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Europe/Istanbul',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).format(dateObj);
-  };
-
-  // Generate time slots based on business hours
-  const generateTimeSlots = (date?: string) => {
+  // Generate time slots based on business hours - memoized with useCallback
+  const generateTimeSlots = useCallback((date?: string) => {
     const targetDate = date || selectedDate;
 
     if (!business?.businessHours) {
@@ -390,17 +238,79 @@ export default function AppointmentsPage() {
     }
 
     return slots;
-  };
+  }, [selectedDate, business]);
+
+  // Memoize current day's time slots for performance
+  const currentDayTimeSlots = useMemo(() => generateTimeSlots(), [generateTimeSlots]);
+
+  // Pre-compute slot states to avoid O(n*m) complexity in render
+  const slotStates = useMemo(() => {
+    const states = new Map<string, {
+      hasAppointment: boolean;
+      appointment: Appointment | null;
+      isClosed: boolean;
+      closure: any | null;
+      isPast: boolean;
+    }>();
+
+    currentDayTimeSlots.forEach(timeSlot => {
+      // Check if slot has appointment
+      const appointment = appointments.find(apt => {
+        // startTime and endTime are already time strings in "HH:MM" format
+        const startTime = apt.startTime;
+        const endTime = apt.endTime;
+        return timeSlot >= startTime && timeSlot < endTime;
+      });
+
+      // Check if slot is closed - inline logic for proper closure detection
+      const closure = closures.find(c => {
+        // Only check active closures
+        if (!c.isActive) return false;
+        
+        // Parse closure dates (they come as UTC ISO strings from server)
+        const closureStart = new Date(c.startDate);
+        const closureEnd = new Date(c.endDate);
+        
+        // Create datetime for this time slot
+        const [hour, minute] = timeSlot.split(':').map(Number);
+        const slotTime = new Date(selectedDate + 'T00:00:00');
+        slotTime.setHours(hour, minute, 0, 0);
+        
+        // Convert slot time to UTC for proper comparison
+        const slotTimeUTC = new Date(slotTime.getTime() - (slotTime.getTimezoneOffset() * 60000));
+        
+        // Check if slot time (in UTC) is within closure period
+        return slotTimeUTC >= closureStart && slotTimeUTC < closureEnd;
+      });
+
+      // Check if slot is in past
+      const now = new Date();
+      const [hour, minute] = timeSlot.split(':').map(Number);
+      const slotDateTime = new Date(selectedDate + 'T00:00:00');
+      slotDateTime.setHours(hour, minute, 0, 0);
+      const isPast = slotDateTime < now;
+
+      states.set(timeSlot, {
+        hasAppointment: !!appointment,
+        appointment: appointment || null,
+        isClosed: !!closure,
+        closure: closure || null,
+        isPast
+      });
+    });
+
+    return states;
+  }, [currentDayTimeSlots, appointments, closures, selectedDate]);
 
   // Check if a time slot is in the past
-  const isTimeSlotInPast = (date: string, timeSlot: string) => {
+  const isTimeSlotInPast = useCallback((date: string, timeSlot: string) => {
     const now = new Date();
     const [hour, minute] = timeSlot.split(':').map(Number);
     const slotDateTime = new Date(date + 'T00:00:00');
     slotDateTime.setHours(hour, minute, 0, 0);
-    
+
     return slotDateTime < now;
-  };
+  }, []);
 
   // Check if a closure is in the future (can be clicked/deleted)
   const isClosureInFuture = (closure: any) => {
@@ -531,8 +441,8 @@ export default function AppointmentsPage() {
 
     // Find appointment that starts at this time
     const startingAppointment = dayAppointments.find(apt => {
-      const startTime = formatTime(apt.startTime);
-      return startTime === timeSlot;
+      // apt.startTime is already in HH:MM format
+      return apt.startTime === timeSlot;
     });
 
     if (startingAppointment) {
@@ -549,13 +459,17 @@ export default function AppointmentsPage() {
 
     // Check if this slot is occupied by a continuing appointment
     const occupyingAppointment = dayAppointments.find(apt => {
-      const startTime = new Date(apt.startTime);
-      const endTime = new Date(apt.endTime);
-      const slotTime = new Date(apt.startTime);
-      const [hour, minute] = timeSlot.split(':').map(Number);
-      slotTime.setHours(hour, minute, 0, 0);
+      // Convert time strings to minutes for comparison
+      const parseTime = (timeString: string): number => {
+        const [hours, minutes] = timeString.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+      
+      const startTimeMinutes = parseTime(apt.startTime);
+      const endTimeMinutes = parseTime(apt.endTime);
+      const slotTimeMinutes = parseTime(timeSlot);
 
-      return startTime <= slotTime && slotTime < endTime;
+      return startTimeMinutes <= slotTimeMinutes && slotTimeMinutes < endTimeMinutes;
     });
 
     if (occupyingAppointment) {
@@ -575,18 +489,8 @@ export default function AppointmentsPage() {
     }
 
     return appointments.filter(apt => {
-      // Use startTime to determine the appointment date
-      // Convert startTime to the business timezone and get the date
-      const businessTimezone = business?.timezone || 'Europe/Istanbul';
-      const appointmentDate = new Date(apt.startTime);
-      const appointmentDateString = new Intl.DateTimeFormat('en-CA', {
-        timeZone: businessTimezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(appointmentDate);
-
-      return appointmentDateString === date;
+      // Appointment date is already in YYYY-MM-DD format
+      return apt.date === date;
     });
   };
 
@@ -603,8 +507,6 @@ export default function AppointmentsPage() {
       
       // Check if closure overlaps with this local date
       const overlaps = (closureStart < dayEnd && closureEnd > dayStart);
-      
-
       
       return overlaps;
     });
@@ -676,7 +578,8 @@ export default function AppointmentsPage() {
     const dayAppointments = getAppointmentsForDate(selectedDate);
     
     return dayAppointments.some(apt => {
-      const appointmentStart = formatTime(apt.startTime);
+      // apt.startTime is already in HH:MM format
+      const appointmentStart = apt.startTime;
       const appointmentDuration = apt.duration;
       const slotStartTime = parseTime(timeSlot);
       const appointmentStartTime = parseTime(appointmentStart);
@@ -717,25 +620,14 @@ export default function AppointmentsPage() {
   };
 
   // Update appointment status
-  const updateAppointmentStatus = async (appointmentId: string, newStatus: AppointmentStatus) => {
+  const handleUpdateAppointmentStatus = async (appointmentId: string, newStatus: AppointmentStatus) => {
     try {
-      setUpdatingStatus(true);
-      
-      const response = await appointmentService.updateAppointmentStatus(appointmentId, newStatus);
-      
-      if (response.success) {
-        showSuccessToast('Randevu durumu güncellendi!');
-        // Refresh appointments
-        await loadAppointments();
-        setShowStatusDialog(false);
-        setSelectedAppointment(null);
-      } else {
-        handleApiError(response);
-      }
+      await updateAppointmentStatus(appointmentId, newStatus);
+      showSuccessToast('Randevu durumu güncellendi!');
+      setShowStatusDialog(false);
+      setSelectedAppointment(null);
     } catch (error) {
       handleApiError(error);
-    } finally {
-      setUpdatingStatus(false);
     }
   };
 
@@ -797,15 +689,8 @@ export default function AppointmentsPage() {
     }).format(date);
     
     return appointments.filter(apt => {
-      // Use the business timezone to get the actual appointment date
-      const appointmentDate = new Date(apt.startTime);
-      const businessDateString = new Intl.DateTimeFormat('en-CA', {
-        timeZone: businessTimezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(appointmentDate);
-      return businessDateString === targetDateString;
+      // Appointment date is already in YYYY-MM-DD format
+      return apt.date === targetDateString;
     });
   };
 
@@ -842,7 +727,7 @@ export default function AppointmentsPage() {
 
     if (calendarMode === 'booking') {
       // Booking mode: Single click opens appointment booking dialog
-      if (canBookForCustomers()) {
+      if (canBookForCustomers() && business?.id) {
         setSelectedTimeSlotForBooking(timeSlot);
         setAppointmentBookingDialogOpen(true);
       }
@@ -965,6 +850,7 @@ export default function AppointmentsPage() {
     setIsSelecting(false);
     setSelectionStart(null);
     setSelectedTimeSlots([]);
+    setHasDragged(false);
   };
 
   // Simplified mobile touch handlers - just detect scrolling
@@ -973,10 +859,8 @@ export default function AppointmentsPage() {
     setTouchStartTime(Date.now());
     setIsScrolling(false);
 
-    // Prevent default to avoid text selection in blocking mode
-    if (calendarMode === 'blocking' && e) {
-      e.preventDefault();
-    }
+    // Don't prevent default - allow scrolling during selection
+    // CSS touchAction: 'pan-y' and user-select: none handle the rest
   };
 
   const handleTouchEnd = (timeSlot: string, e?: React.TouchEvent) => {
@@ -1010,6 +894,9 @@ export default function AppointmentsPage() {
     // Only handle left mouse button
     if (e.button !== 0) return;
     
+    // Only handle mouse drag in blocking mode
+    if (calendarMode !== 'blocking') return;
+    
     const slotInfo = getSlotAppointment(timeSlot);
     const isClosed = isTimeSlotClosed(selectedDate, timeSlot);
     const isPast = isTimeSlotInPast(selectedDate, timeSlot);
@@ -1018,14 +905,22 @@ export default function AppointmentsPage() {
       return;
     }
 
-    // Start selection mode
-    setIsSelecting(true);
-    setSelectionStart(timeSlot);
-    setSelectedTimeSlots([timeSlot]);
+    // Don't immediately start selection - wait to see if user drags
+    setHasDragged(false);
+    
+    let dragStarted = false;
+    const startSlot = timeSlot;
     
     // Add mouse move and up listeners
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isSelecting || !selectionStart) return;
+      // Mark that user has dragged
+      if (!dragStarted) {
+        dragStarted = true;
+        setHasDragged(true);
+        setIsSelecting(true);
+        setSelectionStart(startSlot);
+        setSelectedTimeSlots([startSlot]);
+      }
       
       const elementBelow = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
       if (elementBelow && (elementBelow as HTMLElement).dataset?.timeSlot) {
@@ -1042,11 +937,21 @@ export default function AppointmentsPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       
-      // If we have a valid selection, open the closure dialog
-      if (selectedTimeSlots.length > 0 && isSelecting) {
+      // Only open dialog if user actually dragged
+      if (dragStarted && selectedTimeSlots.length > 1) {
         setClosureDialogOpen(true);
         setIsSelecting(false);
         setSelectionStart(null);
+        setHasDragged(false);
+      } else if (dragStarted) {
+        // User dragged but only selected one slot, reset
+        setIsSelecting(false);
+        setSelectionStart(null);
+        setSelectedTimeSlots([]);
+        setHasDragged(false);
+      } else {
+        // User just clicked without dragging - let click handler manage it
+        setHasDragged(false);
       }
     };
     
@@ -1062,13 +967,13 @@ export default function AppointmentsPage() {
 
   const handleClosureCreated = () => {
     setSelectedTimeSlots([]);
-    loadAppointmentsForCurrentView();
-    loadClosures(); // Also reload closures to show the new one
+    refetchAppointments();
+    refetchClosures(); // Also reload closures to show the new one
   };
 
   const handleAppointmentCreated = () => {
     setSelectedTimeSlotForBooking('');
-    loadAppointmentsForCurrentView(); // Reload appointments to show the new one
+    refetchAppointments(); // Reload appointments to show the new one
   };
 
   const handleDeleteClosure = () => {
@@ -1078,24 +983,18 @@ export default function AppointmentsPage() {
 
   const confirmDeleteClosure = async () => {
     if (!selectedClosure) return;
-    
-    setIsDeletingClosure(true);
-    
+
     try {
-      await businessService.deleteClosure(selectedClosure.id);
+      await deleteClosure(selectedClosure.id);
       // Close all modals
       setShowDeleteConfirmation(false);
       setClosureDetailsOpen(false);
       setSelectedClosure(null);
-      // Reload closures to refresh the UI
-      await loadClosures();
       // Show success message
       showSuccessToast('Kapatma başarıyla silindi!');
     } catch (error) {
       console.error('Closure delete failed:', error);
       handleApiError(error);
-    } finally {
-      setIsDeletingClosure(false);
     }
   };
 
@@ -1367,9 +1266,7 @@ export default function AppointmentsPage() {
 
               {/* Time slots - show all slots or closed message */}
               {(() => {
-                const timeSlots = generateTimeSlots();
-
-                if (timeSlots.length === 0 && business?.businessHours) {
+                if (currentDayTimeSlots.length === 0 && business?.businessHours) {
                   // Business is closed on this day
                   const businessHours = getBusinessHoursForDate(business, selectedDate);
                   return (
@@ -1396,14 +1293,11 @@ export default function AppointmentsPage() {
                   );
                 }
 
-                return timeSlots.map((timeSlot, index) => {
+                return currentDayTimeSlots.map((timeSlot, index) => {
                 const isHourStart = timeSlot.endsWith(':00');
-                // Check if this time slot has an appointment covering it
-                const hasAppointment = appointments.some(apt => {
-                  const startTime = formatTime(apt.startTime);
-                  const endTime = formatTime(apt.endTime);
-                  return timeSlot >= startTime && timeSlot < endTime;
-                });
+                // Use pre-computed slot state for performance
+                const slotState = slotStates.get(timeSlot);
+                const hasAppointment = slotState?.hasAppointment || false;
 
                 return (
                   <div
@@ -1423,12 +1317,11 @@ export default function AppointmentsPage() {
                     {/* Empty slot column */}
                     <div className="flex-1 min-w-0 relative">
                       {(() => {
-                        const isClosed = isTimeSlotClosed(selectedDate, timeSlot);
-                        const closure = getSlotClosure(selectedDate, timeSlot);
-                        const isPast = isTimeSlotInPast(selectedDate, timeSlot);
-                        
+                        // Use pre-computed slot state for performance
+                        const isClosed = slotState?.isClosed || false;
+                        const closure = slotState?.closure;
+                        const isPast = slotState?.isPast || false;
 
-                        
                         return (
                           <div
                             className={`h-full ${!hasAppointment ? 'border-r border-[var(--theme-border)]/50' : ''} select-none transition-colors duration-150 ${
@@ -1539,8 +1432,9 @@ export default function AppointmentsPage() {
 
               {/* Appointments positioned absolutely over the time slots */}
               {getAppointmentsForDate(selectedDate).map((appointment) => {
-                const startTime = formatTime(appointment.startTime);
-                const startIndex = generateTimeSlots().findIndex(slot => slot === startTime);
+                // appointment.startTime is already in HH:MM format
+                const startTime = appointment.startTime;
+                const startIndex = currentDayTimeSlots.findIndex(slot => slot === startTime);
                 const durationInMinutes = appointment.duration;
                 const slotsToSpan = Math.ceil(durationInMinutes / 15);
 
@@ -1568,7 +1462,7 @@ export default function AppointmentsPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm text-[var(--theme-foreground)] truncate">
-                            {formatTime(appointment.startTime)} - {formatTime(appointment.endTime)}
+                            {appointment.startTime} - {appointment.endTime}
                           </div>
                           <div className="font-medium text-sm truncate text-[var(--theme-foreground)] truncate">
                             {getCustomerDisplayName(appointment)}
@@ -1727,7 +1621,8 @@ export default function AppointmentsPage() {
 
                           {/* Appointments positioned absolutely - only show customer names */}
                           {dayAppointments.map((appointment) => {
-                            const startTime = formatTime(appointment.startTime);
+                            // appointment.startTime is already in HH:MM format
+                            const startTime = appointment.startTime;
                             const startIndex = dayTimeSlots.findIndex(slot => slot === startTime);
                             const durationInMinutes = appointment.duration;
                             const slotsToSpan = Math.ceil(durationInMinutes / 15);
@@ -1843,9 +1738,9 @@ export default function AppointmentsPage() {
                                       apt.status === 'NO_SHOW' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' :
                                         'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600'
                               }`}
-                            title={`${formatTime(apt.startTime)} - ${getCustomerDisplayName(apt)} - ${getStatusText(apt.status)}`}
+                            title={`${apt.startTime} - ${getCustomerDisplayName(apt)} - ${getStatusText(apt.status)}`}
                           >
-                            <div className="font-bold truncate text-xs leading-tight">{formatTime(apt.startTime)}</div>
+                            <div className="font-bold truncate text-xs leading-tight">{apt.startTime}</div>
                             <div className="font-medium truncate text-xs leading-tight">{getCustomerDisplayName(apt)}</div>
                           </div>
                         ))}
@@ -2350,28 +2245,51 @@ export default function AppointmentsPage() {
               
               {/* Appointment Details */}
               <div className="bg-[var(--theme-background)] rounded-xl p-4 mb-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-[var(--theme-foregroundSecondary)]">Müşteri:</span>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  {/* Customer Name */}
+                  <div className="flex flex-col">
+                    <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Müşteri:</span>
                     <span className="text-[var(--theme-foreground)] font-medium">
                       {getCustomerDisplayName(selectedAppointment)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--theme-foregroundSecondary)]">Hizmet:</span>
+                  
+                  {/* Phone Number */}
+                  {(selectedAppointment).customer?.phoneNumber && (
+                    <div className="flex flex-col">
+                      <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Telefon:</span>
+                      <a 
+                        href={`tel:${(selectedAppointment).customer.phoneNumber}`}
+                        className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryForeground)] font-medium transition-colors flex items-center gap-1.5"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span>{(selectedAppointment).customer.phoneNumber}</span>
+                      </a>
+                    </div>
+                  )}
+                  
+                  {/* Service */}
+                  <div className="flex flex-col">
+                    <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Hizmet:</span>
                     <span className="text-[var(--theme-foreground)] font-medium">
                       {getServiceName(selectedAppointment)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--theme-foregroundSecondary)]">Tarih:</span>
+                  
+                  {/* Date & Time */}
+                  <div className="flex flex-col">
+                    <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Tarih:</span>
                     <span className="text-[var(--theme-foreground)] font-medium">
-                      {formatTime(selectedAppointment.startTime)}
+                      {selectedAppointment.date} {selectedAppointment.startTime}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[var(--theme-foregroundSecondary)]">Mevcut Durum:</span>
-                    <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 ${getStatusColor(selectedAppointment.status)}`}>
+                  
+                  {/* Status - Full Width */}
+                  <div className="col-span-2 flex flex-col">
+                    <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Mevcut Durum:</span>
+                    <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 w-fit ${getStatusColor(selectedAppointment.status)}`}>
                       <span className="text-sm">{getStatusIcon(selectedAppointment.status)}</span>
                       <span>{getStatusText(selectedAppointment.status)}</span>
                     </div>
@@ -2380,52 +2298,54 @@ export default function AppointmentsPage() {
               </div>
 
               {/* Status Update Options */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-[var(--theme-cardForeground)] mb-3">
+              <div>
+                <h4 className="font-semibold text-[var(--theme-cardForeground)] mb-3 text-sm">
                   Yeni Durum Seç:
                 </h4>
                 
-                {[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS, AppointmentStatus.COMPLETED, AppointmentStatus.CANCELED, AppointmentStatus.NO_SHOW].map((status) => {
-                  if (status === selectedAppointment.status) return null;
-                  
-                  const getStatusLabel = (status: AppointmentStatus) => {
-                    switch (status) {
-                      case AppointmentStatus.PENDING: return 'Bekliyor';
-                      case AppointmentStatus.CONFIRMED: return 'Onaylandı';
-                      case AppointmentStatus.IN_PROGRESS: return 'Devam Ediyor';
-                      case AppointmentStatus.COMPLETED: return 'Tamamlandı';
-                      case AppointmentStatus.CANCELED: return 'İptal Edildi';
-                      case AppointmentStatus.NO_SHOW: return 'Gelmedi';
-                      default: return status;
-                    }
-                  };
+                <div className="grid grid-cols-2 gap-2">
+                  {[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED, AppointmentStatus.IN_PROGRESS, AppointmentStatus.COMPLETED, AppointmentStatus.CANCELED, AppointmentStatus.NO_SHOW].map((status) => {
+                    if (status === selectedAppointment.status) return null;
+                    
+                    const getStatusLabel = (status: AppointmentStatus) => {
+                      switch (status) {
+                        case AppointmentStatus.PENDING: return 'Bekliyor';
+                        case AppointmentStatus.CONFIRMED: return 'Onaylandı';
+                        case AppointmentStatus.IN_PROGRESS: return 'Devam Ediyor';
+                        case AppointmentStatus.COMPLETED: return 'Tamamlandı';
+                        case AppointmentStatus.CANCELED: return 'İptal Edildi';
+                        case AppointmentStatus.NO_SHOW: return 'Gelmedi';
+                        default: return status;
+                      }
+                    };
 
-                  const getStatusColor = (status: AppointmentStatus) => {
-                    switch (status) {
-                      case AppointmentStatus.PENDING: return 'border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900/20';
-                      case AppointmentStatus.CONFIRMED: return 'border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20';
-                      case AppointmentStatus.IN_PROGRESS: return 'border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20';
-                      case AppointmentStatus.COMPLETED: return 'border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20';
-                      case AppointmentStatus.CANCELED: return 'border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20';
-                      case AppointmentStatus.NO_SHOW: return 'border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20';
-                      default: return 'border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/20';
-                    }
-                  };
+                    const getStatusColor = (status: AppointmentStatus) => {
+                      switch (status) {
+                        case AppointmentStatus.PENDING: return 'border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-900/20';
+                        case AppointmentStatus.CONFIRMED: return 'border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20';
+                        case AppointmentStatus.IN_PROGRESS: return 'border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20';
+                        case AppointmentStatus.COMPLETED: return 'border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20';
+                        case AppointmentStatus.CANCELED: return 'border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20';
+                        case AppointmentStatus.NO_SHOW: return 'border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20';
+                        default: return 'border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/20';
+                      }
+                    };
 
-                  return (
-                    <button
-                      key={status}
-                      onClick={() => updateAppointmentStatus(selectedAppointment.id, status)}
-                      disabled={updatingStatus}
-                      className={`w-full p-3 border-2 rounded-xl text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 ${getStatusColor(status)}`}
-                    >
-                      <span className="text-lg">{getStatusIcon(status)}</span>
-                      <span className="font-medium text-[var(--theme-foreground)]">
-                        {getStatusLabel(status)}
-                      </span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => handleUpdateAppointmentStatus(selectedAppointment.id, status)}
+                        disabled={updatingStatus}
+                        className={`w-full p-2 border-2 rounded-lg text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${getStatusColor(status)}`}
+                      >
+                        <span className="text-base">{getStatusIcon(status)}</span>
+                        <span className="text-sm font-medium text-[var(--theme-foreground)]">
+                          {getStatusLabel(status)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Loading State */}

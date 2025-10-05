@@ -6,11 +6,16 @@ export interface Appointment {
   serviceId: string;
   staffId?: string;
   customerId: string;
-  date: string | Date;  // Business date - can be YYYY-MM-DD string or Date object
-  startTime: Date;
-  endTime: Date;
+  date: string;  // Business date in YYYY-MM-DD format
+  startTime: string;  // Time in HH:MM format
+  endTime: string;    // Time in HH:MM format
   duration: number;
   status: AppointmentStatus;
+  customer: {
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+  }
   price: number;
   currency: string;
   customerNotes?: string;
