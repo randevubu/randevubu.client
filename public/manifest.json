@@ -22,6 +22,20 @@
       "purpose": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
   "categories": ["business", "lifestyle", "productivity"],
   "lang": "tr",
   "gcm_sender_id": "103953800507"

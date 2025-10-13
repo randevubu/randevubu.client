@@ -3,7 +3,7 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { usageService, UsageSummary, UsageAlerts, UsageLimitsCheck, DailySmsUsage, MonthlyUsage } from '../services/usage';
-import { useMyBusiness } from './useMyBusiness';
+import { useDashboardBusiness } from '../../context/DashboardContext';
 
 export interface UsageData {
   usageSummary: UsageSummary | null;
@@ -62,10 +62,10 @@ export function useUsageData(options?: {
   historyMonths?: number;
 }): UseUsageDataResult {
   const { user, isAuthenticated, hasInitialized, isLoading: authLoading } = useAuth();
-  const { businesses, isLoading: businessLoading } = useMyBusiness();
-
-  // Get the primary business ID
-  const businessId = businesses?.[0]?.id || '';
+  
+  // Use cached business data from context - no additional API call!
+  const business = useDashboardBusiness();
+  const businessId = business?.id || '';
   const { 
     includeAlerts = false, 
     includeLimits = false, 
@@ -91,7 +91,7 @@ export function useUsageData(options?: {
 
       return response.data;
     },
-    enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !businessLoading && !!businessId,
+    enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
     staleTime: 5 * 60 * 1000, // 5 minutes - usage data doesn't change frequently
     gcTime: 15 * 60 * 1000, // 15 minutes - keep in cache longer
     refetchOnWindowFocus: false, // Don't refetch on focus - usage data is stable
@@ -121,7 +121,7 @@ export function useUsageData(options?: {
 
       return response.data;
     },
-    enabled: includeAlerts && !!user && isAuthenticated && hasInitialized && !authLoading && !businessLoading && !!businessId,
+    enabled: includeAlerts && !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -145,7 +145,7 @@ export function useUsageData(options?: {
 
       return response.data;
     },
-    enabled: includeLimits && !!user && isAuthenticated && hasInitialized && !authLoading && !businessLoading && !!businessId,
+    enabled: includeLimits && !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 3 * 60 * 1000, // 3 minutes
     refetchOnWindowFocus: false,
@@ -169,7 +169,7 @@ export function useUsageData(options?: {
 
       return response.data;
     },
-    enabled: includeCharts && !!user && isAuthenticated && hasInitialized && !authLoading && !businessLoading && !!businessId,
+    enabled: includeCharts && !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
     staleTime: 10 * 60 * 1000, // 10 minutes - chart data changes rarely
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
@@ -193,7 +193,7 @@ export function useUsageData(options?: {
 
       return response.data;
     },
-    enabled: includeCharts && !!user && isAuthenticated && hasInitialized && !authLoading && !businessLoading && !!businessId,
+    enabled: includeCharts && !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
     staleTime: 15 * 60 * 1000, // 15 minutes - historical data changes rarely
     gcTime: 60 * 60 * 1000, // 1 hour
     refetchOnWindowFocus: false,

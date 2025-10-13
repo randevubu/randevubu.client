@@ -1,17 +1,13 @@
+export { default as Features } from './Features';
+export { default as Pricing } from './Pricing';
+export { default as CitySelector } from './CitySelector';
 export { default as Hero } from './Hero';
 export { default as HowItWorks } from './HowItWorks';
-export { default as Testimonials } from './Testimonials';
-export { default as BusinessHoursSettings } from './BusinessHoursSettings';
-
-// PWA and Notification Components
-export { default as NotificationSettings } from '../features/NotificationSettings';
-export { default as PWAInstallPrompt } from '../features/PWAInstallPrompt';
-
-// Business Image Management
-export { BusinessImageManager } from '../features/BusinessImageManager';
-
-// Forms
 export { PriceSettingsForm } from './PriceSettingsForm';
-
-// Excel-like Table
-export { default as ExcelLikeTable } from './ExcelLikeTable';
+export { default as PhoneAuth } from './PhoneAuth';
+export { default as CustomerGuard } from './CustomerGuard';
+export { default as ProfileGuard } from './ProfileGuard';
+export { default as ReservationRulesSettings } from './ReservationRulesSettings';
+export { default as CancellationPolicySettings } from './CancellationPolicySettings';
+export { default as CustomerPolicyStatus } from './CustomerPolicyStatus';
+export { default as CustomerManagementSettings } from './CustomerManagementSettings';

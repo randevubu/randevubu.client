@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
-import Pricing from '../../../components/features/Pricing';
+import Pricing from '../../../components/ui/Pricing';
 import PaymentForm from '../../../components/ui/PaymentForm';
 import Confetti from 'react-confetti';
 
@@ -13,7 +13,7 @@ import { SubscriptionPlan } from '../../../types/subscription';
 import { CreatePaymentRequest } from '../../../types/payment';
 import { PaymentResponse } from '../../../lib/services/payments';
 
-import ProfileGuard from '../../../components/features/ProfileGuard';
+import ProfileGuard from '../../../components/ui/ProfileGuard';
 
 function SubscriptionContent() {
   const searchParams = useSearchParams();

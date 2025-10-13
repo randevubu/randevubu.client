@@ -1,0 +1,331 @@
+/* Monitor Display Specific Styles */
+
+/* Large screen optimizations for monitor displays */
+@media (min-width: 1024px) {
+  .monitor-container {
+    font-size: 1.2rem;
+  }
+  
+  .monitor-header h1 {
+    font-size: 3.5rem;
+  }
+  
+  .monitor-header p {
+    font-size: 1.5rem;
+  }
+  
+  .monitor-time {
+    font-size: 3rem;
+  }
+  
+  .monitor-section h2 {
+    font-size: 2.5rem;
+  }
+  
+  .monitor-appointment-name {
+    font-size: 2.5rem;
+  }
+  
+  .monitor-appointment-detail {
+    font-size: 1.8rem;
+  }
+  
+  .monitor-queue-item {
+    font-size: 1.4rem;
+  }
+  
+  .monitor-stats-number {
+    font-size: 4rem;
+  }
+  
+  .monitor-stats-label {
+    font-size: 1.3rem;
+  }
+}
+
+/* Extra large screens (TVs, large monitors) */
+@media (min-width: 1920px) {
+  .monitor-container {
+    font-size: 1.5rem;
+  }
+  
+  .monitor-header h1 {
+    font-size: 4.5rem;
+  }
+  
+  .monitor-header p {
+    font-size: 2rem;
+  }
+  
+  .monitor-time {
+    font-size: 4rem;
+  }
+  
+  .monitor-section h2 {
+    font-size: 3.5rem;
+  }
+  
+  .monitor-appointment-name {
+    font-size: 3.5rem;
+  }
+  
+  .monitor-appointment-detail {
+    font-size: 2.5rem;
+  }
+  
+  .monitor-queue-item {
+    font-size: 1.8rem;
+  }
+  
+  .monitor-stats-number {
+    font-size: 5rem;
+  }
+  
+  .monitor-stats-label {
+    font-size: 1.8rem;
+  }
+}
+
+/* High contrast mode for better visibility */
+.monitor-high-contrast {
+  background: #000000;
+  color: #ffffff;
+}
+
+.monitor-high-contrast .monitor-current {
+  background: #00ff00;
+  color: #000000;
+}
+
+.monitor-high-contrast .monitor-next {
+  background: #0080ff;
+  color: #ffffff;
+}
+
+.monitor-high-contrast .monitor-waiting {
+  background: #ffff00;
+  color: #000000;
+}
+
+/* Animation for status changes */
+.monitor-status-change {
+  animation: statusChange 0.5s ease-in-out;
+}
+
+@keyframes statusChange {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Pulse animation for current appointment */
+.monitor-current-pulse {
+  animation: currentPulse 2s infinite;
+}
+
+@keyframes currentPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* Fade in animation for new appointments */
+.monitor-fade-in {
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Connection status indicator */
+.monitor-connection-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 1000;
+}
+
+.monitor-connection-online {
+  background: #10b981;
+  color: white;
+}
+
+.monitor-connection-offline {
+  background: #ef4444;
+  color: white;
+}
+
+.monitor-connection-loading {
+  background: #f59e0b;
+  color: white;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+  .monitor-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .monitor-appointment-card {
+    padding: 1.5rem;
+  }
+  
+  .monitor-queue-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .monitor-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .monitor-queue-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .monitor-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .monitor-queue-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Fullscreen styles */
+.monitor-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
+}
+
+/* Hide sidebar and other elements when in fullscreen */
+.monitor-fullscreen ~ * {
+  display: none !important;
+}
+
+/* Ensure monitor content takes full space in fullscreen */
+.monitor-container:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  background: white;
+}
+
+.monitor-container:fullscreen .monitor-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Fullscreen layout adjustments */
+.monitor-container:fullscreen .grid {
+  height: calc(100vh - 200px);
+}
+
+.monitor-container:fullscreen .flex-1 {
+  max-height: calc(100vh - 300px);
+}
+
+/* Hide dashboard sidebar when monitor is in fullscreen */
+body:has(.monitor-fullscreen) .sidebar,
+body:has(.monitor-fullscreen) [data-sidebar],
+body:has(.monitor-fullscreen) nav {
+  display: none !important;
+}
+
+/* Monitor layout improvements */
+.monitor-container .grid {
+  position: relative;
+}
+
+.monitor-container .grid::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, #d1d5db, transparent);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+/* Better spacing for monitor sections */
+.monitor-container .pr-4 {
+  padding-right: 2rem;
+}
+
+.monitor-container .pl-4 {
+  padding-left: 2rem;
+}
+
+/* Fullscreen button styles */
+.monitor-fullscreen-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.monitor-fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
+}
+
+/* Hide fullscreen button when in fullscreen */
+.monitor-container:fullscreen .monitor-fullscreen-btn {
+  display: none;
+}
+
+/* Print styles for monitor displays */
+@media print {
+  .monitor-container {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .monitor-no-print {
+    display: none !important;
+  }
+}

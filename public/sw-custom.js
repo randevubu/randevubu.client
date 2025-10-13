@@ -4,6 +4,10 @@
 const CACHE_NAME = 'randevubu-v1';
 const API_CACHE_NAME = 'randevubu-api-v1';
 
+// Workbox will inject the manifest here
+// This is required when using InjectManifest mode
+const manifest = self.__WB_MANIFEST || [];
+
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...');
@@ -12,15 +16,23 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching essential assets');
-      return cache.addAll([
+      // Cache manifest files from Workbox
+      const manifestUrls = manifest.map(entry => entry.url || entry);
+      // Add additional essential assets
+      const essentialAssets = [
         '/',
         '/offline.html'
-      ].filter(url => {
-        // Only cache if files exist
-        return true;
-      })).catch(err => {
-        console.warn('[Service Worker] Some assets failed to cache:', err);
-      });
+      ];
+      
+      // Cache files individually to prevent one failure from blocking all
+      const allUrls = [...manifestUrls, ...essentialAssets];
+      return Promise.allSettled(
+        allUrls.map(url => 
+          cache.add(url).catch(err => {
+            console.warn('[Service Worker] Failed to cache:', url, err);
+          })
+        )
+      );
     })
   );
 });
@@ -86,12 +98,20 @@ self.addEventListener('fetch', (event) => {
   // Other requests - cache first
   event.respondWith(
     caches.match(request)
-      .then(response => response || fetch(request))
-      .catch(() => {
-        // Return offline page for navigation requests
-        if (request.mode === 'navigate') {
-          return caches.match('/offline.html');
+      .then(response => {
+        if (response) {
+          return response;
         }
+        
+        // Try to fetch from network
+        return fetch(request).catch(() => {
+          // Return offline page for navigation requests
+          if (request.mode === 'navigate') {
+            return caches.match('/offline.html');
+          }
+          // Return a 404 response for other failed requests
+          return new Response('Not found', { status: 404 });
+        });
       })
   );
 });

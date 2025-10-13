@@ -1,14 +1,15 @@
 'use client';
 
 import { getStatusColor, getStatusIcon, getStatusText } from '@/src/lib/utils/appointmentHelpers';
+import { Bell, ChevronLeft, ChevronRight, Clock, Lock, Moon, Phone, Sun, Tag, Trash2, X, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import AppointmentBookingDialog from '../../../components/features/AppointmentBookingDialog';
+import AppointmentBookingDialog from '../../../components/ui/AppointmentBookingDialog';
 import ClosureDialog from '../../../components/ui/ClosureDialog';
 import { useAuth } from '../../../context/AuthContext';
+import { useDashboardBusiness } from '../../../context/DashboardContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAppointments } from '../../../lib/hooks/useAppointments';
 import { useClosures } from '../../../lib/hooks/useClosures';
-import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
 import { useServices } from '../../../lib/hooks/useServices';
 import { MyAppointmentsParams } from '../../../lib/services/appointments';
 import { getBusinessHoursForDate } from '../../../lib/utils/businessHours';
@@ -80,9 +81,9 @@ export default function AppointmentsPage() {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
-  // Fetch business data
-  const { businesses, isLoading: businessLoading } = useMyBusiness();
-  const business = businesses[0] || null;
+  // Use cached business data from context - no additional API call needed!
+  const business = useDashboardBusiness();
+  const businessLoading = false; // Business is already loaded by layout
 
   // Calculate date range based on view mode
   const dateRangeParams = useMemo(() => {
@@ -598,19 +599,19 @@ export default function AppointmentsPage() {
 
     switch (appointment.status) {
       case AppointmentStatus.PENDING:
-        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-700/20 border-l-4 border-l-gray-500 shadow-sm';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-l-4 border-l-gray-500 shadow-sm text-gray-800 dark:text-gray-200';
       case AppointmentStatus.CONFIRMED:
-        return 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-l-4 border-l-green-500 shadow-sm';
+        return 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-800 dark:to-green-700 border-l-4 border-l-green-500 shadow-sm text-green-800 dark:text-green-200';
       case AppointmentStatus.IN_PROGRESS:
-        return 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-l-4 border-l-green-500 shadow-sm';
+        return 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-800 dark:to-green-700 border-l-4 border-l-green-500 shadow-sm text-green-800 dark:text-green-200';
       case AppointmentStatus.COMPLETED:
-        return 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-l-4 border-l-blue-500 shadow-sm';
+        return 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-800 dark:to-blue-700 border-l-4 border-l-blue-500 shadow-sm text-blue-800 dark:text-blue-200';
       case AppointmentStatus.CANCELED:
-        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-l-4 border-l-red-500 shadow-sm';
+        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-800 dark:to-red-700 border-l-4 border-l-red-500 shadow-sm text-red-800 dark:text-red-200';
       case AppointmentStatus.NO_SHOW:
-        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-l-4 border-l-red-500 shadow-sm';
+        return 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-800 dark:to-red-700 border-l-4 border-l-red-500 shadow-sm text-red-800 dark:text-red-200';
       default:
-        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-700/20 border-l-4 border-l-gray-500 shadow-sm';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-l-4 border-l-gray-500 shadow-sm text-gray-800 dark:text-gray-200';
     }
   };
 
@@ -1144,9 +1145,7 @@ export default function AppointmentsPage() {
               onClick={() => navigateDate('prev')}
               className="p-1.5 text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:bg-[var(--theme-backgroundSecondary)] rounded-md transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeft className="w-4 h-4" />
             </button>
 
             <div className="flex-1 text-center">
@@ -1176,9 +1175,7 @@ export default function AppointmentsPage() {
               onClick={() => navigateDate('next')}
               className="p-1.5 text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:bg-[var(--theme-backgroundSecondary)] rounded-md transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRight className="w-4 h-4" />
             </button>
 
             <input
@@ -1198,21 +1195,12 @@ export default function AppointmentsPage() {
               title={`${actualMode === 'light' ? 'Karanlık' : 'Aydınlık'} temaya geç (${actualMode})`}
             >
               {actualMode === 'light' ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
+                <Moon className="w-4 h-4" />
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+                <Sun className="w-4 h-4" />
               )}
             </button>
 
-            {/* Theme Info */}
-            <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-[var(--theme-backgroundSecondary)] rounded-md text-xs text-[var(--theme-foregroundSecondary)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--theme-primary)]"></span>
-              {variant}
-            </div>
 
             {/* Closure Management Icon */}
             <button
@@ -1220,11 +1208,9 @@ export default function AppointmentsPage() {
               className="relative p-1.5 rounded-md transition-colors text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-error)] hover:bg-[var(--theme-backgroundSecondary)]"
               title="Kapatma Yönetimi"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A7 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18 21l3-3m-5.196-5.196a5 5 0 01-7.072-7.072" />
-              </svg>
+              <XCircle className="w-4 h-4" />
               {closures.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[var(--theme-error)] text-[var(--theme-errorForeground)] text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-[var(--theme-error)] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   {closures.length}
                 </span>
               )}
@@ -1273,9 +1259,7 @@ export default function AppointmentsPage() {
                     <div className="p-8 text-center">
                       <div className="flex flex-col items-center space-y-4">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                          <Clock className="w-8 h-8 text-gray-400" />
                         </div>
                         <div className="text-center">
                           <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -1637,13 +1621,13 @@ export default function AppointmentsPage() {
                               <div
                               key={appointment.id}
                               className={`absolute left-0 right-0 z-10 rounded-md cursor-pointer shadow-sm border transition-all hover:shadow-md ${
-                                appointment.status === 'PENDING' ? 'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-800/30 dark:border-gray-600 dark:text-gray-200' :
-                                appointment.status === 'CONFIRMED' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200' :
-                                appointment.status === 'IN_PROGRESS' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200' :
-                                appointment.status === 'COMPLETED' ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-200' :
-                                appointment.status === 'CANCELED' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200' :
-                                appointment.status === 'NO_SHOW' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200' :
-                                'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-800/30 dark:border-gray-600 dark:text-gray-200'
+                                appointment.status === 'PENDING' ? 'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-700/50 dark:border-gray-500 dark:text-gray-200' :
+                                appointment.status === 'CONFIRMED' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-700/50 dark:border-green-500 dark:text-green-200' :
+                                appointment.status === 'IN_PROGRESS' ? 'bg-green-100 border-green-300 text-green-800 dark:bg-green-700/50 dark:border-green-500 dark:text-green-200' :
+                                appointment.status === 'COMPLETED' ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-700/50 dark:border-blue-500 dark:text-blue-200' :
+                                appointment.status === 'CANCELED' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-700/50 dark:border-red-500 dark:text-red-200' :
+                                appointment.status === 'NO_SHOW' ? 'bg-red-100 border-red-300 text-red-800 dark:bg-red-700/50 dark:border-red-500 dark:text-red-200' :
+                                'bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-700/50 dark:border-gray-500 dark:text-gray-200'
                               }`}
                               style={{
                                 top: `${top}px`,
@@ -1730,13 +1714,13 @@ export default function AppointmentsPage() {
                         {dayAppointments.slice(0, 2).map((apt) => (
                           <div
                             key={apt.id}
-                            className={`text-xs p-1 rounded border ${apt.status === 'PENDING' ? 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600' :
-                              apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' :
-                                apt.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' :
-                                  apt.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700' :
-                                    apt.status === 'CANCELED' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' :
-                                      apt.status === 'NO_SHOW' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' :
-                                        'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/30 dark:text-gray-300 dark:border-gray-600'
+                            className={`text-xs p-1 rounded border ${apt.status === 'PENDING' ? 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700/50 dark:text-gray-200 dark:border-gray-500' :
+                              apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-700/50 dark:text-green-200 dark:border-green-500' :
+                                apt.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-700/50 dark:text-green-200 dark:border-green-500' :
+                                  apt.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-700/50 dark:text-blue-200 dark:border-blue-500' :
+                                    apt.status === 'CANCELED' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-700/50 dark:text-red-200 dark:border-red-500' :
+                                      apt.status === 'NO_SHOW' ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-700/50 dark:text-red-200 dark:border-red-500' :
+                                        'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700/50 dark:text-gray-200 dark:border-gray-500'
                               }`}
                             title={`${apt.startTime} - ${getCustomerDisplayName(apt)} - ${getStatusText(apt.status)}`}
                           >
@@ -1802,9 +1786,7 @@ export default function AppointmentsPage() {
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
@@ -1927,9 +1909,7 @@ export default function AppointmentsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18 21l3-3m-5.196-5.196a5 5 0 01-7.072-7.072" />
-                      </svg>
+                      <XCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0">
                       <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">Kapatma Yönetimi</h2>
@@ -1945,9 +1925,7 @@ export default function AppointmentsPage() {
                     className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2"
                     title="Kapat"
                   >
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                 </div>
               </div>
@@ -1962,9 +1940,7 @@ export default function AppointmentsPage() {
                 ) : closures.length === 0 ? (
                   <div className="text-center py-8 sm:py-12">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a4 4 0 11-8 0v-4h8v4z" />
-                      </svg>
+                      <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                     </div>
                     <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Henüz kapatma bulunmuyor</h3>
                     <p className="text-sm text-gray-500 px-4">İş yeriniz için kapatma oluşturmak için takvimden zaman seçin.</p>
@@ -2089,24 +2065,18 @@ export default function AppointmentsPage() {
                                   </div>
                                   <div className="space-y-1 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
-                                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a4 4 0 11-8 0v-4h8v4z" />
-                                      </svg>
+                                      <Lock className="w-4 h-4 text-gray-400" />
                                       <span>{formatClosureDateRange(closure.startDate, closure.endDate)}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                      </svg>
+                                      <Tag className="w-4 h-4 text-gray-400" />
                                                                               <span>
                                           {getClosureTypeText(closure.type)}
                                         </span>
                                     </div>
                                     {closure.notifyCustomers && (
                                       <div className="flex items-center gap-2">
-                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM11 17H6l5 5v-5z" />
-                                        </svg>
+                                        <Bell className="w-4 h-4 text-gray-400" />
                                         <span>Müşterilere bildirim gönderildi</span>
                                       </div>
                                     )}
@@ -2120,9 +2090,7 @@ export default function AppointmentsPage() {
                                   {displayInfo.editabilityText}
                                 </span>
                                 {displayInfo.canEdit && (
-                                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
+                                  <ChevronRight className="w-5 h-5 text-gray-400" />
                                 )}
                               </div>
                             </div>
@@ -2146,9 +2114,7 @@ export default function AppointmentsPage() {
               {/* Header with Icon */}
               <div className="flex items-center justify-center mb-4">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <Trash2 className="w-6 h-6 text-red-600" />
                 </div>
               </div>
 
@@ -2237,9 +2203,7 @@ export default function AppointmentsPage() {
                   }}
                   className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-6 h-6" />
                 </button>
               </div>
               
@@ -2262,9 +2226,7 @@ export default function AppointmentsPage() {
                         href={`tel:${(selectedAppointment).customer.phoneNumber}`}
                         className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryForeground)] font-medium transition-colors flex items-center gap-1.5"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
+                        <Phone className="w-4 h-4" />
                         <span>{(selectedAppointment).customer.phoneNumber}</span>
                       </a>
                     </div>

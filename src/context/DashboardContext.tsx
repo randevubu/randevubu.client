@@ -3,6 +3,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { User } from '../types/auth';
 import { Business } from '../types/business';
+import { Appointment } from '../types';
 import { NavigationItem } from '../lib/constants/navigation';
 
 interface DashboardContextType {
@@ -15,6 +16,9 @@ interface DashboardContextType {
   logout: () => void;
   // Add refetch capabilities for cache invalidation
   refetchBusiness: () => void;
+  // Add cached dashboard data to prevent redundant API calls
+  upcomingAppointments: Appointment[];
+  isLoadingDashboardData: boolean;
 }
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
@@ -29,6 +33,8 @@ interface DashboardProviderProps {
   setSidebarOpen: (open: boolean) => void;
   logout: () => void;
   refetchBusiness: () => void;
+  upcomingAppointments?: Appointment[];
+  isLoadingDashboardData?: boolean;
 }
 
 export function DashboardProvider({
@@ -41,6 +47,8 @@ export function DashboardProvider({
   setSidebarOpen,
   logout,
   refetchBusiness,
+  upcomingAppointments = [],
+  isLoadingDashboardData = false,
 }: DashboardProviderProps) {
   return (
     <DashboardContext.Provider
@@ -53,6 +61,8 @@ export function DashboardProvider({
         setSidebarOpen,
         logout,
         refetchBusiness,
+        upcomingAppointments,
+        isLoadingDashboardData,
       }}
     >
       {children}
@@ -88,4 +98,10 @@ export function useDashboardNavigation() {
 export function useDashboardRefetch() {
   const { refetchBusiness } = useDashboard();
   return refetchBusiness;
+}
+
+// Hook to get cached dashboard data without making new API calls
+export function useDashboardUpcomingAppointments() {
+  const { upcomingAppointments, isLoadingDashboardData } = useDashboard();
+  return { upcomingAppointments, isLoading: isLoadingDashboardData };
 }

@@ -3,10 +3,19 @@ import { customerService, Customer, CustomerDetails, GetCustomersParams, BanCust
 import { handleApiError } from '../utils/toast';
 
 // Query keys for consistent caching
+// Using individual param values instead of object to avoid cache misses
 export const customerKeys = {
   all: ['customers'] as const,
   lists: () => [...customerKeys.all, 'list'] as const,
-  list: (params: Partial<GetCustomersParams>) => [...customerKeys.lists(), params] as const,
+  list: (params: Partial<GetCustomersParams>) => [
+    ...customerKeys.lists(),
+    params.status,
+    params.search,
+    params.page,
+    params.limit,
+    params.sortBy,
+    params.sortOrder
+  ] as const,
   details: () => [...customerKeys.all, 'detail'] as const,
   detail: (id: string) => [...customerKeys.details(), id] as const,
 };

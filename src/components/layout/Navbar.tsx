@@ -1,10 +1,11 @@
 'use client';
 
+import { AlertCircle, BarChart3, Calendar, CheckCircle, CreditCard, Globe, LogOut, Mail, Menu, Plus, Search, Settings, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useMyBusiness } from '../../lib/hooks/useMyBusiness';
 import useClickOutside from '../../lib/hooks/useClickOutside';
+import { useMyBusiness } from '../../lib/hooks/useMyBusiness';
 import {
   hasBusinessAndSubscriptionFromAPI,
   hasBusinessNoSubscriptionFromAPI,
@@ -35,9 +36,7 @@ export default function Navbar() {
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-9 h-9 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-5 h-5 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
+                <Calendar className="w-5 h-5 sm:w-4 sm:h-4 text-white" />
               </div>
               <span className="text-xl sm:text-lg font-black text-[var(--theme-navbarForeground)]">
                 RandevuBu
@@ -140,9 +139,7 @@ export default function Navbar() {
                     className="flex items-center text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors p-2 rounded-xl hover:bg-[var(--theme-backgroundSecondary)] min-h-[44px] min-w-[44px]"
                   >
                     <div className="w-10 h-10 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-full flex items-center justify-center shadow-lg">
-                      <svg className="w-5 h-5 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
+                      <User className="w-5 h-5 sm:w-4 sm:h-4 text-white" />
                     </div>
                   </button>
                 
@@ -161,9 +158,7 @@ export default function Navbar() {
                       <div className="sm:hidden px-4 py-3 border-b border-gray-100 flex items-center justify-between" style={{ backgroundColor: '#ffffff' }}>
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4z" />
-                            </svg>
+                            <Settings className="w-4 h-4 text-white" />
                           </div>
                           <span className="text-sm font-semibold text-gray-900">Tema Seçici</span>
                         </div>
@@ -177,9 +172,7 @@ export default function Navbar() {
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                            <User className="w-5 h-5 text-blue-600" />
                           </div>
                           <span className="font-semibold">Profil</span>
                         </Link>
@@ -191,9 +184,7 @@ export default function Navbar() {
                             onClick={() => setIsProfileOpen(false)}
                           >
                             <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z" />
-                              </svg>
+                              <Calendar className="w-5 h-5 text-green-600" />
                             </div>
                             <span className="font-semibold">Randevularım</span>
                           </Link>
@@ -213,9 +204,7 @@ export default function Navbar() {
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                                <Search className="w-5 h-5 text-orange-600" />
                               </div>
                               <span className="font-semibold">Randevu Al</span>
                             </Link>
@@ -225,9 +214,7 @@ export default function Navbar() {
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
+                                <BarChart3 className="w-5 h-5 text-purple-600" />
                               </div>
                               <span className="font-semibold">İşletmem</span>
                             </Link>
@@ -240,9 +227,7 @@ export default function Navbar() {
                             onClick={() => setIsProfileOpen(false)}
                           >
                             <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                              <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                              <CheckCircle className="w-5 h-5 text-yellow-600" />
                             </div>
                             <span className="font-semibold">Abonelik</span>
                           </Link>
@@ -255,9 +240,7 @@ export default function Navbar() {
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                                <Search className="w-5 h-5 text-orange-600" />
                               </div>
                               <span className="font-semibold">Randevu Al</span>
                             </Link>
@@ -267,9 +250,7 @@ export default function Navbar() {
                               onClick={() => setIsProfileOpen(false)}
                             >
                               <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                </svg>
+                                <Plus className="w-5 h-5 text-indigo-600" />
                               </div>
                               <span className="font-semibold">İşletme Oluştur</span>
                             </Link>
@@ -282,10 +263,7 @@ export default function Navbar() {
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                            <Settings className="w-5 h-5 text-gray-600" />
                           </div>
                           <span className="font-semibold">Ayarlar</span>
                         </Link>
@@ -302,9 +280,7 @@ export default function Navbar() {
                           className="flex items-center space-x-3 w-full px-3 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group"
                         >
                           <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
+                            <LogOut className="w-5 h-5 text-red-600" />
                           </div>
                           <span className="font-semibold">Çıkış Yap</span>
                         </button>
@@ -335,13 +311,11 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] p-3 rounded-xl hover:bg-[var(--theme-backgroundSecondary)] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              {isMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -382,9 +356,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between p-4 border-b border-gray-200" style={{ backgroundColor: '#ffffff', borderColor: '#e5e5e5' }}>
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-md">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
+                <Calendar className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-bold text-gray-900">
                 RandevuBu
@@ -395,9 +367,7 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(false)}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5" />
             </button>
           </div>
 
@@ -425,9 +395,7 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <span className="font-medium group-hover:text-blue-600 text-gray-900">
                   Özellikler
@@ -440,9 +408,7 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
+                  <CreditCard className="w-4 h-4 text-green-600" />
                 </div>
                 <span className="font-medium group-hover:text-green-600 text-gray-900">
                   Fiyatlandırma
@@ -455,9 +421,7 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+                  <Mail className="w-4 h-4 text-purple-600" />
                 </div>
                 <span className="font-medium group-hover:text-purple-600 text-gray-900">
                   İletişim
@@ -470,9 +434,7 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <AlertCircle className="w-4 h-4 text-orange-600" />
                 </div>
                 <span className="font-medium group-hover:text-orange-600 text-gray-900">
                   Hakkımızda

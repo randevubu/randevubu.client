@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Link } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { CreateBusinessData, BusinessType } from '../../../types/business';
-import BusinessGuard from '../../../components/features/BusinessGuard';
-import ProfileGuard from '../../../components/features/ProfileGuard';
+import BusinessGuard from '../../../components/ui/BusinessGuard';
+import ProfileGuard from '../../../components/ui/ProfileGuard';
 import { getAccessToken } from '../../../lib/api';
+import { PaymentsService } from '../../../lib/services/payments';
+import { Location } from '../../../types/subscription';
+import CitySelector from '../../../components/ui/CitySelector';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -18,6 +22,8 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
+  const [location, setLocation] = useState<Location | null>(null);
+  const [locationLoading, setLocationLoading] = useState(true);
   
   const [formData, setFormData] = useState<CreateBusinessData>({
     name: '',
@@ -26,7 +32,7 @@ export default function OnboardingPage() {
     phone: '',
     website: '',
     address: '',
-    city: '',
+    city: 'Istanbul', // Default fallback
     state: '',
     country: 'Turkey',
     postalCode: '',
@@ -53,6 +59,9 @@ export default function OnboardingPage() {
 
     // Check if user already has a business via API (not user context)
     checkBusinessStatus();
+    
+    // Detect location for city selection
+    detectLocation();
   }, [user, isAuthenticated, authLoading, router]);
 
   const checkBusinessStatus = async () => {
@@ -68,6 +77,27 @@ export default function OnboardingPage() {
     } catch (error) {
       // On error, allow onboarding (safe default)
       fetchBusinessTypes();
+    }
+  };
+
+  const detectLocation = async () => {
+    try {
+      setLocationLoading(true);
+      const { location: detectedLocation } = await PaymentsService.getSubscriptionPlansWithLocation();
+      setLocation(detectedLocation);
+      
+      // Update form data with detected city or keep Istanbul as fallback
+      if (detectedLocation?.city) {
+        setFormData(prev => ({
+          ...prev,
+          city: detectedLocation.city
+        }));
+      }
+    } catch (error) {
+      console.error('Error detecting location:', error);
+      // Keep Istanbul as fallback
+    } finally {
+      setLocationLoading(false);
     }
   };
 
@@ -270,6 +300,10 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleCityChange = (city: string) => {
+    handleInputChange('city', city);
+  };
+
   if (authLoading || loadingTypes) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -296,9 +330,7 @@ export default function OnboardingPage() {
         {/* Big Success Icon */}
             <div className="mb-8">
               <div className="mx-auto flex items-center justify-center w-32 h-32 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-2xl mb-6 animate-bounce">
-                <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+                <CheckCircle className="w-16 h-16 text-white" />
               </div>
             </div>
 
@@ -311,9 +343,7 @@ export default function OnboardingPage() {
             <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 lg:p-12 mb-12 max-w-2xl mx-auto">
               <div className="mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m-2 0H7m5 0v-9a2 2 0 012-2h2a2 2 0 012 2v9m-6 0V9a2 2 0 012-2h2a2 2 0 012 2v7" />
-                  </svg>
+                  <Building className="w-8 h-8 text-white" />
                 </div>
                 
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -328,9 +358,7 @@ export default function OnboardingPage() {
                 {/* What's Next Box */}
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 mb-8">
                   <h4 className="font-bold text-gray-900 mb-4 flex items-center">
-                    <svg className="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                    <Info className="w-5 h-5 text-indigo-600 mr-2" />
                     Sırada Ne Var?
                   </h4>
                   <ul className="space-y-3 text-left">
@@ -370,9 +398,7 @@ export default function OnboardingPage() {
                   className="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl mb-4"
                 >
                   <span className="flex items-center justify-center">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                    </svg>
+                    <ArrowRight className="w-5 h-5 mr-2" />
                     Abonelik Planı Seç
                   </span>
                 </button>
@@ -387,9 +413,7 @@ export default function OnboardingPage() {
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
+                  <Calendar className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">Randevu Yönetimi</h3>
                 <p className="text-sm text-gray-600">Kolay rezervasyon ve takvim yönetimi</p>
@@ -397,9 +421,7 @@ export default function OnboardingPage() {
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                  </svg>
+                  <Users className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">Müşteri Yönetimi</h3>
                 <p className="text-sm text-gray-600">Müşteri bilgileri ve geçmiş kayıtları</p>
@@ -407,9 +429,7 @@ export default function OnboardingPage() {
 
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
+                  <BarChart3 className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">Raporlama</h3>
                 <p className="text-sm text-gray-600">Detaylı istatistik ve analiz raporları</p>
@@ -454,9 +474,7 @@ export default function OnboardingPage() {
               <div className="bg-red-50 border-l-4 border-red-500 p-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <AlertCircle className="h-5 w-5 text-red-500" />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-red-700 font-medium">{errors.general}</p>
@@ -473,9 +491,7 @@ export default function OnboardingPage() {
               <div className="bg-red-50 border-l-4 border-red-500 p-6 mb-6">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-red-700 font-bold">
@@ -596,9 +612,7 @@ export default function OnboardingPage() {
                       {formData.website || 'https://randevubu.com/business/'}
                     </div>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                      </svg>
+                      <Link className="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
@@ -628,18 +642,19 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-900 mb-3">Şehir *</label>
-                    <input
-                      name="city"
-                      data-field="city"
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${
-                        errors.city ? 'border-red-500 bg-red-50' : 'border-gray-200'
-                      }`}
-                      placeholder="İstanbul"
-                      disabled={loading}
-                    />
+                    {locationLoading ? (
+                      <div className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <span className="text-gray-600">Konum tespit ediliyor...</span>
+                      </div>
+                    ) : (
+                      <CitySelector
+                        onCityChange={handleCityChange}
+                        currentCity={formData.city}
+                        detectedLocation={location}
+                        className="w-full"
+                      />
+                    )}
                     {errors.city && <p className="text-red-500 text-sm mt-2 font-medium">{errors.city}</p>}
                   </div>
 

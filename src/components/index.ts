@@ -5,4 +5,4 @@ export * from './layout';
 export * from './ui';
 
 // Feature Components
-export * from './features';
+export * from './ui';

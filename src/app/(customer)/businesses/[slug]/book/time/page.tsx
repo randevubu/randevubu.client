@@ -52,6 +52,11 @@ interface BusinessData {
     };
   };
   timezone?: string;
+  reservationSettings?: {
+    maxAdvanceBookingDays: number;
+    minNotificationHours: number;
+    maxDailyAppointments: number;
+  };
 }
 
 interface TimeSlot {
@@ -730,21 +735,18 @@ export default function TimeSelectionPage() {
 
   const isTimeSlotInPast = (date: string, timeSlot: string) => {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
 
-    if (date !== today) {
-      return false;
-    }
-
+    // Create a date object for the selected time slot
+    const [year, month, day] = date.split('-').map(Number);
     const [hour, minute] = timeSlot.split(':').map(Number);
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const slotDateTime = new Date(year, month - 1, day, hour, minute);
 
-    const slotMinutes = hour * 60 + minute;
-    const currentMinutes = currentHour * 60 + currentMinute;
+    // Calculate minimum booking time based on minNotificationHours
+    const minHours = business?.reservationSettings?.minNotificationHours || 0;
+    const minBookingTime = new Date(now.getTime() + (minHours * 60 * 60 * 1000));
 
-    // Add 15 minutes buffer to prevent booking too close to current time
-    return slotMinutes <= (currentMinutes + 15);
+    // Slot is in the past if it's before the minimum booking time
+    return slotDateTime <= minBookingTime;
   };
 
   const handleTimeSelect = (time: string) => {
@@ -875,7 +877,11 @@ export default function TimeSelectionPage() {
                             }`}
                         >
                           {isPast ? (
-                            <span className="text-sm">Geçmiş Tarihe Randevu Alınamaz</span>
+                            <span className="text-sm">
+                              {business?.reservationSettings?.minNotificationHours && business.reservationSettings.minNotificationHours > 0
+                                ? `En az ${business.reservationSettings.minNotificationHours} saat önceden rezervasyon gerekli`
+                                : 'Geçmiş Tarihe Randevu Alınamaz'}
+                            </span>
                           ) : !slot.available && slot.isOccupied && slot.appointment ? (
                             <div className="text-sm">
                               <div className="flex items-center space-x-2">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { ChevronDown, Plus, Edit, Trash2, X, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, Check, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, List, Grid3X3 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
 import { servicesService, MyServicesParams } from '../../../lib/services/services';
@@ -10,7 +11,7 @@ import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
 import { validateServiceForm, validateServiceField, CreateServiceSchema } from '../../../lib/validation/service';
 import { useValidationErrors } from '../../../lib/hooks/useValidationErrors';
 import { PriceSettingsForm } from '../../../components/ui';
-import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
+import { useDashboardBusiness, useDashboardRefetch } from '../../../context/DashboardContext';
 import { useServices } from '../../../lib/hooks/useServices';
 
 // Create Service Modal Component
@@ -152,9 +153,7 @@ function CreateServiceModal({ onClose, onSubmit, isCreating }: CreateServiceModa
                 onClick={onClose}
                 className="text-[var(--theme-foregroundMuted)] hover:text-[var(--theme-foregroundSecondary)] transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -402,9 +401,7 @@ function EditServiceModal({ service, onClose, onSubmit, isUpdating }: EditServic
                 onClick={onClose}
                 className="text-[var(--theme-foregroundMuted)] hover:text-[var(--theme-foregroundSecondary)] transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -538,9 +535,7 @@ function DeleteConfirmationModal({ service, onConfirm, onCancel, isDeleting }: D
           {/* Header with Icon */}
           <div className="flex items-center justify-center mb-4">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-[var(--theme-error)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <Trash2 className="w-6 h-6 text-[var(--theme-error)]" />
             </div>
           </div>
 
@@ -615,9 +610,9 @@ function DeleteConfirmationModal({ service, onConfirm, onCancel, isDeleting }: D
 export default function ServicesPage() {
   const { user } = useAuth();
 
-  // Fetch business data with TanStack Query
-  const { businesses, refetch: refetchBusiness } = useMyBusiness();
-  const business = businesses[0] || null;
+  // Use cached business data from context - no additional API call needed!
+  const business = useDashboardBusiness();
+  const refetchBusiness = useDashboardRefetch();
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -846,9 +841,7 @@ export default function ServicesPage() {
             onClick={() => setShowCreateModal(true)}
             className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-[var(--theme-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--theme-primary)]/90 transition-colors"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="w-4 h-4 mr-2" />
             Yeni Hizmet
           </button>
         </div>
@@ -857,9 +850,7 @@ export default function ServicesPage() {
         <div className="flex items-center gap-3">
           <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-[var(--theme-foregroundMuted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="h-5 w-5 text-[var(--theme-foregroundMuted)]" />
             </div>
             <input
               type="text"
@@ -881,9 +872,7 @@ export default function ServicesPage() {
               }`}
               title="Detaylı Görünüm"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
+              <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('compact')}
@@ -894,9 +883,7 @@ export default function ServicesPage() {
               }`}
               title="Kompakt Görünüm"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Grid3X3 className="w-4 h-4" />
             </button>
           </div>
           
@@ -916,9 +903,7 @@ export default function ServicesPage() {
         <div className="px-4 sm:px-6 py-4 bg-[var(--theme-backgroundSecondary)] border-b border-[var(--theme-border)] transition-colors duration-300">
           <div className="flex sm:flex-row sm:items-center justify-between gap-2">
             <h3 className="text-lg font-semibold text-[var(--theme-foreground)] flex items-center">
-              <svg className="w-5 h-5 mr-2 text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
+              <FileText className="w-5 h-5 mr-2 text-[var(--theme-primary)]" />
               Hizmetler
             </h3>
             {(searchQuery ? filteredServices.length : allServices.length) > 0 && (
@@ -938,9 +923,7 @@ export default function ServicesPage() {
           </div>
         ) : servicesError ? (
           <div className="p-8 text-center">
-            <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
             <h3 className="mt-4 text-lg font-medium text-[var(--theme-foreground)]">Hata</h3>
             <p className="mt-2 text-sm text-[var(--theme-foregroundMuted)]">{servicesError}</p>
             <button
@@ -952,9 +935,7 @@ export default function ServicesPage() {
           </div>
         ) : (searchQuery ? filteredServices : allServices).length === 0 ? (
           <div className="p-8 text-center">
-            <svg className="mx-auto h-12 w-12 text-[var(--theme-foregroundMuted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
+            <FileText className="mx-auto h-12 w-12 text-[var(--theme-foregroundMuted)]" />
             <h3 className="mt-4 text-lg font-medium text-[var(--theme-foreground)]">Hizmet Bulunamadı</h3>
             <p className="mt-2 text-sm text-[var(--theme-foregroundMuted)]">
               {searchQuery
@@ -993,16 +974,12 @@ export default function ServicesPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm">
                       <div className="flex items-center text-[var(--theme-foregroundSecondary)]">
-                        <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="truncate">{formatDuration(service.duration)}</span>
                       </div>
                       
                       <div className="flex items-center text-[var(--theme-foregroundSecondary)]">
-                        <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
+                        <CreditCard className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span className="truncate font-medium">{formatPrice(service.price, service.currency)}</span>
                       </div>
                     </div>
@@ -1047,15 +1024,11 @@ export default function ServicesPage() {
                             </h4>
                             <div className="flex items-center gap-4 mt-1 text-xs sm:text-sm text-[var(--theme-foregroundSecondary)]">
                               <span className="flex items-center">
-                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <Clock className="w-3 h-3 mr-1" />
                                 {formatDuration(service.duration)}
                               </span>
                               <span className="flex items-center font-medium">
-                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                </svg>
+                                <CreditCard className="w-3 h-3 mr-1" />
                                 {formatPrice(service.price, service.currency)}
                               </span>
                             </div>
@@ -1068,16 +1041,11 @@ export default function ServicesPage() {
                             }`}>
                               {service.isActive ? 'Aktif' : 'Pasif'}
                             </span>
-                            <svg 
+                            <ChevronDown 
                               className={`w-5 h-5 text-[var(--theme-foregroundMuted)] transition-transform ${
                                 isExpanded ? 'rotate-180' : ''
                               }`} 
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            />
                           </div>
                         </div>
                       </div>

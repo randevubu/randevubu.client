@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import PlanSelectionStep from '../features/PlanSelectionStep';
+import PlanSelectionStep from './PlanSelectionStep';
 import PaymentForm from './PaymentForm';
 import { PaymentsService } from '../../lib/services/payments';
 import { SubscriptionPlan } from '../../types/subscription';

@@ -2,7 +2,7 @@
 
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
-import ProfileGuard from '../../components/features/ProfileGuard';
+import ProfileGuard from '../../components/ui/ProfileGuard';
 
 export default function CustomerLayout({
   children,

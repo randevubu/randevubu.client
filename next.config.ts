@@ -5,20 +5,16 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    rules: {
-      "*.svg": {
-        loaders: ["@svgr/webpack"],
-        as: "*.js",
-      },
-    },
-  },
+  // SVG configuration removed - Turbopack doesn't support @svgr/webpack
 };
 
-export default withNextIntl(withPWA({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-  // Use custom service worker with push notification support
-  swSrc: "public/sw-custom.js",
-  swDest: "public/sw.js",
-})(nextConfig));
+export default withNextIntl(
+  withPWA({
+    dest: "public",
+    disable: process.env.NODE_ENV === "development",
+    workboxOptions: {
+      swSrc: "public/sw-custom.js",
+      swDest: "public/sw.js",
+    },
+  })(nextConfig)
+);

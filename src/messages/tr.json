@@ -148,7 +148,7 @@
       },
       "starter": {
         "name": "Başlangıç Planı",
-        "description": "Küçük işletmeler için ideal"
+        "description": "Küçük işletmeler için temel randevu yönetimi"
       },
       "pro": {
         "name": "Pro Paket",
@@ -232,7 +232,7 @@
       "planDescription": "İşletmenizin boyutuna göre tasarlanmış esnek fiyatlandırma planları. İstediğiniz zaman değiştirebilirsiniz.",
       "mostPopular": "En Popüler",
       "startNow": "Hemen Başla",
-      "selectPlan": "Plan Seç",
+      "selectPlan": "İletişime Geçin",
       "businesses": "iş yeri",
       "staffPerBusiness": "personel/iş yeri",
       "appointmentsPerDay": "randevu/gün",
@@ -249,7 +249,8 @@
       "pricingNote": "Tüm fiyatlar KDV dahildir. Ödeme güvenliği SSL sertifikası ile korunmaktadır.",
       "haveQuestions": "Soruların mı var? Bizi Ara",
       "comparisonTable": "Karşılaştırma Tablosu",
-      "tryAgain": "Tekrar Dene"
+      "tryAgain": "Tekrar Dene",
+      "customPricing": "Özel"
     }
   },
   "pricing": {

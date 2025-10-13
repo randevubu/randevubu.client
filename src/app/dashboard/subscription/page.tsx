@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useDashboardUser, useDashboardBusiness } from '../../../context/DashboardContext';
 import { useSubscription, useCancelSubscription } from '../../../lib/hooks/useSubscription';
-import Pricing from '../../../components/features/Pricing';
-import PlanChangeFlow from '../../../components/features/PlanChangeFlow';
+import Pricing from '../../../components/ui/Pricing';
+import PlanChangeFlow from '../../../components/ui/PlanChangeFlow';
 
 import { SubscriptionPlan } from '../../../types/subscription';
 import { SubscriptionStatus } from '../../../types/enums';
@@ -59,6 +60,45 @@ export default function SubscriptionPage() {
         return 'İptal Edildi';
       default:
         return status;
+    }
+  };
+
+  const getPlanCardColors = (planName: string) => {
+    const name = planName?.toLowerCase() || '';
+    
+    if (name.includes('professional') || name.includes('profesyonel')) {
+      return {
+        gradient: 'bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700',
+        iconBg: 'bg-white/20',
+        textLight: 'text-purple-100',
+        textLighter: 'text-purple-200',
+        hover: 'hover:from-purple-700 hover:via-purple-800 hover:to-indigo-800'
+      };
+    } else if (name.includes('pro')) {
+      return {
+        gradient: 'bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700',
+        iconBg: 'bg-white/20',
+        textLight: 'text-blue-100',
+        textLighter: 'text-blue-200',
+        hover: 'hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800'
+      };
+    } else if (name.includes('starter') || name.includes('başlangıç')) {
+      return {
+        gradient: 'bg-gradient-to-br from-green-600 via-emerald-700 to-teal-700',
+        iconBg: 'bg-white/20',
+        textLight: 'text-green-100',
+        textLighter: 'text-green-200',
+        hover: 'hover:from-green-700 hover:via-emerald-800 hover:to-teal-800'
+      };
+    } else {
+      // Default colors for unknown plans
+      return {
+        gradient: 'bg-gradient-to-br from-gray-600 via-gray-700 to-slate-700',
+        iconBg: 'bg-white/20',
+        textLight: 'text-gray-100',
+        textLighter: 'text-gray-200',
+        hover: 'hover:from-gray-700 hover:via-gray-800 hover:to-slate-800'
+      };
     }
   };
 
@@ -133,6 +173,7 @@ export default function SubscriptionPage() {
       formatPrice={formatPrice}
       getStatusColor={getStatusColor}
       getStatusText={getStatusText}
+      getPlanCardColors={getPlanCardColors}
       cancelSubscriptionMutation={cancelSubscriptionMutation}
     />
   );
@@ -253,6 +294,7 @@ interface SubscriptionPageContentProps {
   formatPrice: (price: number, currency: string | undefined) => string;
   getStatusColor: (status: SubscriptionStatus) => string;
   getStatusText: (status: SubscriptionStatus) => string;
+  getPlanCardColors: (planName: string) => any;
   cancelSubscriptionMutation: any;
 }
 
@@ -274,6 +316,7 @@ const SubscriptionPageContent = ({
   formatPrice,
   getStatusColor,
   getStatusText,
+  getPlanCardColors,
   cancelSubscriptionMutation,
 }: SubscriptionPageContentProps) => {
   return (
@@ -298,121 +341,116 @@ const SubscriptionPageContent = ({
               </div>
             </div>
 
-            {subscription ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {/* Plan Card - Enhanced */}
-                <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs sm:text-sm text-blue-100">Aktif Plan</div>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-2 sm:mb-3">Aktif Abonelik</h3>
-                  <p className="text-blue-100 mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">Mevcut abonelik planınız</p>
-
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                    {subscription.plan?.displayName || subscription.planId}
-                  </div>
-                  <div className="text-blue-200 text-xs sm:text-sm font-medium">
-                    Durum: {getStatusText(subscription.status)}
-                  </div>
-                </div>
-
-                {/* Features & Details - Enhanced */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200">
-                    <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      Plan Özellikleri
-                    </h4>
-                    <ul className="space-y-2 sm:space-y-3">
-                      <li className="flex items-center text-xs sm:text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                        <span className="break-words">Abonelik aktif</span>
-                      </li>
-                      <li className="flex items-center text-xs sm:text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                        <span className="break-words">Tüm özellikler dahil</span>
-                      </li>
-                      <li className="flex items-center text-xs sm:text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                        <span className="break-words">Premium destek</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 sm:p-6 border border-blue-200">
-                    <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                      </svg>
-                      Abonelik Detayları
-                    </h4>
-                    <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700">
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                        <span className="font-medium">Dönem Başlangıcı:</span>
-                        <span className="font-medium">{formatDate(subscription.currentPeriodStart)}</span>
+            {subscription ? (() => {
+              const planName = subscription.plan?.displayName || subscription.planId || '';
+              const colors = getPlanCardColors(planName);
+              
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                  {/* Plan Card - Enhanced with Dynamic Colors */}
+                  <div className={`${colors.gradient} rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-300 ${colors.hover}`}>
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${colors.iconBg} rounded-xl flex items-center justify-center`}>
+                        <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                        <span className="font-medium">Dönem Sonu:</span>
-                        <span className="font-medium">{formatDate(subscription.currentPeriodEnd)}</span>
+                      <div className="text-right">
+                        <div className={`text-xs sm:text-sm ${colors.textLight}`}>Aktif Plan</div>
                       </div>
-                      {subscription.cancelAtPeriodEnd && (
-                        <div className="text-amber-700 font-medium bg-amber-50 px-3 py-2 rounded-lg text-center text-xs sm:text-sm">
-                          ⚠️ Bu dönem sonunda iptal edilecek
+                    </div>
+                    
+                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-2 sm:mb-3">Aktif Abonelik</h3>
+                    <p className={`${colors.textLight} mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base`}>Mevcut abonelik planınız</p>
+
+                    <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+                      {subscription.plan?.displayName || subscription.planId}
+                    </div>
+                    <div className={`${colors.textLighter} text-xs sm:text-sm font-medium`}>
+                      Durum: {getStatusText(subscription.status)}
+                    </div>
+                  </div>
+
+                  {/* Features & Details - Enhanced */}
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200">
+                      <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
+                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2" />
+                        Plan Özellikleri
+                      </h4>
+                      <ul className="space-y-2 sm:space-y-3">
+                        <li className="flex items-center text-xs sm:text-sm text-gray-700">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
+                          <span className="break-words">Abonelik aktif</span>
+                        </li>
+                        <li className="flex items-center text-xs sm:text-sm text-gray-700">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
+                          <span className="break-words">Tüm özellikler dahil</span>
+                        </li>
+                        <li className="flex items-center text-xs sm:text-sm text-gray-700">
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
+                          <span className="break-words">Premium destek</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 sm:p-6 border border-blue-200">
+                      <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 mr-2" />
+                        Abonelik Detayları
+                      </h4>
+                      <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700">
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                          <span className="font-medium">Dönem Başlangıcı:</span>
+                          <span className="font-medium">{formatDate(subscription.currentPeriodStart)}</span>
                         </div>
-                      )}
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                          <span className="font-medium">Dönem Sonu:</span>
+                          <span className="font-medium">{formatDate(subscription.currentPeriodEnd)}</span>
+                        </div>
+                        {subscription.cancelAtPeriodEnd && (
+                          <div className="text-amber-700 font-medium bg-amber-50 px-3 py-2 rounded-lg text-center text-xs sm:text-sm">
+                            ⚠️ Bu dönem sonunda iptal edilecek
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Action Buttons - Enhanced */}
-                <div className="space-y-3 sm:space-y-4">
-                  <button
-                    onClick={() => setShowPlanChangeFlow(true)}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
-                  >
-                    <div className="flex items-center justify-center">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                      <span className="text-sm sm:text-base">Planı Güncelle</span>
-                    </div>
-                  </button>
-                  
-                  {!subscription.cancelAtPeriodEnd ? (
+                  {/* Action Buttons - Enhanced */}
+                  <div className="space-y-3 sm:space-y-4">
                     <button
-                      onClick={() => setShowCancelModal(true)}
-                      className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl hover:from-red-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
+                      onClick={() => setShowPlanChangeFlow(true)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
                     >
                       <div className="flex items-center justify-center">
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span className="text-sm sm:text-base">Aboneliği İptal Et</span>
+                        <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        <span className="text-sm sm:text-base">Planı Güncelle</span>
                       </div>
                     </button>
-                  ) : (
-                    <div className="text-center text-xs sm:text-sm text-amber-700 bg-amber-50 px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-amber-200">
-                      Abonelik bu dönem sonunda iptal edilecek
-                    </div>
-                  )}
+                    
+                    {!subscription.cancelAtPeriodEnd ? (
+                      <button
+                        onClick={() => setShowCancelModal(true)}
+                        className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl hover:from-red-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-300 font-semibold shadow-lg active:scale-95 touch-manipulation"
+                      >
+                        <div className="flex items-center justify-center">
+                          <X className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                          <span className="text-sm sm:text-base">Aboneliği İptal Et</span>
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                        <div className="text-amber-700 font-medium text-sm">
+                          ⚠️ Abonelik bu dönem sonunda iptal edilecek
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="text-center py-12">
                 <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 mb-6 shadow-lg">
-                  <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
+                  <BarChart3 className="h-10 w-10 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
                   Henüz bir aboneliğiniz bulunmuyor
@@ -462,9 +500,7 @@ const SubscriptionPageContent = ({
           <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 max-w-lg w-full mx-2 sm:mx-4 shadow-2xl transform transition-all duration-300">
             <div className="text-center mb-4 sm:mb-6">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               
               <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3">

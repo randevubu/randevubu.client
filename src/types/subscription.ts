@@ -6,6 +6,7 @@ export interface SubscriptionPlan {
   displayName: string;
   description?: string;
   price: number;
+  basePrice: number; // NEW: Original base price before location adjustment
   currency: string;
   billingInterval: string;
   maxBusinesses: number;
@@ -30,7 +31,16 @@ export interface SubscriptionPlan {
   };
   isActive: boolean;
   isPopular: boolean;
+  isCustomPricing?: boolean;
+  customPriceDisplay?: string;
   sortOrder: number;
+  locationPricing?: { // NEW: Location pricing information
+    city: string;
+    state: string;
+    country: string;
+    tier: string;
+    multiplier: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -197,4 +207,30 @@ export interface ChangePlanResponse {
   paymentInfo?: PaymentInfo;
   createdAt: string;
   updatedAt: string;
+}
+
+// NEW: Location and pricing response types
+export interface Location {
+  city: string;
+  state: string;
+  country: string;
+  detected: boolean;
+  source: 'ip_geolocation' | 'manual' | 'fallback';
+  accuracy: 'high' | 'medium' | 'low';
+}
+
+export interface PricingResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    plans: SubscriptionPlan[];
+    location: Location;
+  };
+}
+
+export interface CityOption {
+  value: string;
+  label: string;
+  tier: string;
 }

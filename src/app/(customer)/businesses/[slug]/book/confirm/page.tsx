@@ -6,7 +6,8 @@ import { businessService } from '@/src/lib/services/business';
 import { appointmentService } from '@/src/lib/services/appointments';
 import { staffService, StaffWithUser } from '@/src/lib/services/staff';
 import { useAuth } from '@/src/context/AuthContext';
-import { showSuccessToast, handleApiError } from '@/src/lib/utils/toast';
+import { showSuccessToast, showErrorToast, handleApiError } from '@/src/lib/utils/toast';
+import { getPolicyErrorMessage } from '@/src/lib/utils/policyValidation';
 import NameCollectionDialog from '@/src/components/ui/NameCollectionDialog';
 import { isProfileComplete } from '@/src/lib/utils/profileValidation';
 
@@ -71,6 +72,7 @@ export default function ConfirmationPage() {
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (slug && serviceId && date && time) {
@@ -113,7 +115,7 @@ export default function ConfirmationPage() {
         }
       }
     } catch (error) {
-      console.error('Error fetching business data:', error);
+      // Error fetching business data - silently fail and show loading state
     } finally {
       setLoading(false);
     }
@@ -129,7 +131,7 @@ export default function ConfirmationPage() {
         }
       }
     } catch (error) {
-      console.error('Error fetching staff:', error);
+      // Error fetching staff - silently fail
     }
   };
 
@@ -153,15 +155,24 @@ export default function ConfirmationPage() {
     try {
       setIsSubmitting(true);
       setBookingLoading(true);
+      setBookingError(null); // Clear previous errors
 
-      const response = await appointmentService.createAppointment({
+      // Debug: Log the appointment data being sent
+      const appointmentData = {
         businessId: business.id,
         serviceId: selectedService.id,
         staffId: selectedStaff?.id,
         date: date,
         startTime: time,
         customerNotes: notes.trim() || undefined
-      });
+      };
+      
+      console.log('📅 Appointment data being sent:', appointmentData);
+      console.log('🕐 Current time:', new Date().toISOString());
+      console.log('📅 Appointment datetime would be:', new Date(`${date}T${time}:00`).toISOString());
+      console.log('⏰ Hours difference:', (new Date(`${date}T${time}:00`).getTime() - new Date().getTime()) / (1000 * 60 * 60));
+
+      const response = await appointmentService.createAppointment(appointmentData);
 
       if (response.success) {
         showSuccessToast('🎉 Randevunuz başarıyla oluşturuldu!');
@@ -171,11 +182,17 @@ export default function ConfirmationPage() {
         }, 1500);
         return;
       } else {
-        handleApiError(response);
+        // Get user-friendly error message for policy violations
+        const errorMessage = getPolicyErrorMessage(response.error || 'Randevu oluşturulurken bir sorun oluştu');
+        setBookingError(errorMessage);
+        showErrorToast(errorMessage);
         setIsSubmitting(false);
       }
-    } catch (error) {
-      handleApiError(error);
+    } catch (error: any) {
+      // Get user-friendly error message for policy violations
+      const errorMessage = getPolicyErrorMessage(error?.response?.data?.error || error);
+      setBookingError(errorMessage);
+      showErrorToast(errorMessage);
       setIsSubmitting(false);
     } finally {
       setBookingLoading(false);
@@ -377,6 +394,29 @@ export default function ConfirmationPage() {
                 {notes.length}/500 karakter
               </p>
             </div>
+
+            {/* Booking Error Display */}
+            {bookingError && (
+              <div className="bg-[var(--theme-error)]/5 border border-[var(--theme-error)]/20 rounded-xl p-4">
+                <div className="flex items-start">
+                  <svg className="w-6 h-6 text-[var(--theme-error)] mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-[var(--theme-error)] mb-1">Randevu Oluşturulamadı</h4>
+                    <p className="text-sm text-[var(--theme-error)]">{bookingError}</p>
+                  </div>
+                  <button
+                    onClick={() => setBookingError(null)}
+                    className="ml-2 text-[var(--theme-error)] hover:text-[var(--theme-error)]/70 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Auth Notice */}
             {!isAuthenticated && (

@@ -355,6 +355,7 @@ export function canViewNavigationItem(user: User | null, itemId: string): boolea
     case 'customers':
     case 'services':
     case 'reports':
+    case 'monitor':
       return canViewBusinessStats(user);
     default:
       return false;

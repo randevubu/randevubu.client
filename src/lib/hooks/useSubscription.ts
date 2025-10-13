@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack
 import { useAuth } from '../../context/AuthContext';
 import { subscriptionService } from '../services/subscription';
 import { BusinessSubscription } from '../../types/subscription';
-import { useMyBusiness } from './useMyBusiness';
+import { useDashboardBusiness } from '../../context/DashboardContext';
 
 export interface UseSubscriptionResult {
   subscription: BusinessSubscription | null;
@@ -23,13 +23,14 @@ export interface UseSubscriptionResult {
  * - Built-in loading and error states
  * - Stale-while-revalidate behavior
  * - Only fetches when user is authenticated and business is available
+ * - Uses cached business data from context to avoid duplicate API calls
  */
 export function useSubscription(): UseSubscriptionResult {
   const { user, isAuthenticated, hasInitialized, isLoading: authLoading } = useAuth();
-  const { businesses, isLoading: businessLoading } = useMyBusiness();
-
-  // Get the primary business ID
-  const businessId = businesses?.[0]?.id || '';
+  
+  // Use cached business data from context - no additional API call!
+  const business = useDashboardBusiness();
+  const businessId = business?.id || '';
 
   const queryResult: UseQueryResult<BusinessSubscription, Error> = useQuery({
     queryKey: ['business-subscription', businessId],
@@ -46,7 +47,7 @@ export function useSubscription(): UseSubscriptionResult {
 
       return response.data;
     },
-    enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !businessLoading && !!businessId,
+    enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
     staleTime: 5 * 60 * 1000, // 5 minutes - subscription data doesn't change frequently
     gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false, // Don't refetch on focus - subscription data is stable

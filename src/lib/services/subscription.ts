@@ -1,5 +1,5 @@
 import { apiClient } from '../api';
-import { BusinessSubscription, SubscriptionPlan, CreateBusinessSubscriptionData, UpdateBusinessSubscriptionData, ChangePlanData, ChangePlanResponse, PaymentMethod, AddPaymentMethodData, PlanChangePreview } from '../../types/subscription';
+import { BusinessSubscription, SubscriptionPlan, CreateBusinessSubscriptionData, UpdateBusinessSubscriptionData, ChangePlanData, ChangePlanResponse, PaymentMethod, AddPaymentMethodData, PlanChangePreview, Location } from '../../types/subscription';
 
 export interface SubscriptionServiceResponse<T> {
   success: boolean;
@@ -14,12 +14,36 @@ export class SubscriptionService {
   /**
    * Get all available subscription plans
    */
-  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+  async getSubscriptionPlans(city?: string): Promise<SubscriptionPlan[]> {
     try {
-      const response = await apiClient.get('/api/v1/subscriptions/plans');
-      return response.data.data || [];
+      const url = city 
+        ? `/api/v1/subscriptions/plans?city=${encodeURIComponent(city)}`
+        : '/api/v1/subscriptions/plans';
+      
+      const response = await apiClient.get(url);
+      return response.data.data?.plans || response.data.data || [];
     } catch (error) {
       console.error('Failed to fetch subscription plans:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get subscription plans with location information
+   */
+  async getSubscriptionPlansWithLocation(city?: string): Promise<{ plans: SubscriptionPlan[]; location: Location }> {
+    try {
+      const url = city 
+        ? `/api/v1/subscriptions/plans?city=${encodeURIComponent(city)}`
+        : '/api/v1/subscriptions/plans';
+      
+      const response = await apiClient.get(url);
+      return {
+        plans: response.data.data?.plans || [],
+        location: response.data.data?.location
+      };
+    } catch (error) {
+      console.error('Failed to fetch subscription plans with location:', error);
       throw error;
     }
   }

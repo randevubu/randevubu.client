@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useApiError } from '@/src/lib/hooks/useApiError';
 import { useErrorTranslations, useCommonTranslations } from '@/src/lib/utils/translations';
-import { LanguageSwitcher } from '@/src/components/features/LanguageSwitcher';
+import { LanguageSwitcher } from '@/src/components/ui/LanguageSwitcher';
 
 // Example component showing how to integrate translations
 export function ExampleTranslatedComponent() {

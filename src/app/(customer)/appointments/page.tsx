@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Calendar, CalendarDays, ChevronDown, Filter, X, Check, Clock, AlertCircle, List, CheckCircle, XCircle, AlertTriangle, RefreshCw, Calendar as CalendarIcon, User, ChevronDown as ChevronDownIcon, MapPin, Phone, DollarSign, FileText, Trash2, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { appointmentService } from '@/src/lib/services/appointments';
 import { isCustomer } from '@/src/lib/utils/permissions';
 import { showSuccessToast, showErrorToast } from '@/src/lib/utils/toast';
+import { getPolicyErrorMessage } from '@/src/lib/utils/policyValidation';
 
 interface AppointmentData {
   id: string;
@@ -170,7 +172,6 @@ export default function AppointmentsPage() {
         setError('Randevular yüklenemedi');
       }
     } catch (error) {
-      console.error('Failed to fetch appointments:', error);
       setError('Randevular yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
@@ -179,36 +180,39 @@ export default function AppointmentsPage() {
 
   const handleCancelAppointment = async () => {
     if (!appointmentToCancel) return;
-    
+
     try {
       setIsCancelling(true);
       const response = await appointmentService.cancelAppointment(
-        appointmentToCancel.id, 
+        appointmentToCancel.id,
         cancelReason || undefined
       );
-      
+
       if (response.success) {
         // Update the appointment in the list
-        setAppointments(prev => prev.map(apt => 
-          apt.id === appointmentToCancel.id 
+        setAppointments(prev => prev.map(apt =>
+          apt.id === appointmentToCancel.id
             ? { ...apt, status: 'CANCELLED', cancelReason: cancelReason }
             : apt
         ));
-        
+
         // Close modal and reset states
         setShowCancelModal(false);
         setShowFinalConfirmation(false);
         setAppointmentToCancel(null);
         setCancelReason('');
-        
+
         // Show success toast
         showSuccessToast('Randevu başarıyla iptal edildi');
       } else {
-        showErrorToast('Randevu iptal edilirken bir hata oluştu');
+        // Get user-friendly error message
+        const errorMessage = getPolicyErrorMessage(response.error || 'Randevu iptal edilirken bir hata oluştu');
+        showErrorToast(errorMessage);
       }
-    } catch (error) {
-      console.error('Failed to cancel appointment:', error);
-      showErrorToast('Randevu iptal edilirken bir hata oluştu');
+    } catch (error: any) {
+      // Get user-friendly error message from the error object
+      const errorMessage = getPolicyErrorMessage(error?.response?.data?.error || error);
+      showErrorToast(errorMessage);
     } finally {
       setIsCancelling(false);
     }
@@ -280,9 +284,7 @@ export default function AppointmentsPage() {
           <div className="mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
               <div className="w-16 h-16 sm:w-12 sm:h-12 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-3xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-                <svg className="w-8 h-8 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z" />
-                </svg>
+                <Calendar className="w-8 h-8 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="flex-1">
                 <div className="h-8 sm:h-9 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse mb-2"></div>
@@ -302,7 +304,7 @@ export default function AppointmentsPage() {
           {/* Skeleton Appointments */}
           <div className="space-y-4 sm:space-y-6">
             {[...Array(3)].map((_, index) => (
-              <div key={index} className="bg-[var(--theme-card)] rounded-2xl border border-[var(--theme-border)] p-4">
+              <div key={index} className="bg-[var(--theme-card)] dark:bg-gray-800/60 rounded-2xl border border-[var(--theme-border)] p-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-10 h-10 bg-[var(--theme-backgroundSecondary)] rounded-lg animate-pulse"></div>
                   <div className="flex-1 space-y-2">
@@ -357,9 +359,7 @@ export default function AppointmentsPage() {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
             <div className="w-16 h-16 sm:w-12 sm:h-12 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-3xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-              <svg className="w-8 h-8 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z" />
-              </svg>
+              <Calendar className="w-8 h-8 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-black text-[var(--theme-foreground)] transition-colors duration-300 mb-1">
@@ -385,9 +385,7 @@ export default function AppointmentsPage() {
                 className="w-full flex items-center justify-between p-3 bg-[var(--theme-backgroundSecondary)] rounded-xl border border-[var(--theme-border)] transition-colors duration-300 hover:border-[var(--theme-primary)]/30"
               >
                 <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
-                  </svg>
+                  <Filter className="w-4 h-4 text-[var(--theme-primary)]" />
                   <span className="text-sm font-semibold text-[var(--theme-foreground)]">
                     {[
                       { value: 'all', label: 'Tüm Durumlar' },
@@ -398,21 +396,21 @@ export default function AppointmentsPage() {
                     ].find(f => f.value === selectedStatus)?.label}
                   </span>
                 </div>
-                <svg className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showFilterDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showFilterDropdown ? 'rotate-180' : ''}`} />
               </button>
               
               {showFilterDropdown && (
-                <div className="absolute top-full mt-2 w-full bg-[var(--theme-card)] rounded-xl border border-[var(--theme-border)] shadow-xl z-20 overflow-hidden">
+                <div className="absolute top-full mt-2 w-full bg-[var(--theme-card)] dark:bg-gray-800/90 rounded-xl border border-[var(--theme-border)] shadow-xl z-20 overflow-hidden">
                   {[
-                    { value: 'all', label: 'Tüm Durumlar', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z' },
-                    { value: 'CONFIRMED', label: 'Onaylandı', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-                    { value: 'COMPLETED', label: 'Tamamlandı', icon: 'M5 13l4 4L19 7' },
-                    { value: 'CANCELLED', label: 'İptal Edildi', icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
-                    { value: 'NO_SHOW', label: 'Gelmedi', icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728' }
-                  ].map((filter, index) => (
-                    <button
+                    { value: 'all', label: 'Tüm Durumlar', icon: List },
+                    { value: 'CONFIRMED', label: 'Onaylandı', icon: CheckCircle },
+                    { value: 'COMPLETED', label: 'Tamamlandı', icon: Check },
+                    { value: 'CANCELLED', label: 'İptal Edildi', icon: XCircle },
+                    { value: 'NO_SHOW', label: 'Gelmedi', icon: AlertTriangle }
+                  ].map((filter, index) => {
+                    const IconComponent = filter.icon;
+                    return (
+                      <button
                       key={filter.value}
                       onClick={() => {
                         setSelectedStatus(filter.value);
@@ -425,17 +423,14 @@ export default function AppointmentsPage() {
                         selectedStatus === filter.value ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]' : 'text-[var(--theme-foreground)]'
                       }`}
                     >
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={filter.icon} />
-                      </svg>
+                      <IconComponent className="w-4 h-4 flex-shrink-0" />
                       <span className="text-sm font-medium">{filter.label}</span>
                       {selectedStatus === filter.value && (
-                        <svg className="w-4 h-4 ml-auto text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check className="w-4 h-4 ml-auto text-[var(--theme-primary)]" />
                       )}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -450,9 +445,7 @@ export default function AppointmentsPage() {
                 className="w-full flex items-center justify-between p-3 bg-[var(--theme-backgroundSecondary)] rounded-xl border border-[var(--theme-border)] transition-colors duration-300 hover:border-[var(--theme-accent)]/30"
               >
                 <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-[var(--theme-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z" />
-                  </svg>
+                  <CalendarDays className="w-4 h-4 text-[var(--theme-accent)]" />
                   <span className="text-sm font-semibold text-[var(--theme-foreground)]">
                     {[
                       { value: 'all', label: 'Tüm Zamanlar' },
@@ -463,20 +456,20 @@ export default function AppointmentsPage() {
                     ].find(f => f.value === selectedDateFilter)?.label}
                   </span>
                 </div>
-                <svg className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showDateDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showDateDropdown ? 'rotate-180' : ''}`} />
               </button>
               
               {showDateDropdown && (
-                <div className="absolute top-full mt-2 w-full bg-[var(--theme-card)] rounded-xl border border-[var(--theme-border)] shadow-xl z-20 overflow-hidden">
+                <div className="absolute top-full mt-2 w-full bg-[var(--theme-card)] dark:bg-gray-800/90 rounded-xl border border-[var(--theme-border)] shadow-xl z-20 overflow-hidden">
                   {[
-                    { value: 'all', label: 'Tüm Zamanlar', icon: 'M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z' },
-                    { value: 'today', label: 'Bugün', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-                    { value: 'thisWeek', label: 'Bu Hafta', icon: 'M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z' },
-                    { value: 'thisMonth', label: 'Bu Ay', icon: 'M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z' },
-                    { value: 'thisYear', label: 'Bu Yıl', icon: 'M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z' }
-                  ].map((filter, index) => (
+                    { value: 'all', label: 'Tüm Zamanlar', icon: Calendar },
+                    { value: 'today', label: 'Bugün', icon: Clock },
+                    { value: 'thisWeek', label: 'Bu Hafta', icon: Calendar },
+                    { value: 'thisMonth', label: 'Bu Ay', icon: Calendar },
+                    { value: 'thisYear', label: 'Bu Yıl', icon: Calendar }
+                  ].map((filter, index) => {
+                    const IconComponent = filter.icon;
+                    return (
                     <button
                       key={filter.value}
                       onClick={() => {
@@ -490,17 +483,14 @@ export default function AppointmentsPage() {
                         selectedDateFilter === filter.value ? 'bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]' : 'text-[var(--theme-foreground)]'
                       }`}
                     >
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={filter.icon} />
-                      </svg>
+                      <IconComponent className="w-4 h-4 flex-shrink-0" />
                       <span className="text-sm font-medium">{filter.label}</span>
                       {selectedDateFilter === filter.value && (
-                        <svg className="w-4 h-4 ml-auto text-[var(--theme-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check className="w-4 h-4 ml-auto text-[var(--theme-accent)]" />
                       )}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -520,9 +510,7 @@ export default function AppointmentsPage() {
           ) : error ? (
             <div className="text-center py-16">
               <div className="w-16 h-16 bg-[var(--theme-error)]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-8 h-8 text-[var(--theme-error)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+                <AlertCircle className="w-8 h-8 text-[var(--theme-error)]" />
               </div>
               <h3 className="text-xl font-bold text-[var(--theme-foreground)] mb-3">Bir Hata Oluştu</h3>
               <p className="text-[var(--theme-foregroundSecondary)] mb-6 max-w-md mx-auto">{error}</p>
@@ -530,18 +518,14 @@ export default function AppointmentsPage() {
                 onClick={fetchAppointments}
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] text-[var(--theme-primaryForeground)] rounded-xl text-sm font-semibold hover:shadow-lg  transition-all duration-300"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Tekrar Dene
               </button>
             </div>
           ) : appointments.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-[var(--theme-primary)]/20 to-[var(--theme-accent)]/20 rounded-3xl flex items-center justify-center mx-auto mb-6  transition-transform duration-300">
-                <svg className="w-12 h-12 text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z" />
-                </svg>
+                <CalendarIcon className="w-12 h-12 text-[var(--theme-primary)]" />
               </div>
               <h3 className="text-2xl font-bold text-[var(--theme-foreground)] mb-3">Henüz Randevu Yok</h3>
               <p className="text-[var(--theme-foregroundSecondary)] mb-6 max-w-md mx-auto transition-colors duration-300">
@@ -554,9 +538,7 @@ export default function AppointmentsPage() {
                 href="/businesses" 
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] text-[var(--theme-primaryForeground)] rounded-xl text-sm font-semibold hover:shadow-lg  transition-all duration-300"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <CalendarIcon className="w-4 h-4 mr-2" />
                 İşletmeleri Keşfet
               </a>
             </div>
@@ -579,7 +561,7 @@ export default function AppointmentsPage() {
                   return (
                   <div 
                     key={appointment.id} 
-                    className="group relative bg-[var(--theme-card)] rounded-2xl border border-[var(--theme-border)] hover:border-[var(--theme-primary)]/20 hover:shadow-xl transition-all duration-300"
+                    className="group relative bg-[var(--theme-card)] dark:bg-gray-800/60 rounded-2xl border border-[var(--theme-border)] hover:border-[var(--theme-primary)]/20 hover:shadow-xl transition-all duration-300"
                   >
 
                     {/* Compact Header - Always Visible */}
@@ -590,9 +572,7 @@ export default function AppointmentsPage() {
                             className="w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-md flex-shrink-0"
                             style={{ backgroundColor: appointment.business.primaryColor || 'var(--theme-primary)' }}
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <User className="w-5 h-5" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-base font-bold text-[var(--theme-foreground)] group-hover:text-[var(--theme-primary)] transition-colors duration-300 truncate">
@@ -615,9 +595,7 @@ export default function AppointmentsPage() {
                           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold ${getStatusBadge(appointment.status)} shadow-sm`}>
                             {getStatusText(appointment.status)}
                           </span>
-                          <svg className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                          <ChevronDownIcon className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </div>
                     </div>
@@ -628,11 +606,9 @@ export default function AppointmentsPage() {
                         <div className="pt-3 space-y-3">
                           {/* Quick Info Row */}
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-[var(--theme-card)]/60 rounded-lg p-2.5">
+                            <div className="bg-[var(--theme-card)]/60 dark:bg-gray-700/40 rounded-lg p-2.5">
                               <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4 text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m4 0H4m16 0v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7h16z" />
-                                </svg>
+                                <Calendar className="w-4 h-4 text-[var(--theme-primary)]" />
                                 <div>
                                   <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium">Tam Tarih</p>
                                   <p className="text-sm font-semibold text-[var(--theme-foreground)]">
@@ -646,11 +622,9 @@ export default function AppointmentsPage() {
                               </div>
                             </div>
 
-                            <div className="bg-[var(--theme-card)]/60 rounded-lg p-2.5">
+                            <div className="bg-[var(--theme-card)]/60 dark:bg-gray-700/40 rounded-lg p-2.5">
                               <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4 text-[var(--theme-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <Clock className="w-4 h-4 text-[var(--theme-accent)]" />
                                 <div>
                                   <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium">Süre</p>
                                   <p className="text-sm font-semibold text-[var(--theme-foreground)]">
@@ -671,9 +645,7 @@ export default function AppointmentsPage() {
                           <div className="bg-[var(--theme-card)]/60 rounded-lg p-2.5">
                             <div className="space-y-2">
                               <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4 text-[var(--theme-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                </svg>
+                                <MapPin className="w-4 h-4 text-[var(--theme-primary)]" />
                                 <div className="flex-1">
                                   <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium">Adres</p>
                                   <p className="text-sm text-[var(--theme-foreground)] font-semibold">{appointment.business.address}</p>
@@ -681,9 +653,7 @@ export default function AppointmentsPage() {
                               </div>
                               {appointment.business.phone && (
                                 <div className="flex items-center space-x-2">
-                                  <svg className="w-4 h-4 text-[var(--theme-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                  </svg>
+                                  <Phone className="w-4 h-4 text-[var(--theme-accent)]" />
                                   <div className="flex-1">
                                     <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium">Telefon</p>
                                     <p className="text-sm text-[var(--theme-foreground)] font-semibold">{appointment.business.phone}</p>
@@ -703,9 +673,7 @@ export default function AppointmentsPage() {
                               {!appointment.business.settings?.priceVisibility?.hideAllServicePrices && (
                                 <div className="bg-gradient-to-r from-[var(--theme-success)]/10 to-[var(--theme-success)]/5 rounded-lg p-2.5 border border-[var(--theme-success)]/20">
                                   <div className="flex items-center space-x-2">
-                                    <svg className="w-4 h-4 text-[var(--theme-success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                    </svg>
+                                    <DollarSign className="w-4 h-4 text-[var(--theme-success)]" />
                                     <div>
                                       <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium">Ücret</p>
                                       <p className="text-lg font-bold text-[var(--theme-success)]">{appointment.price} {appointment.currency}</p>
@@ -715,11 +683,9 @@ export default function AppointmentsPage() {
                               )}
                               
                               {appointment.service.description && (
-                                <div className="bg-[var(--theme-card)]/60 rounded-lg p-2.5">
+                                <div className="bg-[var(--theme-card)]/60 dark:bg-gray-700/40 rounded-lg p-2.5">
                                   <div className="flex items-start space-x-2">
-                                    <svg className="w-4 h-4 text-[var(--theme-primary)] mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
+                                    <FileText className="w-4 h-4 text-[var(--theme-primary)] mt-0.5" />
                                     <div className="flex-1">
                                       <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium mb-1">Hizmet Açıklaması</p>
                                       <p className="text-sm text-[var(--theme-foreground)] leading-relaxed">{appointment.service.description}</p>
@@ -734,9 +700,7 @@ export default function AppointmentsPage() {
                           {appointment.customerNotes && (
                             <div className="bg-gradient-to-r from-[var(--theme-primary)]/10 to-[var(--theme-accent)]/10 rounded-lg p-2.5 border border-[var(--theme-primary)]/20">
                               <div className="flex items-start space-x-2">
-                                <svg className="w-4 h-4 text-[var(--theme-primary)] mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V8m10 0H7" />
-                                </svg>
+                                <FileText className="w-4 h-4 text-[var(--theme-primary)] mt-0.5" />
                                 <div className="flex-1">
                                   <p className="text-xs text-[var(--theme-foregroundSecondary)] font-medium mb-1">Müşteri Notu</p>
                                   <p className="text-sm text-[var(--theme-foreground)] leading-relaxed">{appointment.customerNotes}</p>
@@ -755,9 +719,7 @@ export default function AppointmentsPage() {
                                 }}
                                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[var(--theme-error)] to-red-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg  transition-all duration-300"
                               >
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                <X className="w-4 h-4 mr-2" />
                                 Randevuyu İptal Et
                               </button>
                             </div>
@@ -780,9 +742,7 @@ export default function AppointmentsPage() {
                       disabled={currentPage === 1}
                       className="flex items-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-[var(--theme-foreground)] rounded-xl hover:bg-[var(--theme-card)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
+                      <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                       <span className="hidden sm:inline">Önceki</span>
                     </button>
                     
@@ -808,9 +768,7 @@ export default function AppointmentsPage() {
                       className="flex items-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-[var(--theme-foreground)] rounded-xl hover:bg-[var(--theme-card)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="hidden sm:inline">Sonraki</span>
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 sm:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                      <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 sm:ml-2" />
                     </button>
                   </div>
                 </div>
@@ -823,14 +781,12 @@ export default function AppointmentsPage() {
       {/* Cancel Appointment Modal */}
       {showCancelModal && appointmentToCancel && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[var(--theme-card)] rounded-2xl border border-[var(--theme-border)] max-w-md w-full p-6 shadow-2xl">
+          <div className="bg-[var(--theme-card)] dark:bg-gray-800/90 rounded-2xl border border-[var(--theme-border)] max-w-md w-full p-6 shadow-2xl">
             {!showFinalConfirmation ? (
               <>
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-r from-[var(--theme-error)] to-red-600 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
+                    <AlertTriangle className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[var(--theme-foreground)]">Randevu İptal Et</h3>
@@ -897,9 +853,7 @@ export default function AppointmentsPage() {
               <>
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-r from-[var(--theme-error)] to-red-600 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
+                    <AlertTriangle className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-[var(--theme-foreground)]">Emin misiniz?</h3>

@@ -244,7 +244,8 @@
       "pricingNote": "All prices include VAT. Payment security is protected with SSL certificate.",
       "haveQuestions": "Have questions? Call us",
       "comparisonTable": "Comparison Table",
-      "tryAgain": "Try Again"
+      "tryAgain": "Try Again",
+      "customPricing": "CUSTOM"
     }
   },
   "pricing": {
