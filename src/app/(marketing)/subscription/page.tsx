@@ -14,12 +14,14 @@ import { CreatePaymentRequest } from '../../../types/payment';
 import { PaymentResponse } from '../../../lib/services/payments';
 
 import ProfileGuard from '../../../components/ui/ProfileGuard';
+import SubscriptionPageSkeleton from '../../../components/ui/SubscriptionPageSkeleton';
 
 function SubscriptionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<'plans' | 'payment' | 'success' | 'error'>('plans');
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -28,6 +30,8 @@ function SubscriptionContent() {
   const [checkingBusiness, setCheckingBusiness] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
+  const [isNewBusiness, setIsNewBusiness] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   
   const checkBusinessAccess = useCallback(async () => {
@@ -44,18 +48,23 @@ function SubscriptionContent() {
       if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
         const primaryBusiness = response.data.businesses[0];
         const subscription = primaryBusiness.subscription;
-        
+
         console.log('Subscription - Business:', primaryBusiness.name);
         console.log('Subscription - Subscription:', subscription);
-        
+
         if (subscription && ['ACTIVE', 'TRIAL'].includes(subscription.status)) {
           console.log('Subscription - Active subscription found, redirecting to dashboard subscription page');
           router.push('/dashboard/subscription');
           return;
         }
-        
+
         console.log('Subscription - No active subscription, showing subscription plans');
         setBusinessId(primaryBusiness.id);
+        setBusinessName(primaryBusiness.name);
+
+        // Check if this is a newly created business (from query param or recently created)
+        const fromOnboarding = searchParams.get('from') === 'onboarding';
+        setIsNewBusiness(fromOnboarding);
       } else {
         console.log('Subscription - No business found, redirecting to onboarding');
         router.push('/onboarding');
@@ -97,7 +106,7 @@ function SubscriptionContent() {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Handle confetti animation
+  // Show confetti on success
   useEffect(() => {
     if (currentStep === 'success') {
       setShowConfetti(true);
@@ -108,6 +117,16 @@ function SubscriptionContent() {
       return () => clearTimeout(timer);
     }
   }, [currentStep]);
+
+  // Show success banner with slight delay for better UX
+  useEffect(() => {
+    if (isNewBusiness && businessName) {
+      const timer = setTimeout(() => {
+        setShowSuccessBanner(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isNewBusiness, businessName]);
 
   const handlePlanSelect = (plan: SubscriptionPlan) => {
     setSelectedPlan(plan);
@@ -185,89 +204,13 @@ function SubscriptionContent() {
   };
 
   if (isLoading || checkingBusiness || !businessId) {
-    return (
-      <div className="min-h-screen">
-        {/* Hero Section Skeleton */}
-        <section className="relative bg-white pt-16 sm:pt-20 pb-8 sm:pb-12">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
-          
-          <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
-            <div className="inline-block w-20 h-6 bg-indigo-100 rounded-full animate-pulse mb-3 sm:mb-4"></div>
-            
-            <div className="space-y-3 mb-4 sm:mb-6">
-              <div className="h-8 sm:h-12 lg:h-14 bg-gray-200 rounded-lg animate-pulse mx-auto w-3/4"></div>
-              <div className="h-8 sm:h-12 lg:h-14 bg-gray-200 rounded-lg animate-pulse mx-auto w-2/3"></div>
-            </div>
-            
-            <div className="h-4 sm:h-6 bg-gray-200 rounded-lg animate-pulse mx-auto w-1/2 mb-8 sm:mb-12"></div>
-            
-            {/* Step Indicator Skeleton */}
-            <div className="flex items-center justify-center mb-8 sm:mb-12 px-4">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-200 rounded-full animate-pulse"></div>
-                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse hidden sm:block"></div>
-                <div className="h-4 w-8 bg-gray-200 rounded animate-pulse sm:hidden"></div>
-                <div className="w-8 sm:w-16 h-0.5 bg-gray-200 animate-pulse"></div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full animate-pulse"></div>
-                <div className="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
-                <div className="w-8 sm:w-16 h-0.5 bg-gray-200 animate-pulse"></div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full animate-pulse"></div>
-                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse hidden sm:block"></div>
-                <div className="h-4 w-8 bg-gray-200 rounded animate-pulse sm:hidden"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Content Section Skeleton */}
-        <section className="pb-12 sm:pb-20">
-          <div className="max-w-7xl mx-auto px-4 lg:px-6">
-            {/* Subscription Plans Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {[...Array(3)].map((_, index) => (
-                <div key={index} className="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8">
-                  {/* Plan Badge */}
-                  <div className="h-6 w-20 bg-indigo-100 rounded-full animate-pulse mb-4"></div>
-                  
-                  {/* Plan Name */}
-                  <div className="h-8 bg-gray-200 rounded-lg animate-pulse mb-3"></div>
-                  
-                  {/* Price */}
-                  <div className="flex items-baseline space-x-2 mb-6">
-                    <div className="h-10 w-16 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 w-8 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 w-6 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                  
-                  {/* Features */}
-                  <div className="space-y-3 mb-8">
-                    {[...Array(5)].map((_, featureIndex) => (
-                      <div key={featureIndex} className="flex items-center space-x-3">
-                        <div className="w-5 h-5 bg-green-100 rounded-full animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse flex-1"></div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Button */}
-                  <div className="h-12 bg-indigo-100 rounded-xl animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Loading Status */}
-            <div className="flex items-center justify-center mt-8">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-gray-600 text-sm sm:text-base">
-                  {isLoading ? 'Yükleniyor...' : checkingBusiness ? 'İşletme kontrol ediliyor...' : 'Yükleniyor...'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
+    const loadingMessage = isLoading
+      ? 'Yükleniyor...'
+      : checkingBusiness
+        ? 'İşletme kontrol ediliyor...'
+        : 'Yükleniyor...';
+
+    return <SubscriptionPageSkeleton loadingMessage={loadingMessage} />;
   }
 
   const renderStepIndicator = () => (
@@ -390,25 +333,10 @@ function SubscriptionContent() {
         <div className="space-y-3 sm:space-y-4">
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
+            className="w-full py-4 sm:py-6 px-6 sm:px-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-base sm:text-lg rounded-xl sm:rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] hover:shadow-2xl"
           >
             🚀 Hemen Başla - Dashboard'a Git
           </button>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              onClick={() => router.push('/dashboard/appointments')}
-              className="py-2 sm:py-3 px-4 sm:px-6 bg-green-100 text-green-800 hover:bg-green-200 font-medium text-xs sm:text-sm rounded-xl transition-colors"
-            >
-              📅 Randevu Oluştur
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/customers')}
-              className="py-2 sm:py-3 px-4 sm:px-6 bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium text-xs sm:text-sm rounded-xl transition-colors"
-            >
-              👥 Müşteri Ekle
-            </button>
-          </div>
 
           <button
             onClick={handleStartOver}
@@ -490,18 +418,50 @@ function SubscriptionContent() {
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
 
         <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
+          {/* Success Banner for New Business */}
+          {isNewBusiness && businessName && showSuccessBanner && (
+            <div className="mb-6 sm:mb-8 animate-fade-in">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-4 sm:p-6 max-w-3xl mx-auto">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-green-900">İşletme Başarıyla Oluşturuldu! 🎉</h3>
+                </div>
+                <p className="text-sm sm:text-base text-green-800">
+                  <span className="font-semibold text-green-900">{businessName}</span> artık sistemde kayıtlı. Şimdi devam etmek için bir abonelik planı seçin.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-3 sm:mb-4">
-            💳 Abonelik
+            💳 Abonelik Seçimi
           </div>
 
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-gray-900 mb-4 sm:mb-6 leading-tight px-2">
-            Size Uygun
-            <br />
-            <span className="text-indigo-600">Abonelik Seçin</span>
+            {isNewBusiness && businessName ? (
+              <>
+                <span className="text-indigo-600">{businessName}</span> için
+                <br />
+                Plan Seçin
+              </>
+            ) : (
+              <>
+                Size Uygun
+                <br />
+                <span className="text-indigo-600">Abonelik Seçin</span>
+              </>
+            )}
           </h1>
 
           <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4">
-            İşletmenizin ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma planları.
+            {isNewBusiness
+              ? 'İşletmenizi aktif hale getirmek ve randevuları yönetmeye başlamak için bir abonelik planı seçin.'
+              : 'İşletmenizin ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma planları.'
+            }
           </p>
 
           {renderStepIndicator()}
@@ -541,19 +501,14 @@ function SubscriptionContent() {
                 </div>
               </div>
               
-              <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-
-
+              <div className="p-4 sm:p-6 lg:p-8">
                 {/* Payment Form Section */}
-                <div>
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Kart Bilgileri</h4>
-                  <PaymentForm
-                    selectedPlan={selectedPlan}
-                    onSubmit={handlePaymentSubmit}
-                    onBack={handleBackToPlans}
-                    loading={paymentLoading}
-                  />
-                </div>
+                <PaymentForm
+                  selectedPlan={selectedPlan}
+                  onSubmit={handlePaymentSubmit}
+                  onBack={handleBackToPlans}
+                  loading={paymentLoading}
+                />
               </div>
             </div>
           </div>

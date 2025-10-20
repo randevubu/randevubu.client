@@ -14,6 +14,7 @@ export interface Service {
   bufferTime: number;
   maxAdvanceBooking: number;
   minAdvanceBooking: number;
+  showPrice?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { ChevronDown, Plus, Edit, Trash2, X, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, Check, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, List, Grid3X3 } from 'lucide-react';
+import { AlertCircle, ChevronDown, Clock, CreditCard, FileText, Grid3X3, List, Plus, Search, Trash2, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { PriceSettingsForm, SuggestedServices } from '../../../components/ui';
 import { useAuth } from '../../../context/AuthContext';
-import { businessService } from '../../../lib/services/business';
-import { servicesService, MyServicesParams } from '../../../lib/services/services';
-import { Service } from '../../../types/service';
-import { canViewBusinessStats } from '../../../lib/utils/permissions';
-import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
-import { validateServiceForm, validateServiceField, CreateServiceSchema } from '../../../lib/validation/service';
-import { useValidationErrors } from '../../../lib/hooks/useValidationErrors';
-import { PriceSettingsForm } from '../../../components/ui';
 import { useDashboardBusiness, useDashboardRefetch } from '../../../context/DashboardContext';
 import { useServices } from '../../../lib/hooks/useServices';
+import { businessService } from '../../../lib/services/business';
+import { servicesService } from '../../../lib/services/services';
+import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
+import { validateServiceForm } from '../../../lib/validation/service';
+import { getSuggestedServicesForBusinessType } from '../../../lib/utils/serviceSuggestions';
+import { Service } from '../../../types/service';
+import { CreateServiceData } from '../../../types/service';
 
 // Create Service Modal Component
 interface CreateServiceModalProps {
@@ -47,9 +47,6 @@ function CreateServiceModal({ onClose, onSubmit, isCreating }: CreateServiceModa
 
   const validateFormWithData = (dataToValidate: typeof formData) => {
     // Debug logging to understand the data types
-    console.log('Form data before validation:', dataToValidate);
-    console.log('Price type:', typeof dataToValidate.price, 'Value:', dataToValidate.price);
-    console.log('Duration type:', typeof dataToValidate.duration, 'Value:', dataToValidate.duration);
     
     // Ensure data types are correct before validation
     const sanitizedData = {
@@ -58,7 +55,6 @@ function CreateServiceModal({ onClose, onSubmit, isCreating }: CreateServiceModa
       price: typeof dataToValidate.price === 'number' ? dataToValidate.price : parseFloat(String(dataToValidate.price)) || 0
     };
     
-    console.log('Sanitized data:', sanitizedData);
     
     const validationResult = validateServiceForm(sanitizedData, false);
     setErrors(validationResult.errors as Record<string, string>);
@@ -98,7 +94,6 @@ function CreateServiceModal({ onClose, onSubmit, isCreating }: CreateServiceModa
       numericValue = isNaN(parsed) ? 0 : parsed;
     }
     
-    console.log('Price input change:', { value, numericValue, type: typeof numericValue });
     setFormData(prev => ({ ...prev, price: numericValue }));
   };
 
@@ -299,9 +294,6 @@ function EditServiceModal({ service, onClose, onSubmit, isUpdating }: EditServic
 
   const validateFormWithData = (dataToValidate: typeof formData) => {
     // Debug logging to understand the data types in edit mode
-    console.log('Edit form data before validation:', dataToValidate);
-    console.log('Edit Price type:', typeof dataToValidate.price, 'Value:', dataToValidate.price);
-    console.log('Edit Duration type:', typeof dataToValidate.duration, 'Value:', dataToValidate.duration);
     
     // Ensure data types are correct before validation
     const sanitizedData = {
@@ -310,7 +302,6 @@ function EditServiceModal({ service, onClose, onSubmit, isUpdating }: EditServic
       price: typeof dataToValidate.price === 'number' ? dataToValidate.price : parseFloat(String(dataToValidate.price)) || 0
     };
     
-    console.log('Edit Sanitized data:', sanitizedData);
     
     const validationResult = validateServiceForm(sanitizedData, true); // true for update mode
     setErrors(validationResult.errors as Record<string, string>);
@@ -350,7 +341,6 @@ function EditServiceModal({ service, onClose, onSubmit, isUpdating }: EditServic
       numericValue = isNaN(parsed) ? 0 : parsed;
     }
     
-    console.log('Edit Price input change:', { value, numericValue, type: typeof numericValue });
     setFormData(prev => ({ ...prev, price: numericValue }));
   };
 
@@ -738,6 +728,30 @@ export default function ServicesPage() {
     }
   };
 
+  const handleAddSuggestedService = async (serviceData: CreateServiceData) => {
+    if (!business?.id) {
+      handleApiError({ message: 'İşletme ID bulunamadı' });
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const response = await servicesService.createServiceForBusiness(business.id, serviceData);
+      
+      if (response.success && response.data) {
+        refetchServices();
+        showSuccessToast('Hizmet başarıyla eklendi.');
+      } else {
+        handleApiError(response);
+      }
+    } catch (error) {
+      console.error('Suggested service creation failed:', error);
+      handleApiError(error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const handleUpdateService = async (serviceId: string, formData: {
     name: string;
     description: string;
@@ -804,10 +818,8 @@ export default function ServicesPage() {
   }) => {
     try {
       setIsSavingPriceSettings(true);
-      console.log('💾 Saving price settings:', settings);
       
       const response = await businessService.updatePriceSettings(settings);
-      console.log('💾 Save response:', response);
       
       if (response.success) {
         // Refetch business data to get updated settings from server
@@ -826,7 +838,7 @@ export default function ServicesPage() {
 
 
   return (
-    <div className="space-y-4 sm:space-y-6 bg-[var(--theme-background)] min-h-screen transition-colors duration-300">
+    <div className="space-y-4 sm:space-y-6 md:px-6 md:py-6 bg-[var(--theme-background)] min-h-screen transition-colors duration-300">
       {/* Price Settings */}
       <PriceSettingsForm
         business={business}
@@ -934,21 +946,51 @@ export default function ServicesPage() {
             </button>
           </div>
         ) : (searchQuery ? filteredServices : allServices).length === 0 ? (
-          <div className="p-8 text-center">
-            <FileText className="mx-auto h-12 w-12 text-[var(--theme-foregroundMuted)]" />
-            <h3 className="mt-4 text-lg font-medium text-[var(--theme-foreground)]">Hizmet Bulunamadı</h3>
-            <p className="mt-2 text-sm text-[var(--theme-foregroundMuted)]">
-              {searchQuery
-                ? `"${searchQuery}" aramasına uygun hizmet bulunamadı.` 
-                : 'Henüz hiç hizmet bulunmuyor.'}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-4 inline-flex items-center px-4 py-2 bg-[var(--theme-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--theme-primary)]/90"
-              >
-                İlk Hizmetinizi Ekleyin
-              </button>
+          <div className="p-8">
+            {!searchQuery ? (
+              // Show suggested services when no services exist
+              <div className="space-y-6">
+                <div className="text-center">
+                  <FileText className="mx-auto h-12 w-12 text-[var(--theme-foregroundMuted)]" />
+                  <h3 className="mt-4 text-lg font-medium text-[var(--theme-foreground)]">Henüz Hiç Hizmet Bulunmuyor</h3>
+                  <p className="mt-2 text-sm text-[var(--theme-foregroundMuted)]">
+                    İşletmeniz için hizmetlerinizi ekleyerek başlayın.
+                  </p>
+                </div>
+                
+                {/* Suggested Services */}
+                {business?.businessType && (
+                  <SuggestedServices
+                    suggestions={getSuggestedServicesForBusinessType(business.businessType)}
+                    onAddService={handleAddSuggestedService}
+                    isAdding={isCreating}
+                    businessTypeName={business.businessType.displayName}
+                  />
+                )}
+                
+                {/* Manual Add Button */}
+                <div className="text-center">
+                  <p className="text-sm text-[var(--theme-foregroundSecondary)] mb-4">
+                    Veya kendi hizmetinizi manuel olarak ekleyin:
+                  </p>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="inline-flex items-center px-4 py-2 bg-[var(--theme-card)] text-[var(--theme-foreground)] text-sm font-medium rounded-lg border border-[var(--theme-border)] hover:bg-[var(--theme-backgroundSecondary)] transition-colors"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Manuel Hizmet Ekle
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Show search results message
+              <div className="text-center">
+                <FileText className="mx-auto h-12 w-12 text-[var(--theme-foregroundMuted)]" />
+                <h3 className="mt-4 text-lg font-medium text-[var(--theme-foreground)]">Hizmet Bulunamadı</h3>
+                <p className="mt-2 text-sm text-[var(--theme-foregroundMuted)]">
+                  `"${searchQuery}" aramasına uygun hizmet bulunamadı.`
+                </p>
+              </div>
             )}
           </div>
         ) : viewMode === 'detailed' ? (

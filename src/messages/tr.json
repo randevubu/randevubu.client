@@ -56,7 +56,8 @@
       "nameRequired": "Hizmet adı gerekli",
       "priceInvalid": "Geçersiz fiyat",
       "durationInvalid": "Geçersiz süre",
-      "hasAppointments": "Bu hizmette randevular var, silinemez"
+      "hasAppointments": "Bu hizmette randevular var, silinemez",
+      "noServicesCreated": "Önce hizmet oluşturmanız gerekiyor. Lütfen hizmetler sayfasından bir hizmet ekleyin."
     },
     "customer": {
       "notFound": "Müşteri bulunamadı",

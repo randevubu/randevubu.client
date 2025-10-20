@@ -36,6 +36,8 @@ export interface PublicBusiness {
   isVerified: boolean;
   isClosed: boolean;
   tags: string[];
+  rating?: number;
+  totalReviews: number;
   businessType: {
     id: string;
     name: string;
@@ -72,11 +74,12 @@ export const businessService = {
   },
 
   // Get user's business(es) - NEW endpoint for owners/staff
-  getMyBusiness: async (queryParams?: string): Promise<MyBusinessResponse> => {
-  // Always include subscription info to avoid separate API calls
+  getMyBusiness: async (includeSubscription: boolean = true): Promise<MyBusinessResponse> => {
     const baseUrl = '/api/v1/businesses/my-business';
-    const params = new URLSearchParams(queryParams || '');
-    params.append('includeSubscription', 'true');
+    const params = new URLSearchParams();
+    if (includeSubscription) {
+      params.append('includeSubscription', 'true');
+    }
     
     const url = `${baseUrl}?${params.toString()}`;
     const response = await apiClient.get<MyBusinessResponse>(url);
@@ -85,15 +88,9 @@ export const businessService = {
 
   // Create a new business
   createBusiness: async (data: CreateBusinessData): Promise<CreateBusinessResponse> => {
-    console.log('📤 Sending business creation request...');
     const response = await apiClient.post<CreateBusinessResponse>('/api/v1/businesses', data);
     
     // 🔍 DEBUG: Log the exact response structure
-    console.log('📦 Raw API response:', response.data);
-    console.log('📦 Response includes tokens:', !!response.data.tokens);
-    if (response.data.tokens) {
-      console.log('🔑 Token keys:', Object.keys(response.data.tokens));
-    }
     
     return response.data; // This should include { data: {...}, tokens: {...} }
   },
@@ -322,7 +319,6 @@ export const businessService = {
       return response.data;
     } catch (error) {
       // Fallback to basic closure creation if enhanced endpoint not available
-      console.warn('Enhanced closure endpoint not available, falling back to basic closure');
       throw error;
     }
   },
@@ -364,7 +360,6 @@ export const businessService = {
       };
     } catch (error) {
       // Return mock data for development
-      console.warn('Impact preview endpoint error, using mock data:', error);
       
       // Simulate realistic scenario - some dates have no appointments
       const hasAppointments = Math.random() > 0.3; // 70% chance of having appointments
@@ -398,7 +393,6 @@ export const businessService = {
       const response = await apiClient.post<ApiResponse<NotificationResult[]>>('/api/v1/notifications/closure', data);
       return response.data.data || [];
     } catch (error) {
-      console.warn('Notification service not available');
       // Return mock success response
       return data.channels.map(channel => ({
         success: true,
@@ -415,7 +409,6 @@ export const businessService = {
       const response = await apiClient.get<ApiResponse<any[]>>(`/api/v1/closures/${closureId}/affected-appointments`);
       return response.data;
     } catch (error) {
-      console.warn('Affected appointments endpoint not available');
       throw error;
     }
   },
@@ -426,7 +419,6 @@ export const businessService = {
       const response = await apiClient.get<ApiResponse<RescheduleSuggestion[]>>(`/api/v1/closures/${closureId}/reschedule-suggestions`);
       return response.data.data || [];
     } catch (error) {
-      console.warn('Reschedule suggestions endpoint not available');
       return [];
     }
   },
@@ -448,7 +440,6 @@ export const businessService = {
       }
       return response.data.data;
     } catch (error) {
-      console.warn('Closure analytics endpoint not available');
       // Return mock analytics data
       return {
         totalClosures: Math.floor(Math.random() * 50) + 10,
@@ -477,7 +468,6 @@ export const businessService = {
       }
       return response.data.data;
     } catch (error) {
-      console.warn('Customer impact report endpoint not available');
       return {
         totalAffectedCustomers: Math.floor(Math.random() * 100) + 20,
         notificationsSent: Math.floor(Math.random() * 95) + 18,
@@ -499,7 +489,6 @@ export const businessService = {
       const response = await apiClient.post<ApiResponse<any>>('/api/v1/businesses/availability-alerts', data);
       return response.data;
     } catch (error) {
-      console.warn('Availability alerts endpoint not available');
       throw error;
     }
   },
@@ -510,7 +499,6 @@ export const businessService = {
       const response = await apiClient.get<ApiResponse<any>>(`/api/v1/businesses/${businessId}/closure-status`);
       return response.data;
     } catch (error) {
-      console.warn('Closure status endpoint not available');
       return {
         success: true,
         data: {
@@ -537,7 +525,6 @@ export const businessService = {
       const response = await apiClient.post<ApiResponse<any>>('/api/v1/closures/auto-reschedule', data);
       return response.data;
     } catch (error) {
-      console.warn('Auto-reschedule endpoint not available');
       throw error;
     }
   },

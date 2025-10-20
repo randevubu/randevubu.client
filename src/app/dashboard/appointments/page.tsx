@@ -14,12 +14,14 @@ import { useServices } from '../../../lib/hooks/useServices';
 import { MyAppointmentsParams } from '../../../lib/services/appointments';
 import { getBusinessHoursForDate } from '../../../lib/utils/businessHours';
 import { hasRole, isOwner, isStaff } from '../../../lib/utils/permissions';
-import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
+import { handleApiError, showSuccessToast, showErrorToast } from '../../../lib/utils/toast';
+import { useErrorTranslations } from '../../../lib/utils/translations';
 import { Appointment, AppointmentStatus } from '../../../types';
 
 
 export default function AppointmentsPage() {
   const { user } = useAuth();
+  const errorTranslations = useErrorTranslations();
   const { actualMode, variant, setMode } = useTheme();
   const [expandedAppointment, setExpandedAppointment] = useState<string | null>(null);
 
@@ -729,6 +731,11 @@ export default function AppointmentsPage() {
     if (calendarMode === 'booking') {
       // Booking mode: Single click opens appointment booking dialog
       if (canBookForCustomers() && business?.id) {
+        // Check if services exist before opening dialog
+        if (!services || services.length === 0) {
+          showErrorToast(errorTranslations('service.noServicesCreated'));
+          return;
+        }
         setSelectedTimeSlotForBooking(timeSlot);
         setAppointmentBookingDialogOpen(true);
       }

@@ -72,10 +72,11 @@ export default function ChangePlanDialog({
       try {
         const paymentResponse = await subscriptionService.getPaymentMethods(businessId);
         if (paymentResponse.success && paymentResponse.data) {
-          setPaymentMethods(paymentResponse.data);
+          const paymentMethods = Array.isArray(paymentResponse.data) ? paymentResponse.data : [];
+          setPaymentMethods(paymentMethods);
           // Auto-select first payment method if available
-          if (paymentResponse.data.length > 0 && paymentResponse.data[0].id) {
-            setSelectedPaymentMethod(paymentResponse.data[0].id);
+          if (paymentMethods.length > 0 && paymentMethods[0].id) {
+            setSelectedPaymentMethod(paymentMethods[0].id);
           }
         }
       } catch (error) {

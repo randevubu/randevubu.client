@@ -50,9 +50,10 @@ export function useServices(params: UseServicesParams = {}): UseServicesResult {
       return response.data.services;
     },
     enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !!params.businessId,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute (reduced for development)
+    gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes (reduced)
+    refetchOnWindowFocus: true, // Allow refetch on focus for fresh data
+    refetchOnMount: true, // Allow refetch on mount for fresh data
     refetchOnReconnect: true,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors

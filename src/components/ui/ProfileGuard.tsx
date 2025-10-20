@@ -11,41 +11,55 @@ interface ProfileGuardProps {
   redirectTo?: string;
 }
 
-// Global state to track if toast has been shown
-let globalToastShown = false;
-
 export default function ProfileGuard({ children, redirectTo = '/settings?tab=profile' }: ProfileGuardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
+  const [profileToastShown, setProfileToastShown] = useState(() => {
+    // Use sessionStorage to persist across component remounts but reset on logout
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('profileGuardToastShown') === 'true';
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      router.push('/auth');
+      // Use replace to prevent back button from returning to protected page
+      router.replace('/auth');
       return;
     }
 
     if (shouldRedirectForProfile(user, pathname)) {
-      // Show toast notification only once globally
-      if (!globalToastShown) {
+      // Show toast notification only once
+      if (!profileToastShown) {
         toast.error('Lütfen ad ve soyadınızı girin', { duration: 3000 });
-        globalToastShown = true;
+        setProfileToastShown(true);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('profileGuardToastShown', 'true');
+        }
       }
-      
-      router.push(redirectTo);
+
+      // Use replace to prevent back button from returning to protected page
+      router.replace(redirectTo);
       return;
     }
 
-    // Reset global toast state when user has completed profile
-    if (globalToastShown && isProfileComplete(user)) {
-      globalToastShown = false;
-    }
-
     setIsChecking(false);
-  }, [user, isAuthenticated, isLoading, router, redirectTo, pathname]);
+  }, [user, isAuthenticated, isLoading, router, redirectTo, pathname, profileToastShown]);
+
+  // Reset toast flag when profile is complete
+  useEffect(() => {
+    if (profileToastShown && isProfileComplete(user)) {
+      setProfileToastShown(false);
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('profileGuardToastShown');
+      }
+    }
+  }, [profileToastShown, user]);
 
   if (isLoading || isChecking) {
     return (

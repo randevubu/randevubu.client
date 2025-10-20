@@ -13,9 +13,6 @@ interface DashboardGuardProps {
   children: React.ReactNode;
 }
 
-// Global state to track if profile toast has been shown
-let globalProfileToastShown = false;
-
 export default function DashboardGuard({ children }: DashboardGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -24,6 +21,13 @@ export default function DashboardGuard({ children }: DashboardGuardProps) {
   const [subscriptionChecking, setSubscriptionChecking] = useState(true);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState<{ to: string; reason: string } | null>(null);
+  const [profileToastShown, setProfileToastShown] = useState(() => {
+    // Use sessionStorage to persist across component remounts but reset on logout
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('dashboardProfileToastShown') === 'true';
+    }
+    return false;
+  });
 
   const isLoading = authLoading || businessLoading;
 
@@ -68,7 +72,8 @@ export default function DashboardGuard({ children }: DashboardGuardProps) {
   useEffect(() => {
     if (shouldRedirect) {
       console.log(`🔄 [GUARD] Redirecting to ${shouldRedirect.to}: ${shouldRedirect.reason}`);
-      router.push(shouldRedirect.to);
+      // Use replace to prevent back button from returning to protected page
+      router.replace(shouldRedirect.to);
     }
   }, [shouldRedirect, router]);
 
@@ -96,13 +101,16 @@ export default function DashboardGuard({ children }: DashboardGuardProps) {
   // Handle profile completeness redirect
   useEffect(() => {
     if (user && shouldRedirectForProfile(user, pathname)) {
-      if (!globalProfileToastShown) {
+      if (!profileToastShown) {
         toast.error('Lütfen ad ve soyadınızı girin', { duration: 3000 });
-        globalProfileToastShown = true;
+        setProfileToastShown(true);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('dashboardProfileToastShown', 'true');
+        }
       }
       setShouldRedirect({ to: '/settings?tab=profile', reason: 'Profile incomplete' });
     }
-  }, [user, pathname]);
+  }, [user, pathname, profileToastShown]);
 
   // Show loading screen if we're redirecting
   if (shouldRedirect) {
@@ -143,12 +151,15 @@ export default function DashboardGuard({ children }: DashboardGuardProps) {
     );
   }
 
-  // Profile completeness check is now handled in useEffect above
-
-  // Reset profile toast when profile is complete
-  if (globalProfileToastShown && user && !shouldRedirectForProfile(user, pathname)) {
-    globalProfileToastShown = false;
-  }
+  // Reset profile toast flag when profile is complete
+  useEffect(() => {
+    if (profileToastShown && user && !shouldRedirectForProfile(user, pathname)) {
+      setProfileToastShown(false);
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('dashboardProfileToastShown');
+      }
+    }
+  }, [profileToastShown, user, pathname]);
 
   // Show loading screen during checks
   if (isLoading || subscriptionChecking) {

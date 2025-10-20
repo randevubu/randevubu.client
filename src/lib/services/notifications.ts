@@ -263,7 +263,6 @@ class NotificationService {
   // Show a local notification (for immediate feedback)
   showLocalNotification(payload: NotificationPayload): void {
     if (!this.isSupported() || this.getPermissionStatus() !== 'granted') {
-      console.warn('Cannot show local notification: not supported or permission denied');
       return;
     }
 

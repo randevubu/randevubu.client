@@ -1,9 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Bell, Building, Calendar, ChevronDown, Clock, Image, Settings, Users } from 'lucide-react';
+import { AlertTriangle, Bell, Building, Calendar, ChevronDown, Clock, Image, Settings, Users, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BusinessHoursSettings from '../../../components/ui/BusinessHoursSettings';
 import { BusinessImageManager } from '../../../components/ui/BusinessImageManager';
 import BusinessNotificationSettings from '../../../components/ui/BusinessNotificationSettings';
@@ -12,12 +12,13 @@ import { PushNotificationSettings } from '../../../components/ui/PushNotificatio
 import ReservationRulesSettings from '../../../components/ui/ReservationRulesSettings';
 import { StaffPrivacySettingsComponent } from '../../../components/ui/StaffPrivacySettings';
 import ThemeSelector from '../../../components/ui/ThemeSelector';
+import { GoogleIntegrationSettings } from '../../../components';
 import { useAuth } from '../../../context/AuthContext';
 import { useDashboardBusiness, useDashboardRefetch } from '../../../context/DashboardContext';
 import { businessService } from '../../../lib/services/business';
 import { canAccessSettingsPage, canAccessSettingsSection } from '../../../lib/utils/permissions';
 import { handleApiError, showSuccessToast } from '../../../lib/utils/toast';
-import { BusinessType, UpdateBusinessData } from '../../../types/business';
+import { Business, BusinessType, UpdateBusinessData } from '../../../types/business';
 
 interface SettingsFormData {
   // Appearance Settings (theme now handled by ThemeSelector)
@@ -51,6 +52,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
+  const [showOverflowMenu, setShowOverflowMenu] = useState(false);
+  const [screenWidth, setScreenWidth] = useState(0);
 
   // Use cached business data from context - no additional API call needed!
   const business = useDashboardBusiness();
@@ -143,10 +146,62 @@ export default function SettingsPage() {
     { id: 'images', name: 'Görsel Yönetimi', icon: Image },
     { id: 'appointments', name: 'Randevu Ayarları', icon: Calendar },
     { id: 'staff', name: 'Personel Ayarları', icon: Users },
+    { id: 'ratings', name: 'Değerlendirme Ayarları', icon: AlertTriangle },
   ];
 
   // Filter tabs based on user permissions
   const tabs = allTabs.filter(tab => canAccessSettingsSection(user, tab.id));
+
+  // Calculate visible and overflow tabs based on screen size
+  const tabVisibility = useMemo(() => {
+    const tabIds = tabs.map(tab => tab.id);
+    
+    // For demonstration, let's assume we can fit 4 tabs on desktop
+    // In a real implementation, you'd measure the container width
+    const maxVisibleTabs = screenWidth < 1024 ? 2 : 4; // 2 for tablet, 4 for desktop
+    
+    if (tabIds.length <= maxVisibleTabs) {
+      return {
+        visibleTabs: tabIds,
+        overflowTabs: []
+      };
+    } else {
+      return {
+        visibleTabs: tabIds.slice(0, maxVisibleTabs - 1), // Leave space for "More" button
+        overflowTabs: tabIds.slice(maxVisibleTabs - 1)
+      };
+    }
+  }, [tabs, screenWidth]);
+
+  const { visibleTabs, overflowTabs } = tabVisibility;
+
+  // Track screen width for responsive behavior
+  useEffect(() => {
+    const updateScreenWidth = () => {
+      setScreenWidth(window.innerWidth);
+    };
+    
+    // Set initial width
+    updateScreenWidth();
+    
+    window.addEventListener('resize', updateScreenWidth);
+    return () => window.removeEventListener('resize', updateScreenWidth);
+  }, []);
+
+  // Close overflow menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('[data-overflow-menu]')) {
+        setShowOverflowMenu(false);
+      }
+    };
+
+    if (showOverflowMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showOverflowMenu]);
 
   useEffect(() => {
     if (user && canAccessSettingsPage(user)) {
@@ -172,7 +227,6 @@ export default function SettingsPage() {
         setExpandedSections(prev => ({ ...prev, ...preferences }));
       }
     } catch (error) {
-      console.error('Error loading section preferences:', error);
     }
   };
 
@@ -187,7 +241,6 @@ export default function SettingsPage() {
 
       // Theme is now handled by ThemeContext
     } catch (error) {
-      console.error('Settings loading failed:', error);
       handleApiError(error);
     }
   };
@@ -209,7 +262,6 @@ export default function SettingsPage() {
       showSuccessToast('Ayar güncellendi');
       
     } catch (error) {
-      console.error('Setting save failed:', error);
       handleApiError(error);
     } finally {
       setIsSaving(false);
@@ -250,7 +302,6 @@ export default function SettingsPage() {
         handleApiError(response);
       }
     } catch (error) {
-      console.error('Business update failed:', error);
       handleApiError(error);
     } finally {
       setIsSaving(false);
@@ -490,18 +541,17 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">İşletme Türü</label>
                 <select
                   name="businessTypeId"
-                  value={business.businessTypeId || ''}
+                  value={business.businessType?.id || ''}
                   onChange={handleBusinessInputChange}
                   disabled
                   className="w-full px-4 py-3 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foregroundSecondary)] cursor-not-allowed"
                 >
-                  <option value={business.businessTypeId}>
-                    {businessTypes.find(bt => bt.id === business.businessTypeId)?.displayName || 'Bilinmeyen'}
+                  <option value={business.businessType?.id || ''}>
+                    {business.businessType?.displayName || 'Bilinmeyen'}
                   </option>
                 </select>
                 <p className="text-xs text-[var(--theme-foregroundMuted)] mt-1">İşletme türü değiştirilemez</p>
               </div>
-
 
               {/* Phone */}
               <div>
@@ -582,7 +632,6 @@ export default function SettingsPage() {
                   placeholder="İstanbul"
                 />
               </div>
-
             </div>
           </div>
         </div>
@@ -607,7 +656,6 @@ export default function SettingsPage() {
       try {
         localStorage.setItem('settingsSectionPreferences', JSON.stringify(newState));
       } catch (error) {
-        console.error('Error saving section preferences:', error);
       }
     };
 
@@ -876,7 +924,6 @@ export default function SettingsPage() {
       <StaffPrivacySettingsComponent 
         onSettingsUpdated={() => {
           // Optionally reload business data or show success message
-          console.log('Staff privacy settings updated');
         }}
       />
 
@@ -965,6 +1012,45 @@ export default function SettingsPage() {
     </div>
   );
 
+  const renderRatingsSettings = () => (
+    <div className="space-y-6 p-3">
+      {business ? (
+        <>
+          <div className="bg-[var(--theme-backgroundSecondary)] rounded-xl p-6 border border-[var(--theme-border)] transition-colors duration-300">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-8 h-8 bg-[var(--theme-primary)]/10 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-[var(--theme-primary)]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">Değerlendirme Ayarları</h3>
+                <p className="text-sm text-[var(--theme-foregroundSecondary)] mt-1">
+                  Google entegrasyonu ve müşteri değerlendirmelerini yönetin
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <GoogleIntegrationSettings
+            businessId={business.id}
+            currentSettings={business.googleIntegration}
+            onSettingsUpdated={() => {
+              // Reload business data to reflect changes
+              refetchBusiness();
+            }}
+          />
+        </>
+      ) : (
+        <div className="text-center py-12">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[var(--theme-backgroundSecondary)] mb-4">
+            <AlertTriangle className="h-8 w-8 text-[var(--theme-foregroundMuted)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-2">İşletme Bulunamadı</h3>
+          <p className="text-[var(--theme-foregroundSecondary)]">Değerlendirme ayarları için önce bir işletmeniz olmalı.</p>
+        </div>
+      )}
+    </div>
+  );
+
   const renderTabContent = () => {
     // Additional permission check to ensure user can access the current tab
     if (!canAccessSettingsSection(user, activeTab)) {
@@ -990,6 +1076,8 @@ export default function SettingsPage() {
         return renderAppointmentSettings();
       case 'staff':
         return renderStaffSettings();
+      case 'ratings':
+        return renderRatingsSettings();
       default:
         return renderAppearanceSettings();
     }
@@ -1002,18 +1090,18 @@ export default function SettingsPage() {
 
         {/* Modern Mobile Tab Cards */}
         <div className="sm:hidden bg-[var(--theme-background)]">
-          <div className="grid grid-cols-3 gap-2 p-3">
+          <div className="grid grid-cols-2 gap-2 p-3">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`p-2 rounded-lg border-2 transition-all duration-200 min-h-[80px] ${
+                className={`p-3 rounded-lg border-2 transition-all duration-200 min-h-[80px] ${
                   activeTab === tab.id
                     ? 'border-[var(--theme-primary)] bg-[var(--theme-primary)]/10 shadow-md'
                     : 'border-[var(--theme-border)] bg-[var(--theme-background)] hover:border-[var(--theme-borderSecondary)] hover:bg-[var(--theme-backgroundSecondary)]'
                 }`}
               >
-                <div className="flex flex-col items-center space-y-1 h-full justify-start">
+                <div className="flex flex-col items-center space-y-2 h-full justify-center">
                   <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'bg-[var(--theme-primary)]/20'
@@ -1023,26 +1111,10 @@ export default function SettingsPage() {
                       activeTab === tab.id ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-foregroundSecondary)]'
                     }`} />
                   </div>
-                  <span className={`text-xs font-medium text-center leading-tight px-1 flex-1 ${
+                  <span className={`text-xs font-medium text-center leading-tight ${
                     activeTab === tab.id ? 'text-[var(--theme-primary)]' : 'text-[var(--theme-foreground)]'
-                  }`} style={{ 
-                    wordBreak: 'break-word', 
-                    lineHeight: '1.1', 
-                    maxWidth: '100%', 
-                    whiteSpace: 'pre-line',
-                    display: 'block',
-                    minHeight: '2.2em',
-                    textAlign: 'center',
-                    overflowWrap: 'break-word',
-                    hyphens: 'auto',
-                    width: '100%'
-                  }}>
-                    {tab.name === 'İşletme Ayarları' ? 'İşletme\nAyarları' : 
-                     tab.name === 'Görsel Yönetimi' ? 'Görsel\nYönetimi' :
-                     tab.name === 'Hatırlatma Ayarları' ? 'Hatırlatma\nAyarları' :
-                     tab.name === 'Randevu Ayarları' ? 'Randevu\nAyarları' :
-                     tab.name === 'Personel Ayarları' ? 'Personel\nAyarları' :
-                     tab.name}
+                  }`}>
+                    {tab.name}
                   </span>
                 </div>
               </button>
@@ -1051,23 +1123,72 @@ export default function SettingsPage() {
         </div>
 
         {/* Desktop Tabs */}
-        <div className="hidden sm:block bg-[var(--theme-background)] rounded-lg shadow-sm border border-[var(--theme-border)] overflow-hidden">
+        <div className="hidden sm:block bg-[var(--theme-background)] rounded-lg shadow-sm border border-[var(--theme-border)]">
           <div className="border-b border-[var(--theme-border)]">
-            <nav className="-mb-px flex space-x-6 px-6 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]'
-                      : 'border-transparent text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:border-[var(--theme-borderSecondary)]'
-                  }`}
-                >
-                  <tab.icon className="w-5 h-5 mr-2" />
-                  {tab.name}
-                </button>
-              ))}
+            <nav className="-mb-px flex space-x-0 px-6">
+              {/* Visible tabs */}
+              {visibleTabs.map((tabId) => {
+                const tab = tabs.find(t => t.id === tabId);
+                if (!tab) return null;
+                
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap flex items-center transition-colors flex-shrink-0 ${
+                      activeTab === tab.id
+                        ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]'
+                        : 'border-transparent text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:border-[var(--theme-borderSecondary)]'
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">{tab.name}</span>
+                  </button>
+                );
+              })}
+              
+              {/* Overflow menu */}
+              {overflowTabs.length > 0 && (
+                <div className="relative" data-overflow-menu>
+                  <button
+                    onClick={() => setShowOverflowMenu(!showOverflowMenu)}
+                    className={`py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap flex items-center transition-colors flex-shrink-0 ${
+                      overflowTabs.includes(activeTab)
+                        ? 'border-[var(--theme-primary)] text-[var(--theme-primary)]'
+                        : 'border-transparent text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:border-[var(--theme-borderSecondary)]'
+                    }`}
+                  >
+                    <MoreHorizontal className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>Daha Fazla</span>
+                  </button>
+                  
+                  {/* Dropdown menu */}
+                  {showOverflowMenu && (
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-[var(--theme-background)] border border-[var(--theme-border)] rounded-lg shadow-lg z-50">
+                      {overflowTabs.map((tabId) => {
+                        const tab = tabs.find(t => t.id === tabId);
+                        if (!tab) return null;
+                        
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => {
+                              setActiveTab(tab.id);
+                              setShowOverflowMenu(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left flex items-center space-x-3 hover:bg-[var(--theme-backgroundSecondary)] transition-colors ${
+                              activeTab === tab.id ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]' : 'text-[var(--theme-foreground)]'
+                            }`}
+                          >
+                            <tab.icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-sm font-medium">{tab.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </nav>
           </div>
           
@@ -1077,8 +1198,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Mobile Content Card */}
-        <div className="sm:hidden bg-[var(--theme-background)] mb-4 rounded-xl shadow-sm border border-[var(--theme-border)] overflow-hidden">
-          <div className="">
+        <div className="sm:hidden bg-[var(--theme-background)] mb-4 rounded-xl shadow-sm border border-[var(--theme-border)]">
+          <div className="p-4">
             {renderTabContent()}
           </div>
         </div>

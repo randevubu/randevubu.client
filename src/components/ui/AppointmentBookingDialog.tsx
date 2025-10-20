@@ -7,6 +7,7 @@ import { appointmentService, CreateAppointmentData } from '../../lib/services/ap
 import { servicesService } from '../../lib/services/services';
 import { businessService } from '../../lib/services/business';
 import { handleApiError, showSuccessToast } from '../../lib/utils/toast';
+import { useErrorTranslations } from '../../lib/utils/translations';
 import { hasRole, isStaff, isOwner } from '../../lib/utils/permissions';
 import { Service } from '../../types/service';
 import { useUsageLimits } from '../../lib/hooks/useUsageTracking';
@@ -43,6 +44,7 @@ export default function AppointmentBookingDialog({
   onAppointmentCreated
 }: AppointmentBookingDialogProps) {
   const { user } = useAuth();
+  const errorTranslations = useErrorTranslations();
   const [canBookForOthers, setCanBookForOthers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [services, setServices] = useState<Service[]>([]);
@@ -138,10 +140,22 @@ export default function AppointmentBookingDialog({
       const response = await servicesService.getBusinessServices(businessId);
       if (response.success && response.data) {
         setServices(response.data);
+        // If no services found, show error and close dialog
+        if (!response.data || response.data.length === 0) {
+          handleApiError(new Error(errorTranslations('service.noServicesCreated')));
+          onClose();
+          return;
+        }
+      } else {
+        // If no services found, show error and close dialog
+        handleApiError(new Error(errorTranslations('service.noServicesCreated')));
+        onClose();
+        return;
       }
     } catch (error) {
       console.error('Failed to load services:', error);
       handleApiError(error);
+      onClose();
     } finally {
       setLoading(false);
     }
@@ -375,7 +389,7 @@ export default function AppointmentBookingDialog({
                 className="w-full px-3 py-2 border border-[var(--theme-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] bg-[var(--theme-card)] text-[var(--theme-foreground)] transition-colors duration-200"
               >
                 <option value="">Hizmet seçin</option>
-                {services.map(service => (
+                {services && Array.isArray(services) && services.map(service => (
                   <option key={service.id} value={service.id}>
                     {service.name} - {service.price}₺ ({service.duration} dk)
                   </option>

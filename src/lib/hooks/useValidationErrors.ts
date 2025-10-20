@@ -135,7 +135,6 @@ export const useValidationErrors = () => {
       // If no translation found, return original error
       // In development, you might want to log untranslated errors
       if (process.env.NODE_ENV === 'development') {
-        console.warn('Untranslated validation error:', error);
       }
       
       return error;

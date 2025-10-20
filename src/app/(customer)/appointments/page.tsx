@@ -7,6 +7,7 @@ import { appointmentService } from '@/src/lib/services/appointments';
 import { isCustomer } from '@/src/lib/utils/permissions';
 import { showSuccessToast, showErrorToast } from '@/src/lib/utils/toast';
 import { getPolicyErrorMessage } from '@/src/lib/utils/policyValidation';
+import { RatingEligibility } from '@/src/components';
 
 interface AppointmentData {
   id: string;
@@ -706,6 +707,23 @@ export default function AppointmentsPage() {
                                   <p className="text-sm text-[var(--theme-foreground)] leading-relaxed">{appointment.customerNotes}</p>
                                 </div>
                               </div>
+                            </div>
+                          )}
+
+                          {/* Rating Section for Completed Appointments */}
+                          {appointment.status === 'COMPLETED' && (
+                            <div className="bg-gradient-to-r from-[var(--theme-success)]/10 to-[var(--theme-success)]/5 rounded-lg p-2.5 border border-[var(--theme-success)]/20">
+                              <RatingEligibility
+                                businessId={appointment.businessId}
+                                appointmentId={appointment.id}
+                                appointmentDetails={{
+                                  date: appointment.date,
+                                  time: appointment.startTime,
+                                  serviceName: appointment.service.name,
+                                  customerName: `${appointment.customer.firstName} ${appointment.customer.lastName}`,
+                                }}
+                                className="mt-0"
+                              />
                             </div>
                           )}
 

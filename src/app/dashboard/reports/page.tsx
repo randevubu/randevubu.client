@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../../../context/AuthContext';
-import { reportsService, BusinessOverviewReport, RevenueReport, FinancialReport } from '../../../lib/services/reports';
-import { handleApiError } from '../../../lib/utils/toast';
+import { useState } from 'react';
 import { SimpleChart } from '../../../components/charts/SimpleChart';
-import ExcelLikeTable, { type RevenueColumn, type MonthlyData } from '../../../components/ui/ExcelLikeTable';
+import ExcelLikeTable, { type MonthlyData, type RevenueColumn } from '../../../components/ui/ExcelLikeTable';
+import { useAuth } from '../../../context/AuthContext';
+import { BusinessOverviewReport, FinancialReport, reportsService, RevenueReport } from '../../../lib/services/reports';
 
 interface DateRange {
   startDate: string;
@@ -17,7 +16,6 @@ export default function ReportsPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [activeFilter, setActiveFilter] = useState<string>('Bu Ay'); // Track active filter
-  const [calculatorData, setCalculatorData] = useState<{ columns: RevenueColumn[]; monthlyData: MonthlyData }>({ columns: [], monthlyData: {} }); // Calculator table data
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -256,11 +254,11 @@ export default function ReportsPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-emerald-100 opacity-90">Toplam Gelir</div>
-                    <div className="text-lg font-bold">{formatCurrency(overviewData.totalRevenue)}</div>
+                    <div className="text-lg font-bold">{formatCurrency(financialData?.totalRevenue || 0)}</div>
                   </div>
                 </div>
                 <div className="text-xs text-emerald-100">
-                  Ort: {formatCurrency(overviewData.averageAppointmentValue)}
+                  Ort: {formatCurrency(financialData?.avgTransactionValue || 0)}
                 </div>
               </div>
 
@@ -378,86 +376,34 @@ export default function ReportsPage() {
         )}
 
 
-        {activeTab === 'calculator' && (
+        {activeTab === 'calculator' && (() => {
+          const resolvedBusinessId = overviewData?.businessId || user?.businesses?.[0]?.id;
+          // Use the selected date range to determine which month to show
+          const selectedDate = new Date(dateRange.startDate);
+          const resolvedYear = selectedDate.getFullYear();
+          const resolvedMonth = selectedDate.getMonth() + 1;
+          if (!resolvedBusinessId) {
+            return (
+              <div className="bg-[var(--theme-card)] rounded-2xl p-4 shadow-sm border border-[var(--theme-border)]">
+                <p className="text-sm text-[var(--theme-foregroundSecondary)]">
+                  İşletme bilgisi yüklenmediği için Günlük Defter yüklenemedi. Lütfen işletme ile oturum açın.
+                </p>
+              </div>
+            );
+          }
+          return (
           <div className="space-y-4">
-            {/* Calculator Tab Description */}
-            <div className="bg-[var(--theme-card)] rounded-2xl p-4 shadow-sm border border-[var(--theme-border)]">
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-[var(--theme-primary)] rounded-xl flex items-center justify-center text-white">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--theme-foreground)]">Günlük Defterim</h3>
-                  <p className="text-sm text-[var(--theme-foregroundSecondary)]">Günlük gelir ve giderlerinizi kaydedin, otomatik hesaplamalarla kontrolünüzü sağlayın</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 text-xs text-[var(--theme-foregroundMuted)]">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Otomatik hesaplama</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Dinamik satır ekleme</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span>Excel benzeri kullanım</span>
-                </div>
-              </div>
-            </div>
-
             {/* Excel-like Table Component */}
             <ExcelLikeTable
               title="Günlük Defterim"
-              onDataChange={setCalculatorData}
-              initialColumns={calculatorData.columns}
-              initialData={calculatorData.monthlyData}
+              businessId={resolvedBusinessId}
+              year={resolvedYear}
+              month={resolvedMonth}
             />
 
-            {/* Additional Calculator Statistics */}
-            {calculatorData.columns.length > 0 && (
-              <div className="bg-[var(--theme-card)] rounded-2xl p-4 shadow-sm border border-[var(--theme-border)]">
-                <h4 className="text-md font-semibold text-[var(--theme-foreground)] mb-3">Özet İstatistikler</h4>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[var(--theme-foregroundSecondary)]">Aktif Sütunlar:</span>
-                      <span className="text-sm font-medium text-[var(--theme-foreground)]">
-                        {calculatorData.columns.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[var(--theme-foregroundSecondary)]">Gelir Sütunları:</span>
-                      <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                        {calculatorData.columns.filter(col => col.type === 'income').length}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[var(--theme-foregroundSecondary)]">Gider Sütunları:</span>
-                      <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                        {calculatorData.columns.filter(col => col.type === 'expense').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-[var(--theme-foregroundSecondary)]">Veri Girişi:</span>
-                      <span className="text-sm font-medium text-[var(--theme-foreground)]">
-                        {Object.keys(calculatorData.monthlyData).length} gün
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

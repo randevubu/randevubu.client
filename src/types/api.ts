@@ -35,7 +35,14 @@ export interface MyBusinessResponse {
   message: string;
   data?: {
     businesses: import('./business').Business[];
-    subscriptions?: import('./subscription').BusinessSubscription[];
+    hasBusinesses: boolean;
+    isFirstTimeUser: boolean;
+    canCreateBusiness: boolean;
+    context?: {
+      primaryBusinessId?: string;
+      totalBusinesses: number;
+      includesSubscriptionInfo: boolean;
+    };
   };
   error?: {
     message: string;

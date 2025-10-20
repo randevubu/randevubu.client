@@ -16,6 +16,7 @@ interface Service {
   duration: number;
   currency?: string;
   isActive: boolean;
+  showPrice?: boolean;
 }
 
 interface BusinessData {
@@ -83,8 +84,16 @@ export default function ServiceSelectionPage() {
 
         // Get public services using the dedicated endpoint
         const servicesResponse = await servicesService.getPublicServices(businessData.id);
+        console.log('Services API Response:', servicesResponse);
         if (servicesResponse.success && servicesResponse.data) {
-          const availableServices = servicesResponse.data.filter((s: Service) => s.isActive);
+          // Handle nested response structure - data.services array
+          const responseData = servicesResponse.data as any;
+          console.log('Response data structure:', responseData);
+          const servicesData = responseData.services || responseData;
+          const servicesArray = Array.isArray(servicesData) ? servicesData : [];
+          console.log('Services array:', servicesArray);
+          const availableServices = servicesArray.filter((s: any) => s.isActive);
+          console.log('Available services:', availableServices);
           setServices(availableServices);
 
           // Mark service as pre-selected if provided in URL
@@ -219,11 +228,11 @@ export default function ServiceSelectionPage() {
                         {service.name}
                       </h3>
                       <div className="flex items-center">
-                        {!priceSettings?.hideAllServicePrices && service.price !== null ? (
+                        {!priceSettings?.hideAllServicePrices && service.showPrice !== false && service.price !== null ? (
                           <span className="text-xl font-black text-[var(--theme-primary)]">
                             {formatPrice(service.price)}
                           </span>
-                        ) : service.price === null ? (
+                        ) : service.price === null || service.showPrice === false ? (
                           <div className="relative group">
                             <HelpCircle className="w-5 h-5 text-[var(--theme-foregroundSecondary)] cursor-help" />
                             <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">

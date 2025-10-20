@@ -198,6 +198,19 @@ export default function BusinessesPage() {
                         <span className="line-clamp-1 text-xs">{business.city}, {business.state}</span>
                       </div>
 
+                      {/* Rating */}
+                      {business.rating && business.totalReviews > 0 && (
+                        <div className="flex items-center text-xs text-[var(--theme-foregroundSecondary)] mb-2">
+                          <Star className="w-3 h-3 mr-1 text-yellow-500 fill-yellow-500" />
+                          <span className="font-medium text-[var(--theme-cardForeground)]">
+                            {business.rating.toFixed(1)}
+                          </span>
+                          <span className="ml-1">
+                            ({business.totalReviews})
+                          </span>
+                        </div>
+                      )}
+
                       {/* Spacer to push button to bottom */}
                       <div className="flex-grow"></div>
 

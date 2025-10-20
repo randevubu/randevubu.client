@@ -322,7 +322,24 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
       ? [...settings.reminderTiming.filter(t => t !== timing), timing].sort((a, b) => a - b)
       : settings.reminderTiming.filter(t => t !== timing);
 
-    updateSettings({ reminderTiming: updatedTiming });
+    // Build reminderChannels based on currently enabled channels
+    const activeChannels: string[] = [];
+    if (settings.smsEnabled) activeChannels.push('SMS');
+    if (settings.pushEnabled) activeChannels.push('PUSH');
+    if (settings.emailEnabled) activeChannels.push('EMAIL');
+
+    // Only send update if there are active channels
+    if (activeChannels.length > 0) {
+      updateSettings({ 
+        reminderTiming: updatedTiming,
+        reminderChannels: activeChannels
+      });
+    } else {
+      // If no channels are active, just update the timing locally without sending to backend
+      // This prevents the validation error
+      const updatedSettings = { ...settings, reminderTiming: updatedTiming };
+      setSettings(updatedSettings);
+    }
   };
 
   const handleQuietHoursToggle = (enabled: boolean) => {
@@ -496,7 +513,6 @@ export default function BusinessNotificationSettings({ className = '' }: Busines
                             await pushNotifications.disableNotifications();
                             console.log('Successfully unsubscribed from push notifications');
                           } catch (error) {
-                            console.warn('Failed to unsubscribe from push notifications:', error);
                             // Continue with business setting update even if unsubscribe fails
                           }
                         }

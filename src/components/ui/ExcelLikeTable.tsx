@@ -1,14 +1,20 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { appointmentService } from '../../lib/services/appointments';
 import { useAuth } from '../../context/AuthContext';
-import { AppointmentStatus } from '../../types/enums';
+import { useDailyNotebook } from '../../lib/hooks/useDailyNotebook';
+import { Plus, Columns, X, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 
 export interface RevenueColumn {
   id: string;
+  businessId: string;
   name: string;
-  type: 'income' | 'expense'; // + or -
+  type: 'income' | 'expense';
+  priority: 'high' | 'medium' | 'low';
+  visible: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DayData {
@@ -21,161 +27,194 @@ export interface MonthlyData {
 
 interface ExcelLikeTableProps {
   title?: string;
-  onDataChange?: (data: { columns: RevenueColumn[]; monthlyData: MonthlyData }) => void;
-  initialColumns?: RevenueColumn[];
-  initialData?: MonthlyData;
+  businessId?: string;
+  year?: number;
+  month?: number;
+  mobileView?: 'table' | 'cards' | 'auto';
 }
 
 export default function ExcelLikeTable({ 
   title = "Günlük Defterim",
-  onDataChange,
-  initialColumns = [],
-  initialData = {}
+  businessId,
+  year,
+  month,
+  mobileView = 'auto'
 }: ExcelLikeTableProps) {
   const { user } = useAuth();
-  const [columns, setColumns] = useState<RevenueColumn[]>(() => {
-    if (initialColumns.length > 0) {
-      return initialColumns;
-    }
-    return [
-      { id: 'appointments', name: 'Randevular', type: 'income' },
-      { id: '1', name: 'Satış', type: 'income' },
-      { id: '2', name: 'Kira', type: 'expense' }
-    ];
+  
+  // Use current date if not provided
+  const currentDate = new Date();
+  const currentYear = year || currentDate.getFullYear();
+  const currentMonth = month || (currentDate.getMonth() + 1);
+  const businessIdToUse = businessId || user?.businesses?.[0]?.id;
+
+  // Use the daily notebook hook
+  const {
+    columns,
+    monthlyData,
+    appointmentRevenue,
+    totals,
+    isLoading,
+    isUpdating,
+    isCreatingColumn,
+    isUpdatingColumn,
+    isDeletingColumn,
+    updateCell,
+    addColumn,
+    updateColumn,
+    deleteColumn,
+    getCellValue,
+    getVisibleColumns,
+    getDayTotal,
+    getColumnTotal,
+    getGrandTotal
+  } = useDailyNotebook({
+    businessId: businessIdToUse!,
+    year: currentYear,
+    month: currentMonth
   });
 
-  const [monthlyData, setMonthlyData] = useState<MonthlyData>(initialData);
-  const [appointmentRevenue, setAppointmentRevenue] = useState<MonthlyData>({});
   const [editingCell, setEditingCell] = useState<{ day: number; columnId: string } | null>(null);
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnType, setNewColumnType] = useState<'income' | 'expense'>('income');
 
-  // Get current month info
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  // Value Dialog State for Mobile Card Edits
+  const [showValueDialog, setShowValueDialog] = useState(false);
+  const [dialogDay, setDialogDay] = useState<number | null>(null);
+  const [dialogColumnId, setDialogColumnId] = useState<string | null>(null);
+  const [dialogColumnName, setDialogColumnName] = useState<string>('');
+  const [dialogValue, setDialogValue] = useState<string>('');
+  const [currentMobileView, setCurrentMobileView] = useState<'table' | 'cards'>('table');
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showColumnDetails, setShowColumnDetails] = useState(false);
+  const [detailsColumnId, setDetailsColumnId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  const displayTitle = isMobile ? 'Defterim' : title;
 
   // Generate array of days for current month
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  // Fetch appointments for the current month
+  // Mobile detection and responsive behavior
   useEffect(() => {
-    const fetchAppointments = async () => {
-      if (!user?.businesses?.[0]?.id) return;
-
-      try {
-        const startDate = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
-        const endDate = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
-        
-        const response = await appointmentService.getBusinessAppointments({
-          businessId: user.businesses[0].id,
-          startDate,
-          endDate
-        });
-
-        if (response.success && response.data) {
-          const dailyRevenue: MonthlyData = {};
-          
-          response.data.forEach(appointment => {
-            // Only count completed appointments as revenue
-            if (appointment.status === AppointmentStatus.COMPLETED) {
-              const appointmentDate = new Date(appointment.date);
-              const day = appointmentDate.getDate();
-              
-              if (!dailyRevenue[day]) {
-                dailyRevenue[day] = {};
-              }
-              
-              const currentAmount = dailyRevenue[day]['appointments'] || 0;
-              dailyRevenue[day]['appointments'] = currentAmount + appointment.price;
-            }
-          });
-
-          setAppointmentRevenue(dailyRevenue);
-        }
-      } catch (error) {
-        console.error('Failed to fetch appointments:', error);
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobileView === 'auto') {
+        setCurrentMobileView(mobile ? 'cards' : 'table');
+      } else {
+        setCurrentMobileView(mobileView);
       }
     };
 
-    fetchAppointments();
-  }, [user?.businesses?.[0]?.id, currentMonth, currentYear]);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [mobileView]);
 
-  const addColumn = useCallback(() => {
+
+  const handleAddColumn = useCallback(() => {
     if (!newColumnName.trim()) return;
     
-    const newColumn: RevenueColumn = {
-      id: Date.now().toString(),
+    addColumn({
       name: newColumnName.trim(),
-      type: newColumnType
-    };
+      type: newColumnType,
+      priority: 'medium'
+    });
     
-    setColumns(prev => [...prev, newColumn]);
     setNewColumnName('');
     setShowAddColumn(false);
-  }, [newColumnName, newColumnType]);
+  }, [newColumnName, newColumnType, addColumn]);
 
-  const removeColumn = useCallback((columnId: string) => {
-    if (columns.length <= 1 || columnId === 'appointments') return; // Don't allow deleting appointments column
-    setColumns(prev => prev.filter(col => col.id !== columnId));
+  const toggleColumnVisibility = useCallback((columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    if (column) {
+      updateColumn(columnId, { visible: !column.visible });
+    }
+  }, [columns, updateColumn]);
+
+  const getMobileColumns = useCallback(() => {
+    // For card view, show all visible columns
+    return getVisibleColumns();
+  }, [getVisibleColumns]);
+
+  const handleRemoveColumn = useCallback((columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    if (column && column.isSystem) return; // Don't allow deleting system columns
     
-    // Remove data for this column from all days
-    setMonthlyData(prev => {
-      const updated = { ...prev };
-      Object.keys(updated).forEach(day => {
-        const dayNum = parseInt(day);
-        if (updated[dayNum]) {
-          const { [columnId]: removed, ...rest } = updated[dayNum];
-          updated[dayNum] = rest;
-        }
-      });
-      return updated;
-    });
-  }, [columns.length]);
+    if (columns.length <= 1) return;
+    
+    deleteColumn(columnId);
+  }, [columns, deleteColumn]);
 
-  const updateCell = useCallback((day: number, columnId: string, value: number) => {
-    setMonthlyData(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [columnId]: value || 0
-      }
-    }));
-    setEditingCell(null);
+  const openColumnDetails = useCallback((columnId: string) => {
+    setDetailsColumnId(columnId);
+    setShowColumnDetails(true);
   }, []);
+
+  const closeColumnDetails = useCallback(() => {
+    setShowColumnDetails(false);
+    setDetailsColumnId(null);
+  }, []);
+
+  const openDeleteConfirm = useCallback((columnId: string) => {
+    setColumnToDelete(columnId);
+    setShowDeleteConfirm(true);
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setShowDeleteConfirm(false);
+    setColumnToDelete(null);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    if (columnToDelete) {
+      handleRemoveColumn(columnToDelete);
+      closeColumnDetails();
+      closeDeleteConfirm();
+    }
+  }, [columnToDelete, handleRemoveColumn, closeColumnDetails, closeDeleteConfirm]);
+
+  const handleUpdateCell = useCallback((day: number, columnId: string, value: number) => {
+    updateCell(day, columnId, value);
+    setEditingCell(null);
+  }, [updateCell]);
 
   const handleCellClick = useCallback((day: number, columnId: string) => {
     setEditingCell({ day, columnId });
   }, []);
 
-  const getCellValue = useCallback((day: number, columnId: string): number => {
-    // For appointments column, return the sum of manual entries + appointment revenue
-    if (columnId === 'appointments') {
-      const manualValue = monthlyData[day]?.[columnId] || 0;
-      const appointmentValue = appointmentRevenue[day]?.[columnId] || 0;
-      return manualValue + appointmentValue;
+  const openValueDialog = useCallback((day: number, columnId: string, columnName: string) => {
+    const current = getCellValue(day, columnId);
+    setDialogDay(day);
+    setDialogColumnId(columnId);
+    setDialogColumnName(columnName);
+    setDialogValue(current ? String(current) : '');
+    setShowValueDialog(true);
+  }, [getCellValue]);
+
+  const closeValueDialog = useCallback(() => {
+    setShowValueDialog(false);
+    setDialogDay(null);
+    setDialogColumnId(null);
+    setDialogColumnName('');
+    setDialogValue('');
+  }, []);
+
+  const saveValueDialog = useCallback(() => {
+    if (dialogDay == null || !dialogColumnId) {
+      closeValueDialog();
+      return;
     }
-    return monthlyData[day]?.[columnId] || 0;
-  }, [monthlyData, appointmentRevenue]);
+    const num = parseFloat(dialogValue);
+    const amount = Number.isFinite(num) ? num : 0;
+    handleUpdateCell(dialogDay, dialogColumnId, amount);
+    closeValueDialog();
+  }, [dialogDay, dialogColumnId, dialogValue, handleUpdateCell, closeValueDialog]);
 
-  const getDayTotal = useCallback((day: number): number => {
-    return columns.reduce((total, col) => {
-      const value = getCellValue(day, col.id);
-      return total + (col.type === 'income' ? value : -value);
-    }, 0);
-  }, [columns, getCellValue]);
-
-  const getColumnTotal = useCallback((columnId: string): number => {
-    return days.reduce((total, day) => {
-      return total + getCellValue(day, columnId);
-    }, 0);
-  }, [days, getCellValue]);
-
-  const getGrandTotal = useCallback((): number => {
-    return days.reduce((total, day) => total + getDayTotal(day), 0);
-  }, [days, getDayTotal]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -186,12 +225,25 @@ export default function ExcelLikeTable({
     }).format(amount);
   };
 
-  // Notify parent component of data changes
-  useEffect(() => {
-    if (onDataChange) {
-      onDataChange({ columns, monthlyData });
-    }
-  }, [columns, monthlyData, onDataChange]);
+  // Compute appointment revenue total for summary card with fallback
+  const getAppointmentRevenueTotal = () => {
+    // Sum from appointmentRevenue map first (auto-only)
+    const autoTotal = Object.values(appointmentRevenue || {}).reduce<number>((sum, day) => {
+      const dayMap = day as Record<string, number>;
+      return sum + Object.values(dayMap || {}).reduce<number>((inner, val) => inner + (val ?? 0), 0);
+    }, 0);
+
+    if (autoTotal > 0) return autoTotal;
+
+    // Fallback: sum Randevular column from monthlyData if backend didn't provide appointmentRevenue
+    const appointmentsCol = columns.find(c => c.name === 'Randevular');
+    if (!appointmentsCol) return 0;
+    return Object.values(monthlyData || {}).reduce<number>((sum, day) => {
+      const val = (day as Record<string, number>)[appointmentsCol.id] ?? 0;
+      return sum + val;
+    }, 0);
+  };
+
 
   const CellEditor = ({ day, columnId, value }: { day: number; columnId: string; value: number }) => {
     const [localValue, setLocalValue] = useState(value.toString());
@@ -202,13 +254,13 @@ export default function ExcelLikeTable({
 
     const handleBlur = () => {
       const processedValue = parseFloat(localValue) || 0;
-      updateCell(day, columnId, processedValue);
+      handleUpdateCell(day, columnId, processedValue);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
         const processedValue = parseFloat(localValue) || 0;
-        updateCell(day, columnId, processedValue);
+        handleUpdateCell(day, columnId, processedValue);
       }
       if (e.key === 'Escape') {
         setEditingCell(null);
@@ -231,20 +283,73 @@ export default function ExcelLikeTable({
   };
 
   const CellDisplay = ({ day, columnId, value }: { day: number; columnId: string; value: number }) => {
-    const hasAppointmentRevenue = columnId === 'appointments' && (appointmentRevenue[day]?.['appointments'] || 0) > 0;
-    const manualValue = columnId === 'appointments' ? (monthlyData[day]?.[columnId] || 0) : value;
-    const autoValue = columnId === 'appointments' ? (appointmentRevenue[day]?.['appointments'] || 0) : 0;
+    const column = columns.find(col => col.id === columnId);
+    const hasAppointmentRevenue = column?.isSystem && column?.name === 'Randevular' && (appointmentRevenue[day]?.[columnId] || 0) > 0;
+    const manualValue = column?.isSystem && column?.name === 'Randevular' ? (monthlyData[day]?.[columnId] || 0) : value;
+    const autoValue = column?.isSystem && column?.name === 'Randevular' ? (appointmentRevenue[day]?.[columnId] || 0) : 0;
+    const sign = column?.type === 'income' ? '+' : '-';
     
     return (
       <div 
         className="px-2 sm:px-3 py-3 sm:py-2 cursor-pointer hover:bg-[var(--theme-backgroundSecondary)] transition-colors duration-200 min-h-[44px] sm:min-h-[36px] flex items-center justify-end text-xs sm:text-sm text-[var(--theme-foreground)] hover:border border-[var(--theme-border)] hover:border-dashed"
-        onClick={() => handleCellClick(day, columnId)}
+        onClick={() => openValueDialog(day, columnId, column?.name || '')}
         title={hasAppointmentRevenue ? `Manuel: ${formatCurrency(manualValue)}, Randevu: ${formatCurrency(autoValue)}` : undefined}
       >
         <div className="flex items-center space-x-1">
-          {value > 0 && formatCurrency(value)}
+          {value > 0 ? (
+            <>
+              <span className={`text-[10px] ${column?.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{sign}</span>
+              <span>{formatCurrency(value)}</span>
+            </>
+          ) : (
+            <span>0 ₺</span>
+          )}
           {hasAppointmentRevenue && <span className="text-blue-500 text-xs">⚡</span>}
         </div>
+      </div>
+    );
+  };
+
+  // Mobile Card View Component
+  const MobileCardView = () => {
+    const visibleColumns = getMobileColumns();
+    const hiddenColumns = getVisibleColumns().filter(col => !getMobileColumns().includes(col));
+    
+    return (
+      <div className="space-y-3">
+        {days.map((day) => (
+          <div key={day} className="bg-[var(--theme-card)] rounded-lg border border-[var(--theme-border)] p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-[var(--theme-foreground)]">Gün {day}</h4>
+              <div className={`text-sm font-bold ${getDayTotal(day) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(getDayTotal(day))}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {visibleColumns.map((column) => {
+                const value = getCellValue(day, column.id);
+                const isIncome = String(column.type).toLowerCase() === 'income';
+                return (
+                  <div
+                    key={column.id}
+                    className={`flex items-center justify-between p-2 rounded cursor-pointer min-w-0 ${isIncome ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}
+                    onClick={() => openValueDialog(day, column.id, column.name)}
+                  >
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <span className={`text-[11px] font-bold ${isIncome ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>{isIncome ? '+' : '-'}</span>
+                      <span className="text-xs text-[var(--theme-foregroundSecondary)] truncate max-w-[8rem]">{column.name}</span>
+                    </div>
+                    <div className={`text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap ${value > 0 ? (isIncome ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400') : 'text-[var(--theme-foregroundSecondary)]'}`}>
+                      {value > 0 ? `${formatCurrency(value)}` : '0 ₺'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+          </div>
+        ))}
       </div>
     );
   };
@@ -254,127 +359,232 @@ export default function ExcelLikeTable({
     'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
   ];
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="bg-[var(--theme-card)] rounded-2xl p-3 sm:p-4 shadow-sm border border-[var(--theme-border)] transition-colors duration-300">
+        <div className="flex items-center justify-center py-8">
+          <div className="flex items-center space-x-3">
+            <div className="w-6 h-6 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[var(--theme-foregroundSecondary)] font-medium">Günlük defter yükleniyor...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[var(--theme-card)] rounded-2xl p-3 sm:p-4 shadow-sm border border-[var(--theme-border)] transition-colors duration-300">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)]">{title}</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)]">{displayTitle}</h3>
           <p className="text-xs sm:text-sm text-[var(--theme-foregroundSecondary)]">
             {monthNames[currentMonth]} {currentYear}
           </p>
         </div>
-        <button
-          onClick={() => setShowAddColumn(true)}
-          className="flex items-center justify-center space-x-2 px-3 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:opacity-90 transition-opacity text-xs sm:text-sm font-medium w-full sm:w-auto"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-          </svg>
-          <span>Sütun Ekle</span>
-        </button>
+        
+        {/* Controls */}
+        <div className="flex items-center gap-2 flex-nowrap overflow-x-auto whitespace-nowrap">
+          {isMobile && (
+            <div className="flex space-x-1 bg-[var(--theme-backgroundSecondary)] p-1 rounded-lg">
+              <button
+                onClick={() => setCurrentMobileView('table')}
+                className={`px-3 py-1 text-xs rounded-md transition-all ${
+                  currentMobileView === 'table' 
+                    ? 'bg-[var(--theme-card)] text-[var(--theme-primary)]' 
+                    : 'text-[var(--theme-foregroundSecondary)]'
+                }`}
+              >
+                Tablo
+              </button>
+              <button
+                onClick={() => setCurrentMobileView('cards')}
+                className={`px-3 py-1 text-xs rounded-md transition-all ${
+                  currentMobileView === 'cards' 
+                    ? 'bg-[var(--theme-card)] text-[var(--theme-primary)]' 
+                    : 'text-[var(--theme-foregroundSecondary)]'
+                }`}
+              >
+                Kartlar
+              </button>
+            </div>
+          )}
+          
+          <button
+            onClick={() => setShowColumnSelector(!showColumnSelector)}
+            className="flex items-center justify-center space-x-1 px-2 py-2 bg-gray-500 text-white rounded-lg hover:opacity-90 transition-opacity text-xs sm:text-sm font-medium"
+            title="Sütunlar"
+          >
+            <Columns className="w-4 h-4" />
+            <span className="hidden sm:inline">Sütunlar</span>
+          </button>
+          
+          <button
+            onClick={() => setShowAddColumn(true)}
+            disabled={isCreatingColumn}
+            className="flex items-center justify-center px-2 py-2 bg-[var(--theme-primary)] text-white rounded-lg hover:opacity-90 transition-opacity text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isCreatingColumn ? 'Ekleniyor...' : 'Sütun Ekle'}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">{isCreatingColumn ? 'Ekleniyor...' : 'Sütun Ekle'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Add Column Modal */}
+      {/* Inline Summary Above Table */}
+      <div className="mb-3 grid grid-cols-2 gap-2 text-sm">
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg px-2 py-2 text-white flex items-center justify-between shadow-sm">
+          <span className="opacity-90">Gelir</span>
+          <span className="text-base sm:text-lg font-semibold">{formatCurrency(totals.incomeTotal)}</span>
+        </div>
+        <div className="bg-gradient-to-br from-rose-500 to-red-600 rounded-lg px-2 py-2 text-white flex items-center justify-between shadow-sm">
+          <span className="opacity-90">Gider</span>
+          <span className="text-base sm:text-lg font-semibold">{formatCurrency(totals.expenseTotal)}</span>
+        </div>
+        <div className={`${totals.grandTotal >= 0 ? 'bg-gradient-to-br from-sky-500 to-blue-600' : 'bg-gradient-to-br from-orange-500 to-red-600'} rounded-lg px-2 py-2 text-white flex items-center justify-between shadow-sm`}>
+          <span className="opacity-90">Net</span>
+          <span className="text-base sm:text-lg font-semibold">{formatCurrency(totals.grandTotal)}</span>
+        </div>
+        <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg px-2 py-2 text-white flex items-center justify-between shadow-sm">
+          <span className="opacity-90">Randevu Geliri</span>
+          <span className="text-base sm:text-lg font-semibold">{formatCurrency(getAppointmentRevenueTotal())}</span>
+        </div>
+      </div>
+
+      {/* Add Column Dialog */}
       {showAddColumn && (
-        <div className="mb-4 p-4 bg-[var(--theme-backgroundSecondary)] rounded-lg border border-[var(--theme-border)]">
-          <div className="flex flex-col space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-[var(--theme-foreground)] mb-1">
-                Sütun Adı
-              </label>
-              <input
-                type="text"
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-                placeholder="Örn: Satış, Kira, Maaş..."
-                className="w-full px-3 py-2 text-sm border border-[var(--theme-border)] rounded-md focus:ring-1 focus:ring-[var(--theme-primary)] focus:border-transparent bg-[var(--theme-card)] text-[var(--theme-foreground)]"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
-                Tür
-              </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="income"
-                    checked={newColumnType === 'income'}
-                    onChange={(e) => setNewColumnType(e.target.value as 'income')}
-                    className="text-green-600"
-                  />
-                  <span className="text-sm text-green-600 font-medium">+ Gelir</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[92%] max-w-sm bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-xl p-4 shadow-xl">
+            <div className="flex flex-col space-y-3">
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--theme-foreground)] mb-2">Yeni Sütun</h4>
+                <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-1">
+                  Sütun Adı
                 </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="expense"
-                    checked={newColumnType === 'expense'}
-                    onChange={(e) => setNewColumnType(e.target.value as 'expense')}
-                    className="text-red-600"
-                  />
-                  <span className="text-sm text-red-600 font-medium">- Gider</span>
-                </label>
+                <input
+                  type="text"
+                  value={newColumnName}
+                  onChange={(e) => setNewColumnName(e.target.value)}
+                  placeholder="Örn: Satış, Kira, Maaş..."
+                  className="w-full px-3 py-2 text-sm border border-[var(--theme-border)] rounded-md focus:ring-1 focus:ring-[var(--theme-primary)] focus:border-transparent bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foreground)]"
+                />
               </div>
-            </div>
-            
-            <div className="flex space-x-2">
-              <button
-                onClick={addColumn}
-                disabled={!newColumnName.trim()}
-                className="flex-1 px-3 py-2 bg-[var(--theme-primary)] text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Ekle
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddColumn(false);
-                  setNewColumnName('');
-                }}
-                className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
-              >
-                İptal
-              </button>
+              
+              <div>
+                <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-2">
+                  Tür
+                </label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      value="income"
+                      checked={newColumnType === 'income'}
+                      onChange={(e) => setNewColumnType(e.target.value as 'income')}
+                      className="text-green-600"
+                    />
+                    <span className="text-sm text-green-600 font-medium">+ Gelir</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      value="expense"
+                      checked={newColumnType === 'expense'}
+                      onChange={(e) => setNewColumnType(e.target.value as 'expense')}
+                      className="text-red-600"
+                    />
+                    <span className="text-sm text-red-600 font-medium">- Gider</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleAddColumn}
+                  disabled={!newColumnName.trim() || isCreatingColumn}
+                  className="flex-1 px-3 py-2 bg-[var(--theme-primary)] text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreatingColumn ? 'Ekleniyor...' : 'Ekle'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddColumn(false);
+                    setNewColumnName('');
+                  }}
+                  className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
+                >
+                  İptal
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Excel Table */}
+      {/* Column Selector Modal */}
+      {showColumnSelector && (
+        <div className="mb-4 p-4 bg-[var(--theme-backgroundSecondary)] rounded-lg border border-[var(--theme-border)]">
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-[var(--theme-foreground)]">Sütunlar</h4>
+            <div className="space-y-2">
+              {columns.map((column) => (
+                <div key={column.id} className="flex items-center justify-between p-2 bg-[var(--theme-card)] rounded">
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-xs ${column.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {column.type === 'income' ? '+' : '-'}
+                    </span>
+                    <span className="text-sm text-[var(--theme-foreground)]">{column.name}</span>
+                    {/* priority badges removed per request */}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => toggleColumnVisibility(column.id)}
+                      className={`w-8 h-4 rounded-full transition-colors ${
+                        column.visible ? 'bg-[var(--theme-primary)]' : 'bg-gray-300'
+                      }`}
+                    >
+                      <div className={`w-3 h-3 bg-white rounded-full transition-transform ${
+                        column.visible ? 'translate-x-4' : 'translate-x-0.5'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-xs text-[var(--theme-foregroundMuted)]">
+              <strong>İpucu:</strong> Kart görünümünde tüm görünür sütunlar gösterilir
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content - Mobile Card View or Table */}
+      {isMobile && currentMobileView === 'cards' ? (
+        <MobileCardView />
+      ) : (
       <div className="overflow-hidden border border-[var(--theme-border)] rounded-lg">
         <div className="overflow-x-auto" style={{ maxWidth: '100vw' }}>
-          <table className="w-full" style={{ minWidth: `${Math.max(400, columns.length * 120 + 100)}px` }}>
+            <table className="w-full" style={{ minWidth: `${Math.max(400, getVisibleColumns().length * 120 + 100)}px` }}>
             <thead>
               <tr className="bg-[var(--theme-backgroundSecondary)]">
-                <th className="px-2 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-[var(--theme-foregroundSecondary)] uppercase tracking-wider w-16 sticky left-0 bg-[var(--theme-backgroundSecondary)]">
+                <th className="px-2 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-[var(--theme-foregroundSecondary)] uppercase tracking-wider w-16">
                   Gün
                 </th>
-                {columns.map((column) => (
-                  <th key={column.id} className="px-2 sm:px-3 py-2 sm:py-3 text-right text-xs font-medium text-[var(--theme-foregroundSecondary)] uppercase tracking-wider min-w-[100px] sm:min-w-[120px] relative group">
+                  {getVisibleColumns().map((column) => (
+                  <th key={column.id} className="px-2 sm:px-3 py-2 sm:py-3 text-right text-xs font-medium text-[var(--theme-foregroundSecondary)] uppercase tracking-wider min-w-[100px] sm:min-w-[120px]">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1">
-                        <span className={`text-xs ${column.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {column.type === 'income' ? '+' : '-'}
+                    <button className="flex items-center space-x-1 hover:opacity-80" onClick={() => openColumnDetails(column.id)}>
+                      {(() => { const isIncome = String(column.type).toLowerCase() === 'income'; return (
+                        <span className={`text-xs ${isIncome ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {isIncome ? '+' : '-'}
                         </span>
-                        <span>{column.name}</span>
-                        {column.id === 'appointments' && (
+                      );})()}
+                        <span className="text-[var(--theme-foreground)]">{column.name}</span>
+                        {column.isSystem && column.name === 'Randevular' && (
                           <span className="text-xs text-blue-500 ml-1" title="Otomatik randevu geliri dahil">⚡</span>
                         )}
-                      </div>
-                      {column.id !== 'appointments' && (
-                        <button
-                          onClick={() => removeColumn(column.id)}
-                          disabled={columns.length <= 1}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Sütunu sil"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-                          </svg>
-                        </button>
-                      )}
+                      </button>
                     </div>
                   </th>
                 ))}
@@ -386,10 +596,10 @@ export default function ExcelLikeTable({
             <tbody className="bg-[var(--theme-card)] divide-y divide-[var(--theme-border)]">
               {days.map((day) => (
                 <tr key={day} className="hover:bg-[var(--theme-backgroundSecondary)]/50 transition-colors duration-200">
-                  <td className="px-2 sm:px-3 py-2 text-center text-sm font-medium text-[var(--theme-foreground)] border-r border-[var(--theme-border)] sticky left-0 bg-[var(--theme-card)]">
+                  <td className="px-2 sm:px-3 py-2 text-center text-sm font-medium text-[var(--theme-foreground)] border-r border-[var(--theme-border)]">
                     {day}
                   </td>
-                  {columns.map((column) => {
+                  {getVisibleColumns().map((column) => {
                     const value = getCellValue(day, column.id);
                     return (
                       <td key={column.id} className="border-r border-[var(--theme-border)]">
@@ -413,10 +623,10 @@ export default function ExcelLikeTable({
             {/* Totals Footer */}
             <tfoot className="bg-[var(--theme-backgroundSecondary)] border-t-2 border-[var(--theme-border)]">
               <tr className="font-semibold">
-                <td className="px-2 sm:px-3 py-3 text-center text-xs sm:text-sm text-[var(--theme-foreground)] border-r border-[var(--theme-border)] sticky left-0 bg-[var(--theme-backgroundSecondary)]">
+                <td className="px-2 sm:px-3 py-3 text-center text-xs sm:text-sm text-[var(--theme-foreground)] border-r border-[var(--theme-border)]">
                   TOPLAM
                 </td>
-                {columns.map((column) => (
+                {getVisibleColumns().map((column) => (
                   <td key={column.id} className="px-2 sm:px-3 py-3 text-right text-xs sm:text-sm border-r border-[var(--theme-border)]">
                     <span className={`${column.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                       {formatCurrency(getColumnTotal(column.id))}
@@ -435,53 +645,120 @@ export default function ExcelLikeTable({
           </table>
         </div>
       </div>
+      )}
 
-      {/* Summary Cards - Mobile Optimized */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg p-3 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs opacity-90 mb-1">Aylık Gelir</div>
-              <div className="text-lg sm:text-xl font-bold">
-                {formatCurrency(columns.filter(c => c.type === 'income').reduce((sum, col) => sum + getColumnTotal(col.id), 0))}
+      {/* Lower summary removed: already displayed above */}
+
+      {/* Value Input Dialog */}
+      {showValueDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[90%] max-w-sm bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-xl p-4 shadow-xl">
+            <div className="mb-3">
+              <h4 className="text-sm font-semibold text-[var(--theme-foreground)]">{dialogColumnName}</h4>
+              <p className="text-xs text-[var(--theme-foregroundSecondary)]">Gün {dialogDay}</p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--theme-foregroundSecondary)] mb-1">Tutar</label>
+                <input
+                  type="number"
+                  value={dialogValue}
+                  onChange={(e) => setDialogValue(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-[var(--theme-border)] rounded-md focus:ring-1 focus:ring-[var(--theme-primary)] focus:border-transparent bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foreground)]"
+                />
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={saveValueDialog}
+                  className="flex-1 px-3 py-2 bg-[var(--theme-primary)] text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
+                >
+                  Kaydet
+                </button>
+                <button
+                  onClick={closeValueDialog}
+                  className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
+                >
+                  İptal
+                </button>
               </div>
             </div>
-            <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-            </svg>
           </div>
         </div>
-        
-        <div className="bg-gradient-to-br from-red-500 to-rose-600 rounded-lg p-3 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs opacity-90 mb-1">Aylık Gider</div>
-              <div className="text-lg sm:text-xl font-bold">
-                {formatCurrency(columns.filter(c => c.type === 'expense').reduce((sum, col) => sum + getColumnTotal(col.id), 0))}
+      )}
+
+      {/* Column Details Dialog */}
+      {showColumnDetails && detailsColumnId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-[92%] max-w-sm bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-xl p-4 shadow-xl">
+            {(() => {
+              const col = columns.find(c => c.id === detailsColumnId);
+              if (!col) return null;
+              return (
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-[var(--theme-foreground)] flex items-center space-x-2">
+                      <span className={`text-xs ${col.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>{col.type === 'income' ? '+' : '-'}</span>
+                      <span>{col.name}</span>
+                    </h4>
+                    <p className="text-xs text-[var(--theme-foregroundSecondary)]">Tür: {col.type === 'income' ? 'Gelir' : 'Gider'}{col.isSystem ? ' • Sistem Sütunu' : ''}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    {!col.isSystem && (
+                      <button
+                        onClick={() => openDeleteConfirm(col.id)}
+                        className="flex-1 px-3 py-2 bg-red-600 text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
+                      >
+                        Sütunu Sil
+                      </button>
+                    )}
+                    <button
+                      onClick={closeColumnDetails}
+                      className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-md hover:opacity-90 transition-opacity text-sm font-medium"
+                    >
+                      Kapat
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-[90%] max-w-md bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-xl p-6 shadow-xl">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-2">
+                Sütunu Sil
+              </h3>
+              <p className="text-sm text-[var(--theme-foregroundSecondary)] mb-6">
+                Bu sütunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve sütundaki tüm veriler kalıcı olarak silinecektir.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={closeDeleteConfirm}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-[var(--theme-foregroundSecondary)] bg-[var(--theme-backgroundSecondary)] rounded-lg hover:bg-[var(--theme-border)] transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Evet, Sil
+                </button>
               </div>
             </div>
-            <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-            </svg>
           </div>
         </div>
-        
-        <div className={`rounded-lg p-3 text-white ${
-          getGrandTotal() >= 0 
-            ? 'bg-gradient-to-br from-blue-500 to-[var(--theme-primary)]' 
-            : 'bg-gradient-to-br from-orange-500 to-red-600'
-        }`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs opacity-90 mb-1">Net Kar/Zarar</div>
-              <div className="text-lg sm:text-xl font-bold">{formatCurrency(getGrandTotal())}</div>
-            </div>
-            <svg className="w-6 h-6 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Instructions */}
       <div className="mt-4 p-3 bg-[var(--theme-backgroundSecondary)] rounded-lg">
@@ -489,6 +766,9 @@ export default function ExcelLikeTable({
           <strong>Kullanım:</strong> Hücrelere dokunarak/tıklayarak günlük tutarları girin • 
           <span className="hidden sm:inline"> Enter ile kaydet • </span>
           <strong>+ Gelir</strong> ve <strong>- Gider</strong> sütunları ekleyebilirsiniz
+          {isMobile && (
+            <span> • <strong>Sütunlar</strong> butonu ile görünürlük ayarlayın • <strong>Kartlar</strong> görünümü mobilde daha kolay • Gizli sütunlar hesaplamalardan çıkarılır</span>
+          )}
         </div>
       </div>
     </div>

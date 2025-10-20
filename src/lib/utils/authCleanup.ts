@@ -42,7 +42,9 @@ export const clearAuthState = async (): Promise<void> => {
       'accessToken',
       'refreshToken',
       'user',
-      'hasAuth'
+      'hasAuth',
+      'dashboardProfileToastShown',
+      'profileGuardToastShown'
     ];
 
     sessionItemsToClear.forEach(item => {

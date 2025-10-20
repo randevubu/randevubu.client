@@ -51,6 +51,19 @@ export interface Business {
   tags: string[];
   rating?: number;
   totalReviews: number;
+  googleIntegration?: {
+    googlePlaceId?: string;
+    googleIntegrationEnabled: boolean;
+    googleLinkedAt?: string;
+    latitude?: number;
+    longitude?: number;
+    urls?: {
+      maps: string;
+      reviews: string;
+      writeReview: string;
+      embed: string;
+    };
+  };
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
@@ -158,7 +171,10 @@ export interface CreateBusinessData {
   city?: string;
   state?: string;
   country?: string;
-  postalCode?: string;
+  neighborhood?: string;
+  street?: string;
+  buildingNumber?: string;
+  apartment?: string;
   timezone?: string;
   primaryColor?: string;
   tags?: string[];

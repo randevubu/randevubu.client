@@ -13,6 +13,8 @@ interface DashboardContextType {
   pathname: string;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   logout: () => void;
   // Add refetch capabilities for cache invalidation
   refetchBusiness: () => void;
@@ -31,6 +33,8 @@ interface DashboardProviderProps {
   pathname: string;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   logout: () => void;
   refetchBusiness: () => void;
   upcomingAppointments?: Appointment[];
@@ -45,6 +49,8 @@ export function DashboardProvider({
   pathname,
   sidebarOpen,
   setSidebarOpen,
+  sidebarCollapsed,
+  setSidebarCollapsed,
   logout,
   refetchBusiness,
   upcomingAppointments = [],
@@ -59,6 +65,8 @@ export function DashboardProvider({
         pathname,
         sidebarOpen,
         setSidebarOpen,
+        sidebarCollapsed,
+        setSidebarCollapsed,
         logout,
         refetchBusiness,
         upcomingAppointments,

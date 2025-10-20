@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
+import { SubscriptionStatus } from '../../types/enums';
 
 interface BusinessGuardProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export default function BusinessGuard({ children }: BusinessGuardProps) {
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
+      // Use replace to prevent back button from returning to protected page
       router.replace('/auth');
       return;
     }
@@ -28,13 +30,27 @@ export default function BusinessGuard({ children }: BusinessGuardProps) {
 
   const checkBusiness = async () => {
     try {
-      const response = await businessService.getMyBusiness('?includeSubscription=true');
+      const response = await businessService.getMyBusiness(true);
       console.log('BusinessGuard - API response:', response);
       
-      if (response.success && response.data?.businesses && response.data.businesses.length > 0) {
-        console.log('BusinessGuard - Business found, redirecting to subscription');
-        router.replace('/subscription');
-        return;
+      if (response.success && response.data?.hasBusinesses) {
+        const businesses = response.data.businesses || [];
+        const subscriptions = response.data.subscriptions || [];
+        
+        // Check if user has any active subscription
+        const hasActiveSubscription = subscriptions.some(sub => 
+          sub.status === SubscriptionStatus.ACTIVE || sub.status === SubscriptionStatus.TRIAL
+        );
+        
+        if (hasActiveSubscription) {
+          console.log('BusinessGuard - Business with active subscription found, redirecting to dashboard');
+          router.replace('/dashboard');
+          return;
+        } else {
+          console.log('BusinessGuard - Business found but no active subscription, allowing onboarding access');
+          setCanAccess(true);
+          return;
+        }
       } else {
         console.log('BusinessGuard - No business found, allowing onboarding access');
         setCanAccess(true);

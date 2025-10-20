@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { businessService } from '@/src/lib/services/business';
+import { ratingService } from '@/src/lib/services/ratings';
 import { Business, BusinessType } from '@/src/types/business';
+import { GoogleIntegration } from '@/src/types/rating';
+import { BusinessRatings } from '@/src/components';
 
 interface Service {
   id: string;
@@ -39,12 +42,13 @@ export default function BusinessDetailsPage() {
   const [workingHours, setWorkingHours] = useState<WorkingHours>({});
   const [loading, setLoading] = useState(true);
   const [businessType, setBusinessType] = useState<BusinessType | null>(null);
+  const [googleIntegration, setGoogleIntegration] = useState<GoogleIntegration | null>(null);
   
   // Collapsible sections state
   const [openSections, setOpenSections] = useState({
     services: false,
     tags: false,
-    workingHours: false
+    workingHours: true  // Open by default
   });
 
   // Gallery modal state
@@ -73,8 +77,8 @@ export default function BusinessDetailsPage() {
           Object.entries(businessData.businessHours).forEach(([day, hours]: [string, any]) => {
             transformedHours[day] = {
               isOpen: hours.isOpen,
-              openTime: hours.open,
-              closeTime: hours.close
+              openTime: hours.openTime || hours.open,
+              closeTime: hours.closeTime || hours.close
             };
           });
         }
@@ -84,9 +88,19 @@ export default function BusinessDetailsPage() {
         if (businessData?.businessType) {
           setBusinessType(businessData.businessType);
         }
+
+        // Fetch Google integration data separately
+        try {
+          const googleResponse = await ratingService.getGoogleIntegration(businessData.id);
+          if (googleResponse.success && googleResponse.data) {
+            setGoogleIntegration(googleResponse.data);
+          }
+        } catch (googleError) {
+          // This is not an error - Google integration is optional
+        }
       }
     } catch (error) {
-      console.error('Error fetching business details:', error);
+      // Handle error silently or show user-friendly message
     } finally {
       setLoading(false);
     }
@@ -134,7 +148,6 @@ export default function BusinessDetailsPage() {
         day: 'numeric'
       }).format(date);
     } catch (error) {
-      console.error('Date formatting error:', error);
       return 'Tarih bilgisi yok';
     }
   };
@@ -436,76 +449,22 @@ export default function BusinessDetailsPage() {
                 </div>
               </div>
 
-
-              {/* Services - Collapsible */}
+              {/* Customer Reviews - Always Open */}
               <div className="bg-[var(--theme-card)] rounded-3xl shadow-xl border border-[var(--theme-border)] overflow-hidden">
-                <button
-                  onClick={() => toggleSection('services')}
-                  className="w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-[var(--theme-background)]/50 transition-colors"
-                >
-                  <h2 className="text-sm sm:text-base font-bold text-[var(--theme-cardForeground)]">Hizmetlerimiz</h2>
-                  <div className="flex items-center space-x-3">
-                    <span className="bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-sm font-semibold">
-                      {services.filter(s => s.isActive).length} Hizmet
-                    </span>
-                    <svg
-                      className={`w-5 h-5 sm:w-6 sm:h-6 text-[var(--theme-foregroundSecondary)] transition-transform duration-300 ${openSections.services ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </button>
-
-                {openSections.services && (
-                  <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-                    {services.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                        {services.filter(service => service.isActive).map((service) => (
-                          <div
-                            key={service.id}
-                            className="bg-[var(--theme-background)] border-2 border-[var(--theme-border)] rounded-2xl p-4 sm:p-6 hover:border-[var(--theme-primary)] transition-all duration-300 hover:shadow-lg"
-                          >
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 sm:mb-4 space-y-2 sm:space-y-0">
-                              <h3 className="text-base sm:text-lg font-bold text-[var(--theme-foreground)]">
-                                {service.name}
-                              </h3>
-                              <span className="text-xl sm:text-2xl font-black text-[var(--theme-primary)] sm:ml-4">
-                                {formatPrice(service.price)}
-                              </span>
-                            </div>
-
-                            {service.description && (
-                              <p className="text-[var(--theme-foregroundSecondary)] mb-3 sm:mb-4 text-sm">
-                                {service.description}
-                              </p>
-                            )}
-
-                            <div className="flex items-center text-sm text-[var(--theme-foregroundSecondary)]">
-                              <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {formatDuration(service.duration)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 sm:py-12">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[var(--theme-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                          <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--theme-foregroundMuted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                        </div>
-                        <h3 className="text-lg sm:text-xl font-bold text-[var(--theme-cardForeground)] mb-2 sm:mb-3">Henüz Hizmet Eklenmemiş</h3>
-                        <p className="text-[var(--theme-foregroundSecondary)] text-sm sm:text-base">Bu işletme henüz hizmet listesi oluşturmamış.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="p-4 sm:p-6">
+                  <h2 className="text-sm sm:text-base font-bold text-[var(--theme-cardForeground)] mb-4 sm:mb-6">Müşteri Yorumları</h2>
+                  
+                  
+                  <BusinessRatings
+                    businessId={business.id}
+                    averageRating={0} // Will be overridden by ratings API data
+                    totalRatings={0}  // Will be overridden by ratings API data
+                    googleIntegration={googleIntegration || undefined}
+                    showGoogleWidget={true}
+                  />
+                </div>
               </div>
+
             </div>
 
             {/* Right Column - Sidebar */}
@@ -589,6 +548,76 @@ export default function BusinessDetailsPage() {
                   )}
                 </div>
               )}
+
+              {/* Services - Collapsible */}
+              <div className="bg-[var(--theme-card)] rounded-3xl shadow-xl border border-[var(--theme-border)] overflow-hidden">
+                <button
+                  onClick={() => toggleSection('services')}
+                  className="w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-[var(--theme-background)]/50 transition-colors"
+                >
+                  <h2 className="text-sm sm:text-base font-bold text-[var(--theme-cardForeground)]">Hizmetlerimiz</h2>
+                  <div className="flex items-center space-x-3">
+                    <span className="bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-sm font-semibold">
+                      {services.filter(s => s.isActive).length} Hizmet
+                    </span>
+                    <svg
+                      className={`w-5 h-5 sm:w-6 sm:h-6 text-[var(--theme-foregroundSecondary)] transition-transform duration-300 ${openSections.services ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+
+                {openSections.services && (
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                    {services.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        {services.filter(service => service.isActive).map((service) => (
+                          <div
+                            key={service.id}
+                            className="bg-[var(--theme-background)] border-2 border-[var(--theme-border)] rounded-2xl p-4 sm:p-6 hover:border-[var(--theme-primary)] transition-all duration-300 hover:shadow-lg"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+                              <h3 className="text-base sm:text-lg font-bold text-[var(--theme-foreground)]">
+                                {service.name}
+                              </h3>
+                              <span className="text-xl sm:text-2xl font-black text-[var(--theme-primary)] sm:ml-4">
+                                {formatPrice(service.price)}
+                              </span>
+                            </div>
+
+                            {service.description && (
+                              <p className="text-[var(--theme-foregroundSecondary)] mb-3 sm:mb-4 text-sm">
+                                {service.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center text-sm text-[var(--theme-foregroundSecondary)]">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {formatDuration(service.duration)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 sm:py-12">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[var(--theme-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                          <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[var(--theme-foregroundMuted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-bold text-[var(--theme-cardForeground)] mb-2 sm:mb-3">Henüz Hizmet Eklenmemiş</h3>
+                        <p className="text-[var(--theme-foregroundSecondary)] text-sm sm:text-base">Bu işletme henüz hizmet listesi oluşturmamış.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* CTA Card */}
               <div className="bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-2xl p-6 sm:p-8 shadow-2xl text-center">

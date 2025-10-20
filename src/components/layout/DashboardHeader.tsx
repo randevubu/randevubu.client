@@ -5,8 +5,8 @@ const DashboardHeader = memo(() => {
   const { business, navigationItems, pathname, setSidebarOpen } = useDashboard();
   
   return (
-  <header className="bg-[var(--theme-card)] shadow-sm border-b border-[var(--theme-border)] h-16 flex items-center transition-colors duration-300">
-    <div className="flex-1 flex items-center justify-between px-4 sm:px-6">
+  <header className="bg-[var(--theme-card)] shadow-sm border-b border-[var(--theme-border)] h-16 flex items-center transition-colors duration-300 overflow-x-hidden w-full">
+    <div className="flex-1 flex items-center justify-between px-4 sm:px-6 overflow-x-hidden max-w-full">
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
@@ -23,19 +23,6 @@ const DashboardHeader = memo(() => {
         </h1>
       </div>
       <div className="flex items-center space-x-2 sm:space-x-3">
-        <span
-          className={`hidden sm:inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors duration-300 ${
-            business.isActive
-              ? 'bg-[var(--theme-success)]/20 text-[var(--theme-success)]'
-              : 'bg-[var(--theme-error)]/20 text-[var(--theme-error)]'
-          }`}
-          aria-label={business.isActive ? 'İşletme aktif' : 'İşletme pasif'}
-        >
-          <div className={`w-2 h-2 rounded-full mr-1 sm:mr-2 transition-colors duration-300 ${
-            business.isActive ? 'bg-[var(--theme-success)]' : 'bg-[var(--theme-error)]'
-          }`} aria-hidden="true"></div>
-          <span className="hidden sm:inline">{business.isActive ? 'Aktif' : 'Pasif'}</span>
-        </span>
         {business.isVerified && (
           <span
             className="hidden sm:inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-[var(--theme-primary)]/20 text-[var(--theme-primary)] transition-colors duration-300"

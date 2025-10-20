@@ -33,7 +33,6 @@ export default function PhoneAuth() {
     if (isAuthenticated && !hasRedirected.current) {
       hasRedirected.current = true;
       setShouldRedirect(true);
-      toast.success('Zaten giriş yapmışsınız, yönlendiriliyorsunuz...', { duration: 2000 });
       router.replace('/');
     }
   }, [isAuthenticated, router]);

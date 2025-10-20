@@ -34,8 +34,10 @@ interface BusinessData {
   services?: Service[];
   businessHours?: {
     [key: string]: {
-      open: string;
-      close: string;
+      open?: string;
+      close?: string;
+      openTime?: string;
+      closeTime?: string;
       isOpen: boolean;
       breaks: Array<{
         startTime: string;
@@ -185,19 +187,14 @@ export default function TimeSelectionPage() {
 
   const generateBasicTimeSlots = async (date: string, service: Service, business: BusinessData): Promise<TimeSlot[]> => {
     if (!business || !service) {
-      console.log('No business or service data available for time slot generation');
       return [];
     }
 
-    console.log(`Generating ALL time slots for ${date} to show both occupied and conflicting slots`);
-
     // Generate ALL possible time slots within business hours (15-minute intervals)
     const allSlots = generateAllTimeSlots(business, date);
-    console.log(`🕐 Generated ${allSlots.length} total time slots`);
 
     // Fetch existing appointments
     const appointments = await fetchExistingAppointments(date, business.id);
-    console.log(`📋 Found ${appointments.length} appointments for ${date}`);
 
     // Check each slot for availability, conflicts, and occupancy
     return await checkAllSlotsAvailability(allSlots, appointments, date, service, business);
@@ -214,12 +211,18 @@ export default function TimeSelectionPage() {
     const businessHours = business?.businessHours?.[dayName];
 
     if (!businessHours || !businessHours.isOpen) {
-      console.log(`❌ Business is closed on ${dayName}`);
       return slots;
     }
 
-    const [openHour, openMinute] = businessHours.open.split(':').map(Number);
-    const [closeHour, closeMinute] = businessHours.close.split(':').map(Number);
+    const openTime = businessHours.openTime || businessHours.open;
+    const closeTime = businessHours.closeTime || businessHours.close;
+    
+    if (!openTime || !closeTime) {
+      return slots;
+    }
+    
+    const [openHour, openMinute] = openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
 
     // Generate 15-minute time slots from open to close
     for (let hour = openHour; hour < closeHour || (hour === closeHour && 0 < closeMinute); hour++) {
@@ -242,7 +245,6 @@ export default function TimeSelectionPage() {
       }
     }
 
-    console.log(`📅 Generated ${slots.length} time slots from ${businessHours.open} to ${businessHours.close}`);
     return slots;
   };
 
@@ -282,7 +284,6 @@ export default function TimeSelectionPage() {
         return hour * 60 + minute;
       }
     } catch (error) {
-      console.error('Error parsing time:', timeString, error);
       return 0;
     }
   };
@@ -361,8 +362,8 @@ export default function TimeSelectionPage() {
       return slots;
     }
 
-    const openTime = businessHours.open;
-    const closeTime = businessHours.close;
+    const openTime = businessHours.openTime || businessHours.open;
+    const closeTime = businessHours.closeTime || businessHours.close;
     const breaks = businessHours.breaks || [];
 
     if (!openTime || !closeTime) {
@@ -425,10 +426,12 @@ export default function TimeSelectionPage() {
     let closeMinute = 0;
 
     // Use business hours if available
-    if (businessHours?.isOpen && businessHours.open && businessHours.close) {
-      [openHour, openMinute] = businessHours.open.split(':').map(Number);
-      [closeHour, closeMinute] = businessHours.close.split(':').map(Number);
-      console.log(`📅 Using business hours for ${dayName}: ${businessHours.open} - ${businessHours.close}`);
+    const openTime = businessHours?.openTime || businessHours?.open;
+    const closeTime = businessHours?.closeTime || businessHours?.close;
+    if (businessHours?.isOpen && openTime && closeTime) {
+      [openHour, openMinute] = openTime.split(':').map(Number);
+      [closeHour, closeMinute] = closeTime.split(':').map(Number);
+      console.log(`📅 Using business hours for ${dayName}: ${openTime} - ${closeTime}`);
     } else if (businessHours && !businessHours.isOpen) {
       console.log(`❌ Business is closed on ${dayName}`);
       return slots; // Return empty slots for closed days
@@ -533,6 +536,12 @@ export default function TimeSelectionPage() {
 
     appointments.forEach(appointment => {
       try {
+        // Validate appointment data before processing
+        if (!appointment.startTime) {
+          console.warn('Appointment missing startTime, skipping:', appointment);
+          return;
+        }
+
         // API already filtered by date, so all appointments are for the requested date
         // Convert appointment times to Istanbul time for comparison
         const appointmentStart = createIstanbulTimeSlot(date, appointment.startTime);
@@ -599,6 +608,14 @@ export default function TimeSelectionPage() {
     }
 
     // Check if service would extend beyond business hours
+    if (!slot.time) {
+      console.warn('Slot missing time, marking as unavailable:', slot);
+      return {
+        ...slot,
+        available: false
+      };
+    }
+    
     const slotStart = createIstanbulTimeSlot(date, slot.time);
     const serviceEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
     const exceedsBusinessHours = checkBusinessHoursBoundary(serviceEnd, date);
@@ -678,9 +695,21 @@ export default function TimeSelectionPage() {
   // Create a time slot in Istanbul timezone
   const createIstanbulTimeSlot = (date: string, time: string): Date => {
     try {
+      // Validate inputs
+      if (!date || !time) {
+        console.error('Invalid inputs to createIstanbulTimeSlot:', { date, time });
+        return new Date();
+      }
+
       // Create a date object for the slot in local time (assumed to be Istanbul)
       const [year, month, day] = date.split('-').map(Number);
       const [hour, minute] = time.split(':').map(Number);
+
+      // Validate parsed values
+      if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+        console.error('Invalid parsed values:', { year, month, day, hour, minute });
+        return new Date();
+      }
 
       // Create date object (this will be in local time)
       const slotTime = new Date(year, month - 1, day, hour, minute);
@@ -689,7 +718,7 @@ export default function TimeSelectionPage() {
 
       return slotTime;
     } catch (error) {
-      console.error('Error creating Istanbul time slot:', error);
+      console.error('Error creating Istanbul time slot:', error, { date, time });
       return new Date(`${date}T${time}:00`);
     }
   };
@@ -714,16 +743,17 @@ export default function TimeSelectionPage() {
         return true; // Closed day
       }
 
-      if (!businessHours.close) {
+      const closeTime = businessHours.closeTime || businessHours.close;
+      if (!closeTime) {
         console.log(`⚠️ No closing time defined for ${dayName}, using default 18:00`);
         const defaultCloseTime = createIstanbulTimeSlot(date, '18:00');
         return serviceEnd > defaultCloseTime;
       }
 
       // Create business closing time in Istanbul time (no conversion needed)
-      const [closeHour, closeMinute] = businessHours.close.split(':').map(Number);
-      const closeTime = `${closeHour.toString().padStart(2, '0')}:${closeMinute.toString().padStart(2, '0')}`;
-      const businessClose = createIstanbulTimeSlot(date, closeTime);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+      const closeTimeString = `${closeHour.toString().padStart(2, '0')}:${closeMinute.toString().padStart(2, '0')}`;
+      const businessClose = createIstanbulTimeSlot(date, closeTimeString);
 
       console.log(`⏰ Business closes at ${businessClose.toLocaleString('tr-TR')}, service ends at ${serviceEnd.toLocaleString('tr-TR')}`);
       return serviceEnd > businessClose;

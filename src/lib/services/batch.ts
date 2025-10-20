@@ -65,7 +65,6 @@ export const batchService = {
     } catch (error: any) {
       // If batch endpoint doesn't exist (404), fall back to individual requests
       if (error.response?.status === 404) {
-        console.warn('Batch endpoint not available, using fallback');
         return await batchService.getDashboardDataFallback(params);
       }
       throw error;
@@ -92,7 +91,6 @@ export const batchService = {
         requests.push(
           apiClient.get(`/api/v1/appointments/my-appointments?limit=${limit}&page=1`)
             .catch(err => {
-              console.warn('Failed to fetch appointments:', err.message);
               return { data: { success: true, data: { appointments: [] } } };
             })
         );
@@ -102,7 +100,6 @@ export const batchService = {
         requests.push(
           apiClient.get('/api/v1/businesses/my-services')
             .catch(err => {
-              console.warn('Failed to fetch services:', err.message);
               return { data: { success: true, data: [] } };
             })
         );
@@ -113,7 +110,6 @@ export const batchService = {
         requests.push(
           apiClient.get(`/api/v1/customers/recent?limit=${limit}`)
             .catch(err => {
-              console.warn('Failed to fetch customers:', err.message);
               return { data: { success: true, data: [] } };
             })
         );
@@ -169,7 +165,6 @@ export const batchService = {
     try {
       await batchService.getDashboardData(params);
     } catch (error) {
-      console.warn('Prefetch failed, will fetch on demand:', error);
     }
   }
 };

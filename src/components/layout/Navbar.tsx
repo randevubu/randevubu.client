@@ -18,11 +18,21 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, isAuthenticated, logout, hasInitialized, isLoading } = useAuth();
-  const { businesses, subscriptions, isLoading: businessesLoading } = useMyBusiness();
+  const { 
+    businesses, 
+    subscriptions, 
+    hasBusinesses, 
+    isFirstTimeUser, 
+    canCreateBusiness,
+    isLoading: businessesLoading 
+  } = useMyBusiness();
   const profileRef = useRef<HTMLDivElement>(null);
 
   // For backward compatibility, also set subscriptionsLoading to match businessesLoading
   const subscriptionsLoading = businessesLoading;
+  
+  // Only show loading if we're actually loading AND don't have any data yet
+  const isDataLoading = businessesLoading && !hasBusinesses;
 
 
   // Use custom hook for click outside behavior
@@ -77,8 +87,8 @@ export default function Navbar() {
             ) : isAuthenticated ? (
               <>
                 {/* Conditional navigation based on user state */}
-                {subscriptionsLoading || businessesLoading ? (
-                  // Show loading state
+                {isDataLoading ? (
+                  // Show loading state only when we don't have data yet
                   <div className="hidden sm:block w-24 h-8 bg-[var(--theme-secondary)] animate-pulse rounded-lg"></div>
                 ) : hasBusinessAndSubscriptionFromAPI(user, businesses, subscriptions) ? (
                   // User has business and subscription - show both İşletmem and Randevu Al
@@ -191,7 +201,7 @@ export default function Navbar() {
                         )}
                         
                         {/* Conditional mobile navigation based on user state */}
-                        {subscriptionsLoading || businessesLoading ? (
+                        {isDataLoading ? (
                           <div className="px-3 py-3 sm:hidden">
                             <div className="w-full h-12 bg-gray-200 animate-pulse rounded-xl"></div>
                           </div>

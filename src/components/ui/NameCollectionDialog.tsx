@@ -20,7 +20,7 @@ export default function NameCollectionDialog({
   title = "Ad ve Soyad Bilgilerinizi Girin",
   description = "Randevu oluşturabilmek için ad ve soyad bilgilerinizi girmeniz gerekiyor."
 }: NameCollectionDialogProps) {
-  const { user, refreshTokenAndUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +62,7 @@ export default function NameCollectionDialog({
 
       if (response.success) {
         // Refresh user context to get updated information
-        await refreshTokenAndUser();
+        await refreshUser();
         
         showSuccessToast('Profil bilgileriniz güncellendi');
         onSuccess();

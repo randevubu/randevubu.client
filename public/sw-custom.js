@@ -66,12 +66,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests - network first
+  // API requests - network first, no caching in development
   if (url.pathname.startsWith('/api/')) {
+    // In development (no Node globals in SW), detect via hostname instead of process.env
+    const isDev = self.location && (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1');
+    if (isDev) {
+      event.respondWith(fetch(request));
+      return;
+    }
+    
     event.respondWith(
       fetch(request)
         .then(response => {
-          // Cache successful GET API responses only (Cache API doesn't support POST/PUT/DELETE)
+          // Only cache successful GET API responses in production
           if (response.ok && request.method === 'GET') {
             const responseClone = response.clone();
             caches.open(API_CACHE_NAME).then(cache => {
@@ -95,24 +102,57 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Other requests - cache first
+  // Other requests - network first in development, cache first in production
   event.respondWith(
-    caches.match(request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        
-        // Try to fetch from network
-        return fetch(request).catch(() => {
-          // Return offline page for navigation requests
-          if (request.mode === 'navigate') {
-            return caches.match('/offline.html');
+    (() => {
+      // In development, always try network first to avoid stale content
+      const isDev = self.location && (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1');
+      if (isDev) {
+        return fetch(request)
+          .then(response => {
+            // Cache successful responses
+            if (response.ok) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            // Fallback to cache if network fails
+            return caches.match(request).then(response => {
+              if (response) {
+                return response;
+              }
+              // Return offline page for navigation requests
+              if (request.mode === 'navigate') {
+                return caches.match('/offline.html');
+              }
+              // Return a 404 response for other failed requests
+              return new Response('Not found', { status: 404 });
+            });
+          });
+      }
+      
+      // Production: cache first
+      return caches.match(request)
+        .then(response => {
+          if (response) {
+            return response;
           }
-          // Return a 404 response for other failed requests
-          return new Response('Not found', { status: 404 });
+          
+          // Try to fetch from network
+          return fetch(request).catch(() => {
+            // Return offline page for navigation requests
+            if (request.mode === 'navigate') {
+              return caches.match('/offline.html');
+            }
+            // Return a 404 response for other failed requests
+            return new Response('Not found', { status: 404 });
+          });
         });
-      })
+    })()
   );
 });
 

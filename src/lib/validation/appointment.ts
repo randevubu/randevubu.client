@@ -130,8 +130,10 @@ export const validateBusinessHours = (
     const appointmentStart = startHour * 60 + startMinute;
     const appointmentEnd = appointmentStart + duration;
     
-    const [openHour, openMinute] = dayHours.open.split(':').map(Number);
-    const [closeHour, closeMinute] = dayHours.close.split(':').map(Number);
+    const openTime = dayHours.openTime || dayHours.open;
+    const closeTime = dayHours.closeTime || dayHours.close;
+    const [openHour, openMinute] = openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
     const businessOpen = openHour * 60 + openMinute;
     const businessClose = closeHour * 60 + closeMinute;
     

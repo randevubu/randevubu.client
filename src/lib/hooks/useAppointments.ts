@@ -92,9 +92,10 @@ export function useAppointments(params: UseAppointmentsParams = {}): UseAppointm
       return response.data;
     },
     enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !!params.businessId,
-    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds (reduced for development)
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes (reduced)
+    refetchOnWindowFocus: true, // Allow refetch on focus for fresh data
+    refetchOnMount: true, // Allow refetch on mount for fresh data
     refetchOnReconnect: true,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors

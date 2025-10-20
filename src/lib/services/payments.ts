@@ -1,5 +1,6 @@
 import { apiClient } from '../api';
 import { SubscriptionPlan, Location } from '../../types/subscription';
+import { subscriptionService } from './subscription';
 
 export interface IyzicoCardData {
   cardHolderName: string;
@@ -55,24 +56,19 @@ export interface TestCard {
 
 export class PaymentsService {
   static async getSubscriptionPlans(city?: string): Promise<SubscriptionPlan[]> {
-    const url = city 
-      ? `/api/v1/subscriptions/plans?city=${encodeURIComponent(city)}`
-      : '/api/v1/subscriptions/plans';
-    
-    const response = await apiClient.get(url);
-    return response.data.data; // Extract the data array from the response
+    return subscriptionService.getSubscriptionPlans(city);
+  }
+
+  static async getSubscriptionPlansByTier(tier: 'TIER_1' | 'TIER_2' | 'TIER_3'): Promise<SubscriptionPlan[]> {
+    return subscriptionService.getSubscriptionPlansByTier(tier);
+  }
+
+  static async getSubscriptionPlansByCity(city: string): Promise<SubscriptionPlan[]> {
+    return subscriptionService.getSubscriptionPlansByCity(city);
   }
 
   static async getSubscriptionPlansWithLocation(city?: string): Promise<{ plans: SubscriptionPlan[]; location: Location }> {
-    const url = city 
-      ? `/api/v1/subscriptions/plans?city=${encodeURIComponent(city)}`
-      : '/api/v1/subscriptions/plans';
-    
-    const response = await apiClient.get(url);
-    return {
-      plans: response.data.data.plans || [],
-      location: response.data.data.location
-    };
+    return subscriptionService.getSubscriptionPlansWithLocation(city);
   }
 
   static async createPayment(businessId: string, paymentData: CreatePaymentRequest): Promise<PaymentResponse> {

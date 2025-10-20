@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { userService } from '@/src/lib/services/user';
 import { appointmentService } from '@/src/lib/services/appointments';
@@ -33,10 +33,10 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        timezone: user.timezone || 'UTC',
-        language: user.language || 'tr',
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+        timezone: user.timezone ?? 'UTC',
+        language: user.language ?? 'tr',
       });
       
       // Fetch appointments if user is a customer
@@ -219,6 +219,7 @@ export default function ProfilePage() {
               </h2>
             </div>
 
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Personal Information */}
               <div className="space-y-6">
@@ -230,7 +231,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="firstName"
-                      value={isEditing ? formData.firstName : (user?.firstName || '')}
+                      value={isEditing ? formData.firstName : (user?.firstName ?? '')}
                       onChange={handleInputChange}
                       onBlur={handleFieldBlur}
                       onFocus={() => setIsEditing(true)}
@@ -240,7 +241,7 @@ export default function ProfilePage() {
                         isEditing ? 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]' :
                         'border-[var(--theme-border)] bg-[var(--theme-backgroundSecondary)] cursor-pointer hover:bg-[var(--theme-backgroundTertiary)]'
                       } ${isEditing ? 'bg-[var(--theme-card)]' : 'bg-[var(--theme-backgroundSecondary)]'} text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
-                      placeholder={isEditing ? "Adınız" : (user?.firstName || 'Belirtilmemiş')}
+                      placeholder={isEditing ? "Adınız" : "Belirtilmemiş"}
                     />
                     {errors.firstName && (
                       <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">
@@ -259,7 +260,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       name="lastName"
-                      value={isEditing ? formData.lastName : (user?.lastName || '')}
+                      value={isEditing ? formData.lastName : (user?.lastName ?? '')}
                       onChange={handleInputChange}
                       onBlur={handleFieldBlur}
                       onFocus={() => setIsEditing(true)}
@@ -269,7 +270,7 @@ export default function ProfilePage() {
                         isEditing ? 'border-[var(--theme-border)] focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)]' :
                         'border-[var(--theme-border)] bg-[var(--theme-backgroundSecondary)] cursor-pointer hover:bg-[var(--theme-backgroundTertiary)]'
                       } ${isEditing ? 'bg-[var(--theme-card)]' : 'bg-[var(--theme-backgroundSecondary)]'} text-[var(--theme-foreground)] rounded-xl focus:ring-2 transition-all duration-300`}
-                      placeholder={isEditing ? "Soyadınız" : (user?.lastName || 'Belirtilmemiş')}
+                      placeholder={isEditing ? "Soyadınız" : "Belirtilmemiş"}
                     />
                     {errors.lastName && (
                       <p className="mt-1 text-sm text-[var(--theme-error)] flex items-center">

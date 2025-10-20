@@ -16,7 +16,7 @@ interface BusinessCreationFormProps {
 
 export default function BusinessCreationForm({ onSuccess, onError }: BusinessCreationFormProps) {
   const router = useRouter();
-  const { updateTokensAndUser, refreshTokenAndUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
@@ -123,12 +123,11 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
         if (response.tokens?.accessToken) {
           console.log('🔑 NEW ACCESS TOKEN RECEIVED!');
           console.log('Old token preview:', getAccessToken()?.substring(0, 50) + '...');
-          
-          // ✅ UPDATE: Store new token immediately via AuthContext
-          await updateTokensAndUser(response.tokens);
-          
-          console.log('New token preview:', response.tokens.accessToken.substring(0, 50) + '...');
-          console.log('✅ Token updated successfully');
+
+          // ✅ UPDATE: Refresh user profile to get updated business/role information
+          await refreshUser(true);
+
+          console.log('✅ User profile refreshed successfully');
           console.log('👑 User promoted to business owner!');
         } else {
           console.warn('⚠️ NO NEW TOKENS IN RESPONSE!');
@@ -138,7 +137,7 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
             keys: Object.keys(response)
           });
           console.log('⚠️ Falling back to force role refresh...');
-          await refreshTokenAndUser(true); // Force role refresh
+          await refreshUser(true); // Force role refresh
         }
         
         // Debug the complete flow

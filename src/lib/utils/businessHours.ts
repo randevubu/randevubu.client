@@ -54,7 +54,6 @@ export function getDayNameFromDate(date: string, timezone: string = 'UTC'): stri
  */
 export function isBusinessOpenOnDate(business: Business, date: string): boolean {
   if (!business.businessHours) {
-    console.warn('No business hours data available');
     return false;
   }
 
@@ -62,7 +61,6 @@ export function isBusinessOpenOnDate(business: Business, date: string): boolean 
   const dayHours = business.businessHours[dayName];
   
   if (!dayHours) {
-    console.warn(`No hours found for ${dayName}`);
     return false;
   }
 
@@ -100,10 +98,14 @@ export function getBusinessHoursForDate(business: Business, date: string): {
     };
   }
 
+  // Handle both data structures: openTime/closeTime (API format) and open/close (legacy format)
+  const openTime = dayHours.openTime || dayHours.open;
+  const closeTime = dayHours.closeTime || dayHours.close;
+
   return {
     isOpen: dayHours.isOpen,
-    openTime: dayHours.isOpen ? dayHours.open : undefined,
-    closeTime: dayHours.isOpen ? dayHours.close : undefined,
+    openTime: dayHours.isOpen ? openTime : undefined,
+    closeTime: dayHours.isOpen ? closeTime : undefined,
     breaks: dayHours.breaks || [],
     dayName
   };
@@ -236,29 +238,20 @@ export function filterSlotsForServiceDuration(
   }>,
   date: string
 ): Array<{ time: string; available: boolean; conflictReason?: string }> {
-  console.log(`🔍 Filtering ${slots.length} slots for ${serviceDuration}min service on ${date}`);
-  console.log(`📋 Existing appointments:`, existingAppointments.map(apt => ({
-    start: apt.startTime,
-    end: apt.endTime,
-    duration: apt.duration
-  })));
 
   return slots.map(slot => {
     const [hour, minute] = slot.time.split(':').map(Number);
     const slotStartMinutes = hour * 60 + minute;
     const slotEndMinutes = slotStartMinutes + serviceDuration;
 
-    console.log(`🕐 Checking slot ${slot.time} (${slotStartMinutes}-${slotEndMinutes}min)`);
 
     // Check for conflicts with existing appointments
     const conflictingAppointment = existingAppointments.find(appointment => {
-      console.log(`  🔍 Checking appointment:`, appointment);
       const appointmentStart = parseTimeToMinutes(appointment.startTime);
       const appointmentEnd = appointment.endTime
         ? parseTimeToMinutes(appointment.endTime)
         : appointmentStart + (appointment.duration || 60);
 
-      console.log(`  🔍 Parsed appointment: ${appointmentStart}min - ${appointmentEnd}min`);
 
       // Check if the new service would overlap with existing appointment
       // Service cannot extend into an existing appointment
@@ -272,16 +265,12 @@ export function filterSlotsForServiceDuration(
 
       const hasOverlap = wouldOverlap && !endsExactlyWhenAppointmentStarts && !startsExactlyWhenAppointmentEnds;
 
-      console.log(`  📊 Service ${slotStartMinutes}-${slotEndMinutes}min vs Appointment ${appointmentStart}-${appointmentEnd}min`);
-      console.log(`  📊 Would overlap: ${wouldOverlap}, Ends exactly when starts: ${endsExactlyWhenAppointmentStarts}, Starts when ends: ${startsExactlyWhenAppointmentEnds}`);
-      console.log(`  📊 Final result: ${hasOverlap ? '❌ CONFLICT' : '✅ OK'}`);
 
       return hasOverlap;
     });
 
     const hasConflict = !!conflictingAppointment;
 
-    console.log(`  🎯 Slot ${slot.time} result: ${hasConflict ? '❌ BLOCKED' : '✅ AVAILABLE'}`);
 
     return {
       ...slot,
@@ -314,8 +303,6 @@ function parseTimeToMinutes(timeString: string): number {
       const [hour, minute] = istanbulTime.split(':').map(Number);
       const minutes = hour * 60 + minute;
 
-      console.log(`📊 Parsing appointment time: ${timeString}`);
-      console.log(`📊 Istanbul time: ${istanbulTime} (${minutes} minutes)`);
 
       return minutes;
     } else {
@@ -324,7 +311,6 @@ function parseTimeToMinutes(timeString: string): number {
       return hour * 60 + minute;
     }
   } catch (error) {
-    console.error('Error parsing time:', timeString, error);
     return 0;
   }
 }

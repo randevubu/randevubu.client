@@ -18,6 +18,29 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```bash
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3001
+
+# Production Domain Configuration
+# Set this to your production domain (e.g., yourdomain.com)
+NEXT_PUBLIC_PRODUCTION_DOMAIN=yourdomain.com
+
+# VAPID Keys for Push Notifications (Development)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key_here
+```
+
+### Business URL Configuration
+
+The application automatically generates business URLs in the format: `https://yourdomain.com/businesses/[business-slug]`
+
+- In development: Uses `localhost:3000/businesses/[business-slug]`
+- In production: Uses the domain specified in `NEXT_PUBLIC_PRODUCTION_DOMAIN`
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

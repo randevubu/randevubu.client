@@ -4,45 +4,36 @@ export interface SubscriptionPlan {
   id: string;
   name: string;
   displayName: string;
-  description?: string;
+  description: string;
   price: number;
-  basePrice: number; // NEW: Original base price before location adjustment
   currency: string;
-  billingInterval: string;
+  billingInterval: 'MONTHLY' | 'YEARLY';
   maxBusinesses: number;
   maxStaffPerBusiness: number;
-  maxAppointmentsPerDay?: number;
+  maxAppointmentsPerDay: number;
   features: {
-    smsQuota: number;
-    apiAccess: boolean;
-    description: string[];
-    maxServices: number;
+    appointmentBooking: boolean;
+    staffManagement: boolean;
     basicReports: boolean;
-    integrations: string[];
-    maxCustomers: number;
-    multiLocation: boolean;
+    emailNotifications: boolean;
+    smsNotifications: boolean;
     customBranding: boolean;
     advancedReports: boolean;
+    apiAccess: boolean;
+    multiLocation: boolean;
     prioritySupport: boolean;
-    staffManagement: boolean;
-    smsNotifications: boolean;
-    appointmentBooking: boolean;
-    emailNotifications: boolean;
+    integrations: string[];
+    maxServices: number;
+    maxCustomers: number;
+    smsQuota: number;
+    pricingTier: 'TIER_1' | 'TIER_2' | 'TIER_3';
+    description: string[];
   };
   isActive: boolean;
   isPopular: boolean;
-  isCustomPricing?: boolean;
-  customPriceDisplay?: string;
   sortOrder: number;
-  locationPricing?: { // NEW: Location pricing information
-    city: string;
-    state: string;
-    country: string;
-    tier: string;
-    multiplier: number;
-  };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BusinessSubscription {
@@ -234,3 +225,85 @@ export interface CityOption {
   label: string;
   tier: string;
 }
+
+// New API response types for subscription plans
+export interface SubscriptionPlansResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    plans: SubscriptionPlan[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface SubscriptionPlansByTierResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    plans: SubscriptionPlan[];
+    tier: 'TIER_1' | 'TIER_2' | 'TIER_3';
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+export interface SubscriptionPlansByCityResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    plans: SubscriptionPlan[];
+    city: string;
+    tier: 'TIER_1' | 'TIER_2' | 'TIER_3';
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+// Tier information types
+export interface PricingTier {
+  id: 'TIER_1' | 'TIER_2' | 'TIER_3';
+  name: string;
+  displayName: string;
+  cities: string[];
+  description: string;
+}
+
+export const PRICING_TIERS: PricingTier[] = [
+  {
+    id: 'TIER_1',
+    name: 'Major Cities',
+    displayName: 'Büyük Şehirler',
+    cities: ['Istanbul', 'Ankara', 'Izmir', 'Bursa', 'Antalya', 'Eskişehir'],
+    description: 'Artmış operasyonel maliyetler ve pazar talebi nedeniyle daha yüksek fiyatlandırma'
+  },
+  {
+    id: 'TIER_2',
+    name: 'Regional Centers',
+    displayName: 'Bölgesel Merkezler',
+    cities: ['Gaziantep', 'Konya', 'Diyarbakır', 'Samsun', 'Denizli', 'Kayseri', 'Mersin', 'Erzurum', 'Trabzon', 'Balıkesir', 'Kahramanmaraş', 'Van', 'Manisa', 'Sivas', 'Batman'],
+    description: 'Bölgesel iş merkezleri için dengeli fiyatlandırma'
+  },
+  {
+    id: 'TIER_3',
+    name: 'Smaller Cities',
+    displayName: 'Küçük Şehirler',
+    cities: ['Diğer tüm şehirler ve kırsal alanlar'],
+    description: 'Küçük pazarlarda hizmete erişimi kolaylaştırmak için daha düşük fiyatlandırma'
+  }
+];

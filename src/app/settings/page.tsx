@@ -307,8 +307,8 @@ function SettingsContent() {
     <div className="min-h-screen bg-[var(--theme-background)] transition-colors duration-300">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto py-6 sm:py-12 px-3 sm:px-4 lg:px-8">
-        <div className="bg-[var(--theme-card)]/80 backdrop-blur-xl rounded-xl sm:rounded-2xl shadow-xl border border-[var(--theme-border)] overflow-hidden transition-colors duration-300">
+      <div className="max-w-4xl mx-auto py-6 sm:py-12 px-3 sm:px-4 lg:px-8 xl:max-w-5xl 2xl:max-w-6xl">
+        <div className="bg-[var(--theme-card)]/80 backdrop-blur-xl rounded-xl sm:rounded-2xl shadow-xl border border-[var(--theme-border)] overflow-hidden transition-colors duration-300 w-full">
           {/* Mobile Header */}
           <div className="sm:hidden bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] p-4">
             <div className="flex items-center space-x-3">
@@ -322,23 +322,23 @@ function SettingsContent() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row">
+          <div className="flex flex-col lg:flex-row min-w-0">
             {/* Sidebar - Mobile Horizontal Tabs */}
-            <div className="w-full sm:w-64 bg-[var(--theme-backgroundSecondary)] sm:border-r border-b sm:border-b-0 border-[var(--theme-border)] transition-colors duration-300">
+            <div className="w-full lg:w-56 xl:w-64 2xl:w-72 bg-[var(--theme-backgroundSecondary)] lg:border-r border-b lg:border-b-0 border-[var(--theme-border)] transition-colors duration-300">
               <div className="p-3 sm:p-6">
                 <h2 className="hidden sm:block text-lg font-semibold text-[var(--theme-foreground)] mb-4">Ayarlar</h2>
-                <nav className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-1 overflow-x-auto sm:overflow-x-visible">
+                <nav className="flex lg:flex-col space-x-2 lg:space-x-0 lg:space-y-1 overflow-x-auto lg:overflow-x-visible">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
-                      className={`flex-shrink-0 sm:w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg transition-colors ${activeTab === tab.key
-                          ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] sm:border-r-2 border-[var(--theme-primary)]'
+                      className={`flex-shrink-0 lg:w-full flex items-center px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm font-medium rounded-lg transition-colors ${activeTab === tab.key
+                          ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] lg:border-r-2 border-[var(--theme-primary)]'
                           : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-foreground)] hover:bg-[var(--theme-backgroundTertiary)]'
                         }`}
                     >
-                      <tab.icon className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-3" />
-                      <span className="hidden sm:inline ml-2 sm:ml-0">{tab.label}</span>
+                      <tab.icon className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-3" />
+                      <span className="hidden lg:inline ml-2 lg:ml-0">{tab.label}</span>
                     </button>
                   ))}
                 </nav>
@@ -346,7 +346,7 @@ function SettingsContent() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-4 sm:p-6 lg:p-8">
+            <div className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-hidden">
               {activeTab === 'profile' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6">Profil Bilgileri</h3>
@@ -371,11 +371,11 @@ function SettingsContent() {
                     </div>
                   )}
 
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-4">Kişisel Bilgiler</h4>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                         <div>
                           <label className="block text-sm font-medium text-[var(--theme-foregroundSecondary)] mb-2">Ad *</label>
                           <input
@@ -407,7 +407,7 @@ function SettingsContent() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mt-4">
                         <div>
                           <label className="block text-sm font-medium text-[var(--theme-foregroundSecondary)] mb-2">Telefon</label>
                           <input
@@ -470,10 +470,10 @@ function SettingsContent() {
               {activeTab === 'general' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6">Genel Ayarlar</h3>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4">Dil ve Zaman</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                         <div>
                           <label className="block text-sm font-medium text-[var(--theme-foregroundSecondary)] mb-2">Dil</label>
                           <select className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-[var(--theme-border)] rounded-lg focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent bg-[var(--theme-background)] text-[var(--theme-foreground)] transition-colors duration-300 text-sm sm:text-base">
@@ -496,7 +496,7 @@ function SettingsContent() {
               {activeTab === 'theme' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6">Tema Ayarları</h3>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4">Tema Seçici</h4>
                       <p className="text-[var(--theme-foregroundSecondary)] text-xs sm:text-sm mb-4 sm:mb-6 leading-relaxed">
@@ -535,14 +535,14 @@ function SettingsContent() {
               {activeTab === 'notifications' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6 transition-colors duration-300">Bildirim Ayarları</h3>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Bildirim Türleri</h4>
-                      <div className="space-y-3 sm:space-y-4">
-                        <div className="flex items-start sm:items-center justify-between gap-3">
+                      <div className="space-y-3 lg:space-y-4">
+                        <div className="flex items-start lg:items-center justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">E-posta Bildirimleri</h5>
-                            <p className="text-xs sm:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Yeni randevular ve güncellemeler için e-posta alın</p>
+                            <p className="text-xs lg:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Yeni randevular ve güncellemeler için e-posta alın</p>
                           </div>
                           <button
                             onClick={() => handleNotificationChange('email')}
@@ -555,10 +555,10 @@ function SettingsContent() {
                             />
                           </button>
                         </div>
-                        <div className="flex items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-start lg:items-center justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">SMS Bildirimleri</h5>
-                            <p className="text-xs sm:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Randevu hatırlatmaları için SMS alın</p>
+                            <p className="text-xs lg:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Randevu hatırlatmaları için SMS alın</p>
                           </div>
                           <button
                             onClick={() => handleNotificationChange('sms')}
@@ -571,10 +571,10 @@ function SettingsContent() {
                             />
                           </button>
                         </div>
-                        <div className="flex items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-start lg:items-center justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">Push Bildirimleri</h5>
-                            <p className="text-xs sm:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Tarayıcı bildirimleri alın</p>
+                            <p className="text-xs lg:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Tarayıcı bildirimleri alın</p>
                           </div>
                           <button
                             onClick={() => handleNotificationChange('push')}
@@ -596,7 +596,7 @@ function SettingsContent() {
               {activeTab === 'privacy' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6 transition-colors duration-300">Gizlilik Ayarları</h3>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Profil Görünürlüğü</h4>
                       <div className="space-y-3 sm:space-y-4">
@@ -657,21 +657,21 @@ function SettingsContent() {
               {activeTab === 'business' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6 transition-colors duration-300">İşletme Ayarları</h3>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Çalışma Saatleri</h4>
                       <div className="space-y-3 sm:space-y-4">
                         {days.map((day) => {
                           const daySettings = settings.business.workingHours[day.key as keyof typeof settings.business.workingHours];
                           return (
-                            <div key={day.key} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                              <div className="w-full sm:w-24">
+                            <div key={day.key} className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-4 min-w-0">
+                              <div className="w-full lg:w-20 flex-shrink-0">
                                 <span className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">{day.label}</span>
                               </div>
-                              <div className="flex items-center space-x-2 sm:space-x-4">
+                              <div className="flex items-center space-x-2 lg:space-x-2 min-w-0 flex-1 lg:flex-none">
                                 <button
                                   onClick={() => handleWorkingHoursChange(day.key, 'closed', !daySettings.closed)}
-                                  className={`px-2 sm:px-3 py-1 rounded text-xs font-medium transition-colors duration-300 flex-shrink-0 ${daySettings.closed ? 'bg-[var(--theme-error)]/20 text-[var(--theme-error)]' : 'bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foregroundSecondary)]'
+                                  className={`px-2 lg:px-3 py-1 rounded text-xs font-medium transition-colors duration-300 flex-shrink-0 ${daySettings.closed ? 'bg-[var(--theme-error)]/20 text-[var(--theme-error)]' : 'bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foregroundSecondary)]'
                                     }`}
                                 >
                                   {daySettings.closed ? 'Kapalı' : 'Açık'}
@@ -682,14 +682,14 @@ function SettingsContent() {
                                       type="time"
                                       value={daySettings.start}
                                       onChange={(e) => handleWorkingHoursChange(day.key, 'start', e.target.value)}
-                                      className="px-2 sm:px-3 py-1 sm:py-2 border border-[var(--theme-border)] bg-[var(--theme-background)] text-[var(--theme-foreground)] rounded text-xs sm:text-sm focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-colors duration-300"
+                                      className="px-2 py-1 border border-[var(--theme-border)] bg-[var(--theme-background)] text-[var(--theme-foreground)] rounded text-xs focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-colors duration-300 w-20"
                                     />
-                                    <span className="text-[var(--theme-foregroundMuted)] transition-colors duration-300 text-xs sm:text-sm">-</span>
+                                    <span className="text-[var(--theme-foregroundMuted)] transition-colors duration-300 text-xs">-</span>
                                     <input
                                       type="time"
                                       value={daySettings.end}
                                       onChange={(e) => handleWorkingHoursChange(day.key, 'end', e.target.value)}
-                                      className="px-2 sm:px-3 py-1 sm:py-2 border border-[var(--theme-border)] bg-[var(--theme-background)] text-[var(--theme-foreground)] rounded text-xs sm:text-sm focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-colors duration-300"
+                                      className="px-2 py-1 border border-[var(--theme-border)] bg-[var(--theme-background)] text-[var(--theme-foreground)] rounded text-xs focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-colors duration-300 w-20"
                                     />
                                   </>
                                 )}
@@ -702,10 +702,10 @@ function SettingsContent() {
 
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Randevu Ayarları</h4>
-                      <div className="flex items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-start lg:items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">Otomatik Onay</h5>
-                          <p className="text-xs sm:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Gelen randevuları otomatik olarak onayla</p>
+                          <p className="text-xs lg:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Gelen randevuları otomatik olarak onayla</p>
                         </div>
                         <button
                           onClick={() => handleBusinessChange('autoConfirm')}
@@ -726,36 +726,36 @@ function SettingsContent() {
               {activeTab === 'account' && (
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6 transition-colors duration-300">Hesap Ayarları</h3>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
                     <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
                       <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Hesap İşlemleri</h4>
                       <div className="space-y-3 sm:space-y-4">
                         <button
                           onClick={() => {/* TODO: Export data */ }}
-                          className="w-full flex items-center justify-between p-3 sm:p-4 bg-[var(--theme-info)]/10 border border-[var(--theme-info)]/30 rounded-lg hover:bg-[var(--theme-info)]/20 transition-colors duration-300"
+                          className="w-full flex items-center justify-between p-3 lg:p-4 bg-[var(--theme-info)]/10 border border-[var(--theme-info)]/30 rounded-lg hover:bg-[var(--theme-info)]/20 transition-colors duration-300"
                         >
                           <div className="flex items-center min-w-0 flex-1">
-                            <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--theme-info)] mr-2 sm:mr-3 transition-colors duration-300 flex-shrink-0" />
+                            <Download className="w-4 h-4 lg:w-5 lg:h-5 text-[var(--theme-info)] mr-2 lg:mr-3 transition-colors duration-300 flex-shrink-0" />
                             <div className="text-left min-w-0">
                               <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">Verilerimi İndir</h5>
                               <p className="text-xs text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Tüm verilerinizi JSON formatında indirin</p>
                             </div>
                           </div>
-                          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                          <ChevronRight className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400 flex-shrink-0" />
                         </button>
 
                         <button
                           onClick={() => setShowDeleteModal(true)}
-                          className="w-full flex items-center justify-between p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                          className="w-full flex items-center justify-between p-3 lg:p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
                         >
                           <div className="flex items-center min-w-0 flex-1">
-                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mr-2 sm:mr-3 flex-shrink-0" />
+                            <Trash2 className="w-4 h-4 lg:w-5 lg:h-5 text-red-600 mr-2 lg:mr-3 flex-shrink-0" />
                             <div className="text-left min-w-0">
                               <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">Hesabımı Sil</h5>
                               <p className="text-xs text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Bu işlem geri alınamaz</p>
                             </div>
                           </div>
-                          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-[var(--theme-foregroundMuted)] transition-colors duration-300 flex-shrink-0" />
+                          <ChevronRight className="w-3 h-3 lg:w-4 lg:h-4 text-[var(--theme-foregroundMuted)] transition-colors duration-300 flex-shrink-0" />
                         </button>
                       </div>
                     </div>
@@ -765,10 +765,10 @@ function SettingsContent() {
 
               {/* Save Button - Only show for non-profile tabs */}
               {activeTab !== 'profile' && (
-                <div className="mt-6 sm:mt-8 flex justify-center sm:justify-end">
+                <div className="mt-6 lg:mt-8 flex justify-center lg:justify-end">
                   <button
                     onClick={saveSettings}
-                    className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl sm:transform sm:hover:-translate-y-0.5 text-sm sm:text-base"
+                    className="w-full lg:w-auto px-4 lg:px-6 py-2 lg:py-3 bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl lg:transform lg:hover:-translate-y-0.5 text-sm lg:text-base"
                   >
                     Ayarları Kaydet
                   </button>
@@ -782,21 +782,21 @@ function SettingsContent() {
       {/* Delete Account Modal - Mobile Responsive */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 max-w-md w-full border border-[var(--theme-border)] transition-colors duration-300">
-            <h3 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4">Hesabımı Sil</h3>
-            <p className="text-sm text-[var(--theme-foregroundSecondary)] mb-4 sm:mb-6 leading-relaxed">
+          <div className="bg-[var(--theme-card)] rounded-lg p-4 lg:p-6 max-w-md w-full border border-[var(--theme-border)] transition-colors duration-300">
+            <h3 className="text-base lg:text-lg font-semibold text-[var(--theme-foreground)] mb-3 lg:mb-4">Hesabımı Sil</h3>
+            <p className="text-sm text-[var(--theme-foregroundSecondary)] mb-4 lg:mb-6 leading-relaxed">
               Bu işlem geri alınamaz. Tüm verileriniz kalıcı olarak silinecektir.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-2 sm:py-2 border border-[var(--theme-border)] text-[var(--theme-foregroundSecondary)] rounded-lg font-semibold hover:bg-[var(--theme-backgroundSecondary)] transition-colors text-sm sm:text-base"
+                className="flex-1 px-4 py-2 lg:py-2 border border-[var(--theme-border)] text-[var(--theme-foregroundSecondary)] rounded-lg font-semibold hover:bg-[var(--theme-backgroundSecondary)] transition-colors text-sm lg:text-base"
               >
                 İptal
               </button>
               <button
                 onClick={handleDeleteAccount}
-                className="flex-1 px-4 py-2 sm:py-2 bg-[var(--theme-error)] text-white rounded-lg font-semibold hover:bg-[var(--theme-error)]/80 transition-colors text-sm sm:text-base"
+                className="flex-1 px-4 py-2 lg:py-2 bg-[var(--theme-error)] text-white rounded-lg font-semibold hover:bg-[var(--theme-error)]/80 transition-colors text-sm lg:text-base"
               >
                 Hesabımı Sil
               </button>

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardData } from '../../lib/hooks/useDashboardData';
 import { useSidebarNavigation } from '../../lib/hooks/useSidebarNavigation';
-import { DashboardProvider } from '../../context/DashboardContext';
+import { DashboardProvider, useDashboard } from '../../context/DashboardContext';
 import DashboardGuard from '../../components/ui/DashboardGuard';
 import DashboardSidebar from '../../components/layout/DashboardSidebar';
 import DashboardHeader from '../../components/layout/DashboardHeader';
@@ -42,6 +42,21 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Load collapsed state from localStorage on mount
+  useEffect(() => {
+    const savedCollapsed = localStorage.getItem('sidebarCollapsed');
+    if (savedCollapsed !== null) {
+      setSidebarCollapsed(savedCollapsed === 'true');
+    }
+  }, []);
+
+  // Save collapsed state to localStorage when it changes
+  const handleSetSidebarCollapsed = (collapsed: boolean) => {
+    setSidebarCollapsed(collapsed);
+    localStorage.setItem('sidebarCollapsed', String(collapsed));
+  };
 
   const handleLogout = () => {
     logout();
@@ -59,6 +74,8 @@ export default function DashboardLayout({
           pathname={pathname}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={handleSetSidebarCollapsed}
           logout={handleLogout}
           refetchBusiness={refetchBusiness}
           upcomingAppointments={upcomingAppointments}
@@ -74,13 +91,19 @@ export default function DashboardLayout({
 }
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
+  const { sidebarCollapsed } = useDashboard();
+
   return (
-    <div className="min-h-screen bg-[var(--theme-background)] flex transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--theme-background)] flex overflow-x-hidden transition-colors duration-300">
       <DashboardSidebar />
-      <div className="flex-1 lg:ml-64">
+      <div className={`flex-1 min-w-0 overflow-x-hidden transition-all duration-300 ${
+        sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'
+      }`}>
         <DashboardHeader />
-        <main className="">
-          {children}
+        <main className="overflow-x-hidden w-full">
+          <div className="max-w-full overflow-x-hidden">
+            {children}
+          </div>
         </main>
       </div>
     </div>

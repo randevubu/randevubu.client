@@ -85,12 +85,13 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 60000, // 60 seconds - backend is slow
   withCredentials: true, // Include cookies in requests
 });
 
 apiClient.interceptors.request.use(
   (config) => {
+
     if (typeof window !== 'undefined' && currentAccessToken) {
       config.headers.Authorization = `Bearer ${currentAccessToken}`;
     }
@@ -100,11 +101,14 @@ apiClient.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 apiClient.interceptors.response.use(
   (response) => {
+
     if (response.data?.tokens?.accessToken) {
       setAccessToken(response.data.tokens.accessToken);
 
@@ -119,35 +123,35 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Only handle 401 errors for automatic token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>)['__sessionRefreshInProgress']) {
-        return Promise.reject(error);
-      }
-
+      // Check if refresh token cookie exists before attempting refresh
       if (typeof window !== 'undefined' && !document.cookie.includes('refreshToken=')) {
         setAccessToken(null);
-        window.location.href = '/auth';
+        await clearAuthAndRedirect();
         return Promise.reject(error);
       }
 
+      // If already refreshing, queue this request
       if (isRefreshing && refreshPromise) {
         return refreshPromise
           .then((token) => {
             if (token) {
               originalRequest.headers.Authorization = `Bearer ${token}`;
               return apiClient(originalRequest);
-            } else {
-              throw new Error('Token refresh failed');
             }
+            return Promise.reject(new Error('Token refresh failed'));
           })
           .catch((err) => {
             return Promise.reject(err);
           });
       }
 
+      // Mark this request as retried to prevent infinite loops
       originalRequest._retry = true;
       isRefreshing = true;
 
+      // Start the refresh process
       refreshPromise = (async () => {
         try {
           const { authService } = await import('./services/auth');
@@ -157,25 +161,32 @@ apiClient.interceptors.response.use(
             const newAccessToken = response.data.tokens.accessToken;
             setAccessToken(newAccessToken);
 
+            // Notify the app that token was updated
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('auth-token-updated', {
                 detail: { accessToken: newAccessToken }
               }));
             }
 
+            processQueue(null, newAccessToken);
             return newAccessToken;
-          } else {
-            setAccessToken(null);
-            return null;
           }
+
+          processQueue(new Error('Token refresh failed'), null);
+          setAccessToken(null);
+          return null;
         } catch (refreshError) {
           const authError = refreshError as { status?: number; isAuthError?: boolean };
 
+          // If refresh token is invalid (401), clear everything and redirect
           if (authError.status === 401 || authError.isAuthError) {
+            processQueue(authError as Error, null);
             await clearAuthAndRedirect();
             return null;
           }
 
+          // Other errors - just clear token and let user retry
+          processQueue(authError as Error, null);
           setAccessToken(null);
           return null;
         }
@@ -187,12 +198,13 @@ apiClient.interceptors.response.use(
         if (newAccessToken) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return apiClient(originalRequest);
-        } else {
-          if (typeof window !== 'undefined') {
-            window.location.href = '/auth';
-          }
-          return Promise.reject(error);
         }
+
+        // No new token - redirect to auth
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth';
+        }
+        return Promise.reject(error);
       } finally {
         isRefreshing = false;
         refreshPromise = null;

@@ -10,6 +10,8 @@ import { PushNotificationProvider } from "../context/PushNotificationContext";
 import { Toaster } from "react-hot-toast";
 import { type Locale } from '../i18n';
 import { ServiceWorkerInitializer } from "../components/ServiceWorkerInitializer";
+import { CacheControlPanel } from "../components/dev/CacheControlPanel";
+import "../lib/utils/cacheUtils"; // Initialize cache utilities
 import "../styles/globals.css";
 import "../styles/mobile-enhancements.css";
 
@@ -73,6 +75,7 @@ export default async function RootLayout({
                 <AuthProvider>
                   <PushNotificationProvider>
                     <ServiceWorkerInitializer />
+                    <CacheControlPanel />
                     {children}
                     <Toaster
                       position="top-right"

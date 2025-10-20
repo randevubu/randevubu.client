@@ -52,7 +52,8 @@ export function useClosures(params: UseClosuresParams = {}): UseClosuresResult {
     enabled: !!user && isAuthenticated && hasInitialized && !authLoading,
     staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
     refetchOnReconnect: true,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors

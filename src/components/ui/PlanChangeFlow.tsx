@@ -51,9 +51,10 @@ export default function PlanChangeFlow({
     try {
       const response = await subscriptionService.getPaymentMethods(businessId);
       if (response.success && response.data) {
-        setAllPaymentMethods(response.data);
+        const paymentMethods = Array.isArray(response.data) ? response.data : [];
+        setAllPaymentMethods(paymentMethods);
         // Auto-select default payment method
-        const defaultMethod = response.data.find(m => m.isDefault || m.makeDefault) || response.data[0];
+        const defaultMethod = paymentMethods.find(m => m.isDefault || m.makeDefault) || paymentMethods[0];
         if (defaultMethod) {
           setSelectedPaymentMethod(defaultMethod);
         }
