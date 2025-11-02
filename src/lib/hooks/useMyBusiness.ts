@@ -99,9 +99,11 @@ export function useMyBusiness(includeSubscription: boolean = true): UseMyBusines
               currentPeriodStart: subscription.currentPeriodStart,
               currentPeriodEnd: subscription.currentPeriodEnd,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd || false,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            } as BusinessSubscription;
+              autoRenewal: !subscription.cancelAtPeriodEnd,
+              failedPaymentCount: 0,
+              createdAt: '',
+              updatedAt: ''
+            };
           });
 
         return {

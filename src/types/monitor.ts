@@ -51,5 +51,6 @@ export interface MonitorAppointmentsParams {
   businessId: string;
   date?: string; // YYYY-MM-DD format, defaults to today
   includeStats?: boolean; // defaults to true
-  maxQueueSize?: number; // defaults to 10
+  maxQueueSize?: number; // defaults to 10, max 50
+  live?: boolean; // if true, skips cache (15 second TTL)
 }

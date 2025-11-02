@@ -1,5 +1,6 @@
 import { apiClient } from '../api';
 import { ApiResponse } from '../../types/api';
+import { getServiceWorkerRegistration } from '../utils/serviceWorkerRegistration';
 
 interface PushSubscriptionData {
   endpoint: string;
@@ -82,12 +83,9 @@ export class PushNotificationService {
       this.vapidPublicKey = response.data.data.publicKey;
       return this.vapidPublicKey;
     } catch (error) {
-      console.error('Error getting VAPID public key:', error);
-
       // TEMPORARY: Use VAPID key from environment for development testing
       // Replace this with your actual backend endpoint in production
       if (process.env.NODE_ENV === 'development') {
-        console.warn('[DEV] Using VAPID key from environment - replace with real backend endpoint');
         this.vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BN6yWsGKd4MpPimb4VyGBdUt2nz5uOd6Pmi2KTz8SeR6Z37VYVjpBkKxSsln1ZgivnZL6LFNLoeP-azWtIH6PcI';
         return this.vapidPublicKey;
       }
@@ -116,34 +114,26 @@ export class PushNotificationService {
   }
 
   /**
-   * Register service worker
+   * Get service worker registration
+   * Uses centralized registration from serviceWorkerRegistration utility
    */
   async registerServiceWorker(): Promise<ServiceWorkerRegistration> {
     if (!this.isSupported()) {
       throw new Error('Service Worker not supported');
     }
 
-    try {
-      // Check if service worker is already registered
-      const existingRegistration = await navigator.serviceWorker.getRegistration('/');
-      if (existingRegistration) {
-        return existingRegistration;
-      }
-
-      // Try to register our custom service worker with push support
-      const registration = await navigator.serviceWorker.register('/sw-custom.js', {
-        scope: '/',
-        updateViaCache: 'none' // Always check for updates
-      });
-
-      // Wait for the service worker to be ready
-      await navigator.serviceWorker.ready;
-
-      return registration;
-    } catch (error) {
-      console.error('Service Worker registration failed:', error);
-      throw new Error(`Failed to register service worker: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Use centralized service worker registration
+    // This ensures single source of truth and prevents duplicate registrations
+    const registration = await getServiceWorkerRegistration();
+    
+    if (!registration) {
+      throw new Error('Service worker is not registered. Ensure ServiceWorkerInitializer is in your app.');
     }
+
+    // Wait for the service worker to be ready
+    await navigator.serviceWorker.ready;
+
+    return registration;
   }
 
   /**
@@ -154,7 +144,6 @@ export class PushNotificationService {
       const registration = await navigator.serviceWorker.ready;
       return await registration.pushManager.getSubscription();
     } catch (error) {
-      console.error('Error getting current subscription:', error);
       return null;
     }
   }
@@ -185,8 +174,8 @@ export class PushNotificationService {
       if (existingSubscription) {
         try {
           await this.unsubscribe();
-        } catch (unsubscribeError) {
-          console.warn('Failed to unsubscribe properly, continuing with new subscription:', unsubscribeError);
+        } catch {
+          // Silently continue with new subscription if unsubscribe fails
         }
       }
 
@@ -211,7 +200,6 @@ export class PushNotificationService {
       return result;
 
     } catch (error) {
-      console.error('Error subscribing to push notifications:', error);
       throw error;
     }
   }
@@ -245,11 +233,9 @@ export class PushNotificationService {
         throw new Error(response.data.error?.message || 'Failed to subscribe');
       }
 
-      console.log('Successfully subscribed to push notifications (User Level):', response.data);
       return response.data;
 
     } catch (error) {
-      console.error('Error sending subscription to server:', error);
       throw error;
     }
   }
@@ -263,20 +249,17 @@ export class PushNotificationService {
       const subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        console.log('No subscription found');
         return;
       }
 
       let browserUnsubscribed = false;
-      let serverNotified = false;
 
       // Unsubscribe from browser
       try {
         await subscription.unsubscribe();
         browserUnsubscribed = true;
-        console.log('Successfully unsubscribed from browser push manager');
-      } catch (browserError) {
-        console.error('Failed to unsubscribe from browser:', browserError);
+      } catch {
+        // Continue to notify server even if browser unsubscribe fails
       }
 
       // Notify server (even if browser unsubscribe failed) - User Level endpoint
@@ -284,20 +267,14 @@ export class PushNotificationService {
         await apiClient.post('/api/v1/notifications/push/unsubscribe', {
           endpoint: subscription.endpoint
         });
-        serverNotified = true;
-        console.log('Successfully notified server of unsubscription (User Level)');
-      } catch (serverError) {
-        console.error('Failed to notify server of unsubscription:', serverError);
+      } catch {
         // Don't throw - browser unsubscribe is more important
       }
 
-      if (browserUnsubscribed) {
-        console.log('Successfully unsubscribed from push notifications');
-      } else {
+      if (!browserUnsubscribed) {
         throw new Error('Failed to unsubscribe from browser push manager');
       }
     } catch (error) {
-      console.error('Error unsubscribing:', error);
       throw error;
     }
   }
@@ -315,7 +292,6 @@ export class PushNotificationService {
 
       return response.data;
     } catch (error) {
-      console.error('Error testing notification:', error);
       throw error;
     }
   }

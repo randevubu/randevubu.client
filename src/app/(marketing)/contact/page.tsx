@@ -1,15 +1,29 @@
 'use client';
 
 import { useState } from 'react';
+import { contactService, ContactFormData, ContactResponse } from '@/src/lib/services/contact';
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  subject?: string;
+  message?: string;
+  general?: string;
+}
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
     subject: '',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [success, setSuccess] = useState(false);
+  const [rateLimitCooldown, setRateLimitCooldown] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -17,23 +31,129 @@ export default function ContactPage() {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error for this field when user types
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // Name validation: 2-100 characters
+    if (!formData.name.trim()) {
+      newErrors.name = 'Ad soyad gereklidir';
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Ad en az 2 karakter olmalıdır';
+    } else if (formData.name.trim().length > 100) {
+      newErrors.name = 'Ad en fazla 100 karakter olabilir';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'E-posta gereklidir';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Geçerli bir e-posta adresi giriniz';
+    }
+
+    // Phone validation: 10-20 characters
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Telefon gereklidir';
+    } else if (formData.phone.trim().length < 10) {
+      newErrors.phone = 'Telefon numarası en az 10 karakter olmalıdır';
+    } else if (formData.phone.trim().length > 20) {
+      newErrors.phone = 'Telefon numarası en fazla 20 karakter olabilir';
+    }
+
+    // Subject validation: 3-200 characters
+    if (!formData.subject.trim()) {
+      newErrors.subject = 'Konu gereklidir';
+    } else if (formData.subject.trim().length < 3) {
+      newErrors.subject = 'Konu en az 3 karakter olmalıdır';
+    } else if (formData.subject.trim().length > 200) {
+      newErrors.subject = 'Konu en fazla 200 karakter olabilir';
+    }
+
+    // Message validation: 10-2000 characters
+    if (!formData.message.trim()) {
+      newErrors.message = 'Mesaj gereklidir';
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = 'Mesaj en az 10 karakter olmalıdır';
+    } else if (formData.message.trim().length > 2000) {
+      newErrors.message = 'Mesaj en fazla 2000 karakter olabilir';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    setSuccess(false);
+
+    // Client-side validation
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      alert('Mesajınız başarıyla gönderildi! En kısa sürede size döneceğiz.');
-      setFormData({
-        name: '',
-        phone: '',
-        subject: '',
-        message: ''
-      });
+
+    try {
+      const response = await contactService.submitContactForm(formData as ContactFormData);
+      
+      if (response.success) {
+        setSuccess(true);
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => setSuccess(false), 5000);
+      } else {
+        // Handle API validation errors
+        if (response.error?.details) {
+          const newErrors: FormErrors = {};
+          response.error.details.forEach(detail => {
+            newErrors[detail.field as keyof FormErrors] = detail.message;
+          });
+          setErrors(newErrors);
+        } else {
+          setErrors({ general: response.message || 'Mesaj gönderilemedi' });
+        }
+      }
+    } catch (error: unknown) {
+      console.error('Contact form error:', error);
+      
+      const { extractErrorMessage, isAxiosError } = await import('../../../lib/utils/errorExtractor');
+      const axiosError = isAxiosError(error);
+      const errorMessage = extractErrorMessage(error, 'Mesaj gönderilemedi');
+      
+      if (errorMessage === 'RATE_LIMIT_EXCEEDED' || (axiosError && error.response?.status === 429)) {
+        setErrors({ 
+          general: 'Çok fazla istek gönderdiniz. Lütfen 15 dakika sonra tekrar deneyin.' 
+        });
+        setRateLimitCooldown(true);
+        // Auto-enable after 15 minutes
+        setTimeout(() => {
+          setRateLimitCooldown(false);
+          setErrors({});
+        }, 15 * 60 * 1000);
+      } else if (error.message.includes('Bağlantı hatası')) {
+        setErrors({ general: error.message });
+      } else {
+        setErrors({ general: 'Mesaj gönderilirken bir hata oluştu. Lütfen tekrar deneyin.' });
+      }
+    } finally {
       setIsSubmitting(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -157,6 +277,30 @@ export default function ContactPage() {
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Success Message */}
+                  {success && (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağız.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Error Message */}
+                  {errors.general && (
+                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <span>{errors.general}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -169,25 +313,60 @@ export default function ContactPage() {
                         required
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        disabled={isSubmitting || rateLimitCooldown}
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                          errors.name ? 'border-red-300' : 'border-gray-300'
+                        }`}
                         placeholder="Ahmet Yılmaz"
                       />
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                      )}
                     </div>
 
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                        Telefon
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        E-posta *
                       </label>
                       <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                        placeholder="0555 123 45 67"
+                        disabled={isSubmitting || rateLimitCooldown}
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                          errors.email ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                        placeholder="ahmet@example.com"
                       />
+                      {errors.email && (
+                        <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                      )}
                     </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                      Telefon *
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      required
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting || rateLimitCooldown}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                        errors.phone ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="0555 123 45 67"
+                    />
+                    {errors.phone && (
+                      <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+                    )}
                   </div>
 
 
@@ -195,21 +374,22 @@ export default function ContactPage() {
                     <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                       Konu *
                     </label>
-                    <select
+                    <input
+                      type="text"
                       id="subject"
                       name="subject"
                       required
                       value={formData.subject}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    >
-                      <option value="">Konu seçin</option>
-                      <option value="demo">Demo talep etmek istiyorum</option>
-                      <option value="support">Teknik destek</option>
-                      <option value="sales">Satış danışmanlığı</option>
-                      <option value="billing">Fatura/Ödeme</option>
-                      <option value="other">Diğer</option>
-                    </select>
+                      disabled={isSubmitting || rateLimitCooldown}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
+                        errors.subject ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="Destek Talebi"
+                    />
+                    {errors.subject && (
+                      <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
+                    )}
                   </div>
 
                   <div>
@@ -220,17 +400,23 @@ export default function ContactPage() {
                       id="message"
                       name="message"
                       required
-                      rows={5}
+                      rows={6}
                       value={formData.message}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
+                      disabled={isSubmitting || rateLimitCooldown}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none ${
+                        errors.message ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       placeholder="Mesajınızı buraya yazın..."
                     />
+                    {errors.message && (
+                      <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+                    )}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || rateLimitCooldown}
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-6 rounded-2xl font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
                   >
                     {isSubmitting ? (
@@ -238,6 +424,8 @@ export default function ContactPage() {
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         <span>Gönderiliyor...</span>
                       </div>
+                    ) : rateLimitCooldown ? (
+                      'Çok fazla istek gönderdiniz'
                     ) : (
                       'Mesaj Gönder'
                     )}

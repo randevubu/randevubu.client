@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useMonitorAppointments } from '../../../lib/hooks/useMonitorAppointments';
+import { useMonitorAppointments } from '../../../../lib/hooks/useMonitorAppointments';
 import { Clock, User, Phone, MapPin, RefreshCw, Wifi, WifiOff, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

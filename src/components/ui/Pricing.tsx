@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Info, Phone, Check, X, Star, Heart, Zap, Shield, Users, Building, Calendar, Clock, User, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Warning, CheckCircle, AlertTriangle, Ban, Lock, Unlock, Eye, EyeOff, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Save, Loader2, Moon, Sun, XCircle, Tag, Bell, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Info, Phone, Check, X, Star, Heart, Zap, Shield, Users, Building, Calendar, Clock, User, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, CheckCircle, AlertTriangle, Ban, Lock, Unlock, Eye, EyeOff, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Save, Loader2, Moon, Sun, XCircle, Tag, Bell, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { useSubscriptionPlansByCity, getTierDisplayName } from '../../lib/hooks/useSubscriptionPlans';
 import { SubscriptionPlan } from '../../types/subscription';
 import PricingCard from './PricingCard';
@@ -62,11 +62,12 @@ export default function Pricing({ onPlanSelect }: PricingProps = {}) {
     description: 'Özel ihtiyaçlarınız için özelleştirilmiş çözüm',
     price: 0,
     currency: 'TRY',
-    billingInterval: 'MONTHLY',
+    billingInterval: 'monthly',
     maxBusinesses: -1,
     maxStaffPerBusiness: -1,
     maxAppointmentsPerDay: -1,
     features: {
+      trialDays: 0,
       appointmentBooking: true,
       staffManagement: true,
       basicReports: true,
@@ -140,7 +141,7 @@ export default function Pricing({ onPlanSelect }: PricingProps = {}) {
   // Filter and sort plans, then add Pro plan
   const sortedPlans = [
     ...plans
-      .filter(plan => plan.billingInterval === 'MONTHLY')
+      .filter(plan => plan.billingInterval === 'monthly')
       .sort((a, b) => a.sortOrder - b.sortOrder),
     proPlan
   ];

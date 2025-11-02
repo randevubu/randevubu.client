@@ -8,5 +8,6 @@ export * from './reports';
 export * from './payments';
 export * from './subscription';
 export * from './usage';
+export * from './contact';
 
 export * from './staff';

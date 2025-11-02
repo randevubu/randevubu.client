@@ -190,6 +190,12 @@ export const subscribeBusinessSchema = z.object({
   
   paymentMethodId: z.string()
     .min(1, 'Ödeme yöntemi ID gereklidir')
+    .optional(),
+  
+  discountCode: z.string()
+    .min(3, 'İndirim kodu en az 3 karakter olmalıdır')
+    .max(20, 'İndirim kodu en fazla 20 karakter olmalıdır')
+    .regex(/^[A-Z0-9]+$/, 'İndirim kodu sadece büyük harfler ve rakamlar içerebilir')
     .optional()
 });
 

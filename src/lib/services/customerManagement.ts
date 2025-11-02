@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from '../api';
+import { extractErrorMessage } from '../utils/errorExtractor';
 import {
   CustomerManagementSettings,
   CustomerManagementSettingsResponse,
@@ -25,17 +26,10 @@ const getSettings = async (): Promise<CustomerManagementSettingsResponse> => {
     }
 
     return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
-    }
-    if (error.response?.status === 403) {
-      throw new Error('Bu işlem için yetkiniz bulunmuyor.');
-    }
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
+  } catch (error: unknown) {
+    // Use backend's translated error message if available
+    const errorMessage = extractErrorMessage(error, 'İşlem başarısız oldu');
+    throw new Error(errorMessage);
   }
 };
 
@@ -56,20 +50,10 @@ const updateSettings = async (
     }
 
     return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
-    }
-    if (error.response?.status === 403) {
-      throw new Error('Bu işlem için yetkiniz bulunmuyor.');
-    }
-    if (error.response?.status === 400) {
-      throw new Error(error.response.data?.message || 'Geçersiz ayarlar. Lütfen girdiğiniz bilgileri kontrol edin.');
-    }
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
+  } catch (error: unknown) {
+    // Use backend's translated error message if available
+    const errorMessage = extractErrorMessage(error, 'Failed to update customer management settings');
+    throw new Error(errorMessage);
   }
 };
 
@@ -87,17 +71,10 @@ const resetToDefaults = async (): Promise<CustomerManagementSettingsResponse> =>
     }
 
     return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
-    }
-    if (error.response?.status === 403) {
-      throw new Error('Bu işlem için yetkiniz bulunmuyor.');
-    }
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw error;
+  } catch (error: unknown) {
+    // Use backend's translated error message if available
+    const errorMessage = extractErrorMessage(error, 'İşlem başarısız oldu');
+    throw new Error(errorMessage);
   }
 };
 

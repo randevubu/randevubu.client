@@ -54,9 +54,10 @@ export const useCancellationPolicies = (): UseCancellationPoliciesReturn => {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 401/403 errors
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
+      const axiosError = isAxiosError(error);
+      if (axiosError && (error.response?.status === 401 || error.response?.status === 403)) {
         return false;
       }
       return failureCount < 3;
@@ -76,10 +77,10 @@ export const useCancellationPolicies = (): UseCancellationPoliciesReturn => {
       showSuccessToast('İptal ve gelmeme politikaları başarıyla güncellendi');
       setError(null);
     },
-    onError: (error: any) => {
-      const errorMessage = error.message || 'İptal ve gelmeme politikaları güncellenirken hata oluştu';
+    onError: (error: unknown) => {
+      const errorMessage = extractErrorMessage(error, 'İptal ve gelmeme politikaları güncellenirken hata oluştu');
       setError(errorMessage);
-      handleApiError(error);
+      handleApiError(error as any); // handleApiError expects AxiosError but we handle it internally
     }
   });
 
@@ -95,10 +96,10 @@ export const useCancellationPolicies = (): UseCancellationPoliciesReturn => {
       showSuccessToast('İptal ve gelmeme politikaları varsayılan değerlere sıfırlandı');
       setError(null);
     },
-    onError: (error: any) => {
-      const errorMessage = error.message || 'İptal ve gelmeme politikaları sıfırlanırken hata oluştu';
+    onError: (error: unknown) => {
+      const errorMessage = extractErrorMessage(error, 'İptal ve gelmeme politikaları sıfırlanırken hata oluştu');
       setError(errorMessage);
-      handleApiError(error);
+      handleApiError(error as any); // handleApiError expects AxiosError but we handle it internally
     }
   });
 

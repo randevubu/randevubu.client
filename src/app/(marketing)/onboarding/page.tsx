@@ -15,6 +15,35 @@ import { BusinessType, CreateBusinessData } from '../../../types/business';
 import { Location } from '../../../types/subscription';
 import { SubscriptionStatus } from '../../../types/enums';
 
+/**
+ * Get current date/time as ISO string in Istanbul timezone
+ * Matches the format returned from the database
+ */
+function getIstanbulDateTimeString(): string {
+  const now = new Date();
+  // Format as ISO string in Istanbul timezone
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Istanbul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const year = parts.find(p => p.type === 'year')?.value || '';
+  const month = parts.find(p => p.type === 'month')?.value || '';
+  const day = parts.find(p => p.type === 'day')?.value || '';
+  const hour = parts.find(p => p.type === 'hour')?.value || '';
+  const minute = parts.find(p => p.type === 'minute')?.value || '';
+  const second = parts.find(p => p.type === 'second')?.value || '';
+  
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
@@ -48,6 +77,7 @@ export default function OnboardingPage() {
   });
 
   const [websiteSlug, setWebsiteSlug] = useState('');
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -155,21 +185,23 @@ export default function OnboardingPage() {
         setBusinessTypes(response.data);
       } else {
         // Use fallback business types
+        const now = getIstanbulDateTimeString();
         setBusinessTypes([
-          { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'spa', name: 'spa', displayName: 'Spa', description: 'Wellness and spa services', category: 'Wellness', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'clinic', name: 'clinic', displayName: 'Medical Clinic', description: 'Healthcare services', category: 'Healthcare', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'fitness', name: 'fitness', displayName: 'Fitness Center', description: 'Gym and fitness services', category: 'Fitness', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+          { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
+          { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
+          { id: 'spa', name: 'spa', displayName: 'Spa', description: 'Wellness and spa services', icon: null, category: 'Wellness', isActive: true, createdAt: now, updatedAt: now },
+          { id: 'clinic', name: 'clinic', displayName: 'Medical Clinic', description: 'Healthcare services', icon: null, category: 'Healthcare', isActive: true, createdAt: now, updatedAt: now },
+          { id: 'fitness', name: 'fitness', displayName: 'Fitness Center', description: 'Gym and fitness services', icon: null, category: 'Fitness', isActive: true, createdAt: now, updatedAt: now }
         ]);
       }
     } catch (err) {
       console.error('❌ Error fetching business types:', err);
       console.log('🔄 Using fallback business types');
       // Use fallback business types
+      const now = getIstanbulDateTimeString();
       setBusinessTypes([
-        { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-        { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+        { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
+        { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now }
       ]);
     } finally {
       setLoadingTypes(false);
@@ -194,6 +226,9 @@ export default function OnboardingPage() {
     if (!formData.neighborhood?.trim()) newErrors.neighborhood = 'Mahalle/Semt gereklidir';
     if (!formData.street?.trim()) newErrors.street = 'Sokak/Cadde gereklidir';
     if (!formData.buildingNumber?.trim()) newErrors.buildingNumber = 'Bina numarası gereklidir';
+
+    // KVKK acceptance validation
+    if (!kvkkAccepted) newErrors.kvkkAccepted = 'KVKK aydınlatma metnini okumalı ve onaylamalısınız';
 
     return newErrors;
   };
@@ -260,8 +295,9 @@ export default function OnboardingPage() {
         const error = 'İşletme oluşturulamadı';
         setErrors({ general: error });
       }
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || err.message || 'İşletme oluşturulamadı';
+    } catch (err: unknown) {
+      const { extractErrorMessage } = await import('../../../lib/utils/errorExtractor');
+      const errorMessage = extractErrorMessage(err, 'İşletme oluşturulamadı');
       setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
@@ -978,6 +1014,52 @@ export default function OnboardingPage() {
                   <p className="text-sm text-gray-500 mt-2">
                     Bu URL otomatik olarak işletme adınızdan oluşturulur ve değiştirilemez
                   </p>
+                </div>
+
+                {/* KVKK Acceptance */}
+                <div>
+                  <div className={`flex items-start p-4 border-2 rounded-2xl transition-all ${
+                    hasInteracted && errors.kvkkAccepted 
+                      ? 'border-red-400 bg-red-50' 
+                      : 'border-gray-200 bg-gray-50'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      id="kvkk-acceptance"
+                      checked={kvkkAccepted}
+                      onChange={(e) => {
+                        setKvkkAccepted(e.target.checked);
+                        if (errors.kvkkAccepted) {
+                          setErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.kvkkAccepted;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className="mt-1 h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                      disabled={loading}
+                    />
+                    <label htmlFor="kvkk-acceptance" className="ml-3 text-sm text-gray-700">
+                      <span className="font-medium">
+                        <a 
+                          href="/kvkk" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:text-indigo-700 hover:underline"
+                        >
+                          KVKK Aydınlatma Metni
+                        </a>
+                        'ni okudum, anladım ve kişisel verilerimin işlenmesine onay veriyorum. *
+                      </span>
+                    </label>
+                  </div>
+                  {hasInteracted && errors.kvkkAccepted && (
+                    <div className="flex items-start mt-2 text-red-600">
+                      <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm font-medium leading-relaxed">{errors.kvkkAccepted}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Button */}

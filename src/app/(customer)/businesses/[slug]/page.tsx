@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { BusinessRatings } from '@/src/components';
 import { businessService } from '@/src/lib/services/business';
 import { ratingService } from '@/src/lib/services/ratings';
 import { Business, BusinessType } from '@/src/types/business';
 import { GoogleIntegration } from '@/src/types/rating';
-import { BusinessRatings } from '@/src/components';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface Service {
   id: string;
@@ -19,7 +19,7 @@ interface Service {
   isActive: boolean;
 }
 
-interface BusinessDetailsResponse extends Business {
+interface BusinessDetailsResponse extends Omit<Business, 'businessType'> {
   services?: Service[];
   businessType?: BusinessType;
 }

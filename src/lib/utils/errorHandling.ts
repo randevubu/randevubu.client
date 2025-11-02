@@ -101,7 +101,7 @@ export function shouldRetryError(error: ApiError, attemptCount: number): boolean
   }
 
   // Retry network errors and server errors up to 3 times
-  if (error.isNetworkError || error.status >= 500) {
+  if (error.isNetworkError || (error.status && error.status >= 500)) {
     return attemptCount < 3;
   }
 
@@ -128,7 +128,7 @@ export function getRetryDelay(error: ApiError, attemptCount: number): number {
   }
 
   // Server errors use moderate backoff
-  if (error.status >= 500) {
+  if (error.status && error.status >= 500) {
     return Math.min(2000 * (attemptCount + 1), 15000); // 2s, 4s, 6s, max 15s
   }
 

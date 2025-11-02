@@ -1,15 +1,15 @@
 'use client';
 
-import React from 'react';
+import { AlertTriangle, BarChart3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
+import React from 'react';
 import { useDashboardUser } from '../../../context/DashboardContext';
 import {
   USAGE_ALERT_MESSAGES,
   USAGE_ALERT_TYPES,
   USAGE_COLOR_SCHEMES,
   USAGE_PAGE_TEXTS,
-USAGE_PROGRESS_CONFIGS,
+  USAGE_PROGRESS_CONFIGS,
   USAGE_STATS_LABELS
 } from '../../../lib/constants/usage';
 import { useUsageData } from '../../../lib/hooks/useUsageData';

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Users, User, Mail, Phone, Shield, AlertCircle, CheckCircle, X, Plus, Edit, Trash2, ChevronDown, ChevronRight, Clock, Calendar, MapPin, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, RefreshCw, Save, AlertTriangle, Info, Warning, Check, Ban, UserPlus, UserMinus, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle } from 'lucide-react';
+import { Users, User, Mail, Phone, Shield, AlertCircle, CheckCircle, X, Plus, Edit, Trash2, ChevronDown, ChevronRight, Clock, Calendar, MapPin, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, RefreshCw, Save, AlertTriangle, Info, Check, Ban, UserPlus, UserMinus, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useDashboardBusiness } from '../../../context/DashboardContext';
 import { staffService, StaffWithUser, StaffInviteRequest, StaffInviteVerificationRequest, StaffRole } from '../../../lib/services/staff';

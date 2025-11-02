@@ -317,7 +317,7 @@ export default function ChangePlanDialog({
                     <div className="text-sm text-amber-800">
                       <div className="font-medium mb-1">Plan Düşürme Bilgisi:</div>
                       <ul className="space-y-1 text-xs">
-                        <li>• Plan düşürme işlemi {currentSubscription ? formatDate(currentSubscription.currentPeriodEnd) : 'sonraki fatura döneminde'} etkili olacak</li>
+                        <li>• Plan düşürme işlemi {currentSubscription ? formatDate(new Date(currentSubscription.currentPeriodEnd)) : 'sonraki fatura döneminde'} etkili olacak</li>
                         <li>• Bu tarife kadar mevcut plan özelliklerinizi kullanmaya devam edebilirsiniz</li>
                         <li>• Herhangi bir ödeme yapılmayacak</li>
                       </ul>
@@ -358,7 +358,7 @@ export default function ChangePlanDialog({
                       <div className="flex-1">
                         <div className="font-medium text-gray-900">Sonraki Fatura Döneminde</div>
                         <div className="text-sm text-gray-600 mt-1">
-                          {currentSubscription ? `${formatDate(currentSubscription.currentPeriodEnd)} tarihinde değişir` : 'Sonraki fatura döneminde değişir'}
+                          {currentSubscription ? `${formatDate(new Date(currentSubscription.currentPeriodEnd))} tarihinde değişir` : 'Sonraki fatura döneminde değişir'}
                         </div>
                       </div>
                     </label>

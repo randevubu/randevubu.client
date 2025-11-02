@@ -25,8 +25,10 @@ export function TokenRotationTest() {
       } else {
         setTestResult(`❌ Token rotation test failed: ${result.error}`);
       }
-    } catch (error: any) {
-      setTestResult(`❌ Token rotation test error: ${error.message}`);
+    } catch (error: unknown) {
+      const { extractErrorMessage } = await import('../../lib/utils/errorExtractor');
+      const errorMessage = extractErrorMessage(error, 'Token rotation test failed');
+      setTestResult(`❌ Token rotation test error: ${errorMessage}`);
     }
   };
 
@@ -45,8 +47,10 @@ export function TokenRotationTest() {
       } else {
         setTestResult(`❌ Force refresh failed: ${response.message}`);
       }
-    } catch (error: any) {
-      setTestResult(`❌ Force refresh error: ${error.message}`);
+    } catch (error: unknown) {
+      const { extractErrorMessage } = await import('../../lib/utils/errorExtractor');
+      const errorMessage = extractErrorMessage(error, 'Force refresh failed');
+      setTestResult(`❌ Force refresh error: ${errorMessage}`);
     }
   };
 
@@ -84,9 +88,11 @@ export function TokenRotationTest() {
       } else {
         setTestResult(`❌ Session refresh failed: ${response.message}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ [TEST] Session refresh error:', error);
-      setTestResult(`❌ Session refresh error: ${error.message}`);
+      const { extractErrorMessage } = await import('../../lib/utils/errorExtractor');
+      const errorMessage = extractErrorMessage(error, 'Session refresh failed');
+      setTestResult(`❌ Session refresh error: ${errorMessage}`);
     }
   };
 

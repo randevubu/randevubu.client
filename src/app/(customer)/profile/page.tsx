@@ -9,6 +9,7 @@ import { canViewBusinessStats, isCustomer, getPrimaryRole } from '@/src/lib/util
 import { useErrorTranslation } from '@/src/lib/hooks/useErrorTranslation';
 import { validateField, validateProfileForm, UserProfileUpdateData } from '@/src/lib/validation/profile';
 import toast from 'react-hot-toast';
+import { extractErrorMessage, extractApiError, isAxiosError } from '@/src/lib/utils/errorExtractor';
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -71,8 +72,10 @@ export default function ProfilePage() {
           completed
         });
       }
-    } catch (error) {
-      toast.error('Randevular yüklenirken bir hata oluştu');
+    } catch (error: unknown) {
+      // Use backend's translated error message if available
+      const errorMessage = extractErrorMessage(error, 'Randevular yüklenirken bir hata oluştu');
+      toast.error(errorMessage);
     }
   };
   
@@ -125,32 +128,40 @@ export default function ProfilePage() {
     try {
       await userService.updateProfile(formData);
       await refreshUser();
+      
+      // Sync language preference with API client if language was updated
+      if (formData.language && (formData.language === 'tr' || formData.language === 'en')) {
+        const { setCurrentLocale } = await import('../../lib/api');
+        setCurrentLocale(formData.language);
+      }
+      
       setIsEditing(false);
       toast.success('Profil başarıyla güncellendi!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle API validation errors (fallback)
-      if (error.response?.data?.error) {
-        const apiError = error.response.data.error;
+      const axiosError = isAxiosError(error);
+      const apiError = extractApiError(error);
+      
+      if (apiError && apiError.code === 'VALIDATION_ERROR' && apiError.details?.field) {
+        // Translate validation error to Turkish
+        const translatedError = translateValidationError(apiError);
         
-        if (apiError.code === 'VALIDATION_ERROR' && apiError.details?.field) {
-          // Translate validation error to Turkish
-          const translatedError = translateValidationError(apiError);
-          
-          if (translatedError) {
-            setErrors({
-              [translatedError.field]: translatedError.message
-            });
-          } else {
-            setErrors({
-              [apiError.details.field]: apiError.message
-            });
-          }
+        if (translatedError) {
+          setErrors({
+            [translatedError.field]: translatedError.message
+          });
         } else {
-          // General error
-          toast.error(apiError.message || 'Profil güncellenirken bir hata oluştu');
+          setErrors({
+            [apiError.details.field]: apiError.message
+          });
         }
+      } else if (apiError?.message) {
+        // Use backend's translated error message
+        toast.error(apiError.message);
       } else {
-        toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+        // Network or unknown error - use extractErrorMessage
+        const errorMessage = extractErrorMessage(error, 'Bir hata oluştu. Lütfen tekrar deneyin.');
+        toast.error(errorMessage);
       }
     } finally {
       setIsLoading(false);

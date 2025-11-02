@@ -5,7 +5,7 @@ export interface AuditLog {
   action: AuditAction;
   entity?: string;
   details?: Record<string, any>;
-  createdAt: Date;
+  createdAt: string;
   entityId?: string;
   ipAddress?: string;
   userAgent?: string;
@@ -17,8 +17,8 @@ export interface PhoneVerification {
   code: string;
   purpose: VerificationPurpose;
   attempts: number;
-  createdAt: Date;
-  expiresAt: Date;
+  createdAt: string;
+  expiresAt: string;
   isUsed: boolean;
   maxAttempts: number;
   phoneNumber: string;
@@ -28,12 +28,12 @@ export interface PhoneVerification {
 export interface RefreshToken {
   id: string;
   token: string;
-  createdAt: Date;
+  createdAt: string;
   deviceId?: string;
-  expiresAt: Date;
+  expiresAt: string;
   ipAddress?: string;
   isRevoked: boolean;
-  lastUsedAt: Date;
+  lastUsedAt: string;
   userAgent?: string;
   userId: string;
 }
@@ -57,17 +57,17 @@ export interface User {
   avatar?: string;
   timezone?: string;
   language?: string;
-  createdAt: Date;
-  deletedAt?: Date;
+  createdAt: string;
+  deletedAt?: string;
   failedLoginAttempts: number;
   firstName?: string;
   isActive: boolean;
   isVerified: boolean;
-  lastLoginAt?: Date;
+  lastLoginAt?: string;
   lastName?: string;
-  lockedUntil?: Date;
+  lockedUntil?: string;
   phoneNumber: string;
-  updatedAt: Date;
+  updatedAt: string;
   roles?: UserRole[];
   effectiveLevel?: number;
   businesses?: UserBusiness[]; // User's associated businesses

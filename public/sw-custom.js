@@ -110,8 +110,8 @@ self.addEventListener('fetch', (event) => {
       if (isDev) {
         return fetch(request)
           .then(response => {
-            // Cache successful responses
-            if (response.ok) {
+            // Cache successful GET responses only (POST requests cannot be cached)
+            if (response.ok && request.method === 'GET') {
               const responseClone = response.clone();
               caches.open(CACHE_NAME).then(cache => {
                 cache.put(request, responseClone);

@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reservationRulesService } from '../services/reservationRules';
+import { isAxiosError, extractErrorMessage } from '../utils/errorExtractor';
 import {
   ReservationSettings,
   UpdateReservationSettingsRequest,
@@ -54,9 +55,10 @@ export const useReservationRules = (): UseReservationRulesReturn => {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 401/403 errors
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
+      const axiosError = isAxiosError(error);
+      if (axiosError && (error.response?.status === 401 || error.response?.status === 403)) {
         return false;
       }
       return failureCount < 3;
@@ -76,10 +78,10 @@ export const useReservationRules = (): UseReservationRulesReturn => {
       showSuccessToast('Rezervasyon kuralları başarıyla güncellendi');
       setError(null);
     },
-    onError: (error: any) => {
-      const errorMessage = error.message || 'Rezervasyon kuralları güncellenirken hata oluştu';
+    onError: (error: unknown) => {
+      const errorMessage = extractErrorMessage(error, 'Rezervasyon kuralları güncellenirken hata oluştu');
       setError(errorMessage);
-      handleApiError(error);
+      handleApiError(error as any); // handleApiError expects AxiosError but we handle it internally
     }
   });
 
@@ -95,10 +97,10 @@ export const useReservationRules = (): UseReservationRulesReturn => {
       showSuccessToast('Rezervasyon kuralları varsayılan değerlere sıfırlandı');
       setError(null);
     },
-    onError: (error: any) => {
-      const errorMessage = error.message || 'Rezervasyon kuralları sıfırlanırken hata oluştu';
+    onError: (error: unknown) => {
+      const errorMessage = extractErrorMessage(error, 'Rezervasyon kuralları sıfırlanırken hata oluştu');
       setError(errorMessage);
-      handleApiError(error);
+      handleApiError(error as any); // handleApiError expects AxiosError but we handle it internally
     }
   });
 
@@ -107,9 +109,10 @@ export const useReservationRules = (): UseReservationRulesReturn => {
     try {
       setError(null);
       await updateMutation.mutateAsync(newSettings);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error is already handled by mutation onError
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to update settings');
+      throw new Error(errorMessage);
     }
   }, [updateMutation]);
 
@@ -118,9 +121,10 @@ export const useReservationRules = (): UseReservationRulesReturn => {
     try {
       setError(null);
       await resetMutation.mutateAsync();
-    } catch (error) {
+    } catch (error: unknown) {
       // Error is already handled by mutation onError
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to reset to defaults');
+      throw new Error(errorMessage);
     }
   }, [resetMutation]);
 

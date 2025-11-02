@@ -155,14 +155,18 @@ export const GoogleIntegrationSettings: React.FC<GoogleIntegrationSettingsProps>
           urls: integration?.urls,
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating Google integration:', err);
       
       // Handle backend validation errors
-      if (err?.response?.data?.message) {
-        setValidationMessage(err.response.data.message);
-      } else if (err?.message) {
-        setValidationMessage(err.message);
+      const { extractApiError, extractErrorMessage } = await import('../../lib/utils/errorExtractor');
+      const apiError = extractApiError(err);
+      const errorMessage = extractErrorMessage(err, 'Google entegrasyonu güncellenemedi');
+      
+      if (apiError?.message) {
+        setValidationMessage(apiError.message);
+      } else if (errorMessage) {
+        setValidationMessage(errorMessage);
       } else {
         setValidationMessage('Google entegrasyonu güncellenirken bir hata oluştu.');
       }

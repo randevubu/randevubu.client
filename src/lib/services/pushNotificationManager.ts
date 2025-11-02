@@ -13,6 +13,7 @@
  */
 
 import { apiClient } from '../api';
+import { getServiceWorkerRegistration } from '../utils/serviceWorkerRegistration';
 
 export interface PushSubscriptionData {
   endpoint: string;
@@ -92,7 +93,6 @@ export class PushNotificationManager {
     try {
       // 1. Check browser support
       if (!this.isSupported()) {
-        console.warn('[Push] Push notifications not supported in this browser');
         return { success: false, reason: 'not_supported' };
       }
 
@@ -111,7 +111,6 @@ export class PushNotificationManager {
         // Sync with backend to ensure consistency
         await this.syncSubscriptionWithBackend(existingSubscription);
 
-        console.log('[Push] Already subscribed');
         return {
           success: true,
           reason: 'already_subscribed',
@@ -139,7 +138,6 @@ export class PushNotificationManager {
       // 7. Subscribe to push
       const subscription = await this.subscribeToPush();
 
-      console.log('[Push] Successfully subscribed');
       return {
         success: true,
         reason: 'subscribed',
@@ -147,7 +145,6 @@ export class PushNotificationManager {
       };
 
     } catch (error) {
-      console.error('[Push] Initialization failed:', error);
       return {
         success: false,
         reason: 'error',
@@ -157,48 +154,25 @@ export class PushNotificationManager {
   }
 
   /**
-   * Get or wait for service worker registration
+   * Get service worker registration
+   * Uses centralized registration from serviceWorkerRegistration utility
    */
   private async getServiceWorkerRegistration(): Promise<void> {
     try {
-      // Check if service worker is even available
-      if (!('serviceWorker' in navigator)) {
-        throw new Error('Service Worker API not available');
+      // Use centralized service worker registration
+      // This ensures single source of truth and prevents duplicate registrations
+      const registration = await getServiceWorkerRegistration();
+      
+      if (!registration) {
+        throw new Error('Service worker is not registered. Ensure ServiceWorkerInitializer is in your app.');
       }
+
+      // Wait for service worker to be ready
+      await navigator.serviceWorker.ready;
       
-      // Check if there's already a registration
-      const existingReg = await navigator.serviceWorker.getRegistration();
-      
-      if (existingReg) {
-        // If service worker is installing or waiting, wait for it to become active
-        if (existingReg.installing || !existingReg.active) {
-          console.log('[Push] Waiting for service worker to activate...');
-          const timeout = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error('SW activation timeout')), 10000);
-          });
-          
-          await Promise.race([navigator.serviceWorker.ready, timeout]);
-          console.log('[Push] Service worker activated');
-        }
-        
-        this.serviceWorkerRegistration = existingReg;
-        return;
-      }
-      
-      // Wait for service worker to be ready (with timeout)
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Service worker ready timeout')), 10000);
-      });
-      
-      this.serviceWorkerRegistration = await Promise.race([
-        navigator.serviceWorker.ready,
-        timeoutPromise
-      ]);
-      
-      console.log('[Push] Service worker ready');
+      this.serviceWorkerRegistration = registration;
     } catch (error) {
-      console.error('[Push] Service worker registration failed:', error);
-      throw new Error('Service worker registration failed');
+      throw new Error(`Service worker registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -218,10 +192,8 @@ export class PushNotificationManager {
   private async requestPermission(): Promise<boolean> {
     try {
       const permission = await Notification.requestPermission();
-      console.log('[Push] Permission result:', permission);
       return permission === 'granted';
     } catch (error) {
-      console.error('[Push] Permission request failed:', error);
       return false;
     }
   }
@@ -238,7 +210,6 @@ export class PushNotificationManager {
       const subscription = await this.serviceWorkerRegistration.pushManager.getSubscription();
       return subscription;
     } catch (error) {
-      console.error('[Push] Failed to check existing subscription:', error);
       return null;
     }
   }
@@ -252,16 +223,13 @@ export class PushNotificationManager {
       const envKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (envKey) {
         this.vapidPublicKey = envKey;
-        console.log('[Push] Using VAPID key from environment');
         return;
       }
 
       // Fallback to API endpoint
       const response = await apiClient.get('/api/v1/notifications/push/vapid-key');
       this.vapidPublicKey = response.data.data.publicKey;
-      console.log('[Push] VAPID key retrieved from backend');
     } catch (error) {
-      console.error('[Push] Failed to get VAPID key:', error);
       throw new Error('Failed to retrieve VAPID public key');
     }
   }
@@ -284,15 +252,12 @@ export class PushNotificationManager {
         applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey) as BufferSource
       });
 
-      console.log('[Push] Push subscription created');
-
       // Send subscription to backend
       await this.sendSubscriptionToBackend(subscription);
 
       this.subscription = subscription;
       return subscription;
     } catch (error) {
-      console.error('[Push] Failed to subscribe:', error);
       throw error;
     }
   }
@@ -314,9 +279,7 @@ export class PushNotificationManager {
       };
 
       await apiClient.post('/api/v1/notifications/push/subscribe', subscriptionData);
-      console.log('[Push] Subscription sent to backend');
     } catch (error) {
-      console.error('[Push] Failed to send subscription to backend:', error);
       throw error;
     }
   }
@@ -329,8 +292,7 @@ export class PushNotificationManager {
     try {
       await this.sendSubscriptionToBackend(subscription);
     } catch (error) {
-      // Non-critical error, log but don't throw
-      console.warn('[Push] Failed to sync subscription with backend:', error);
+      // Non-critical error, silently continue
     }
   }
 
@@ -341,10 +303,7 @@ export class PushNotificationManager {
     try {
       // Unsubscribe from browser
       if (this.subscription) {
-        const success = await this.subscription.unsubscribe();
-        if (success) {
-          console.log('[Push] Unsubscribed from browser');
-        }
+        await this.subscription.unsubscribe();
       }
 
       // Notify backend
@@ -352,15 +311,13 @@ export class PushNotificationManager {
         await apiClient.post('/api/v1/notifications/push/unsubscribe', {
           endpoint: this.subscription?.endpoint
         });
-        console.log('[Push] Backend notified of unsubscription');
       } catch (error) {
-        console.warn('[Push] Failed to notify backend of unsubscription:', error);
+        // Don't throw - browser unsubscribe is more important
       }
 
       this.subscription = null;
       return true;
     } catch (error) {
-      console.error('[Push] Unsubscribe failed:', error);
       return false;
     }
   }
@@ -396,7 +353,6 @@ export class PushNotificationManager {
         isSupported
       };
     } catch (error) {
-      console.error('[Push] Failed to get subscription status:', error);
       return {
         isSubscribed: false,
         subscription: null,
@@ -423,9 +379,7 @@ export class PushNotificationManager {
         body: 'Push notification sistemi çalışıyor!',
         data: { test: true }
       });
-      console.log('[Push] Test notification sent');
     } catch (error) {
-      console.error('[Push] Failed to send test notification:', error);
       throw error;
     }
   }

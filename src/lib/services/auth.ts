@@ -15,8 +15,26 @@ export const authService = {
     return response.data;
   },
 
-  verifyLogin: async (data: PhoneVerificationConfirm): Promise<ApiResponse<{ user: User; tokens: { accessToken: string; expiresIn: number } }>> => {
-    const response = await apiClient.post<ApiResponse<{ user: User; tokens: { accessToken: string; expiresIn: number } }>>(
+  verifyLogin: async (data: PhoneVerificationConfirm): Promise<ApiResponse<{
+    user: User;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+      refreshExpiresIn: number;
+    };
+    isNewUser: boolean;
+  }>> => {
+    const response = await apiClient.post<ApiResponse<{
+      user: User;
+      tokens: {
+        accessToken: string;
+        refreshToken: string;
+        expiresIn: number;
+        refreshExpiresIn: number;
+      };
+      isNewUser: boolean;
+    }>>(
       '/api/v1/auth/verify-login',
       data
     );
@@ -24,39 +42,73 @@ export const authService = {
     return response.data;
   },
 
-  refreshToken: async (): Promise<ApiResponse<{ tokens: { accessToken: string; expiresIn: number } }>> => {
-    // Use fetch with credentials to send HttpOnly cookies
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
+  refreshToken: async (): Promise<ApiResponse<{
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+      refreshExpiresIn: number;
+    };
+  }>> => {
+    try {
+      // Use fetch with credentials to send HttpOnly cookies
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Handle network errors (backend not running, CORS issues, etc.)
+      if (!response.ok && response.status === 0) {
+        const error = new Error('Backend server is not available') as Error & {
+          isAuthError: boolean;
+          status: number;
+        };
+        error.isAuthError = false;
+        error.status = 0;
+        throw error;
       }
-    });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    // Handle 401 - refresh token is invalid/revoked
-    if (response.status === 401) {
-      const error = new Error(data.error?.message || data.message || 'Refresh token is invalid or revoked') as Error & {
-        isAuthError: boolean;
-        status: number;
-      };
-      error.isAuthError = true;
-      error.status = 401;
-      throw error;
+      // Handle 401 - refresh token is invalid/revoked
+      if (response.status === 401) {
+        const error = new Error(data.error?.message || data.message || 'Refresh token is invalid or revoked') as Error & {
+          isAuthError: boolean;
+          status: number;
+        };
+        error.isAuthError = true;
+        error.status = 401;
+        throw error;
+      }
+
+      // Handle other errors (403, 500, etc.)
+      if (!response.ok) {
+        const error = new Error(data.error?.message || data.message || 'Token refresh failed') as Error & {
+          status: number;
+        };
+        error.status = response.status;
+        throw error;
+      }
+
+      return data;
+    } catch (fetchError: unknown) {
+      // Handle network errors (failed to fetch, CORS, etc.)
+      const isNetworkError = fetchError instanceof TypeError || 
+        (fetchError instanceof Error && fetchError.message === 'Failed to fetch');
+      if (isNetworkError) {
+        const error = new Error('Backend server is not available') as Error & {
+          isAuthError: boolean;
+          status: number;
+        };
+        error.isAuthError = false;
+        error.status = 0;
+        throw error;
+      }
+      throw fetchError;
     }
-
-    // Handle other errors (403, 500, etc.)
-    if (!response.ok) {
-      const error = new Error(data.error?.message || data.message || 'Token refresh failed') as Error & {
-        status: number;
-      };
-      error.status = response.status;
-      throw error;
-    }
-
-    return data;
   },
 
   getProfile: async (forceRoleRefresh = false): Promise<ApiResponse<{ user: User }>> => {

@@ -1,4 +1,5 @@
 import { apiClient } from '../api';
+import { extractErrorMessage, extractApiError, isAxiosError } from '../utils/errorExtractor';
 import { 
   BusinessSubscription, 
   SubscriptionPlan, 
@@ -12,8 +13,13 @@ import {
   Location,
   SubscriptionPlansResponse,
   SubscriptionPlansByTierResponse,
-  SubscriptionPlansByCityResponse
+  SubscriptionPlansByCityResponse,
+  TrialSubscriptionRequest,
+  TrialSubscriptionResponse,
+  CancelSubscriptionRequest,
+  CancelSubscriptionResponse
 } from '../../types/subscription';
+import { discountCodeService } from './discountCode';
 
 export interface SubscriptionServiceResponse<T> {
   success: boolean;
@@ -36,9 +42,10 @@ export class SubscriptionService {
       
       const response = await apiClient.get<SubscriptionPlansResponse>(url);
       return response.data.data.plans;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch subscription plans:', error);
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch subscription plans');
+      throw new Error(errorMessage);
     }
   }
 
@@ -49,9 +56,10 @@ export class SubscriptionService {
     try {
       const response = await apiClient.get<SubscriptionPlansByTierResponse>(`/api/v1/subscriptions/plans?tier=${tier}`);
       return response.data.data.plans;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch subscription plans by tier:', error);
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch subscription plans by tier');
+      throw new Error(errorMessage);
     }
   }
 
@@ -62,9 +70,10 @@ export class SubscriptionService {
     try {
       const response = await apiClient.get<SubscriptionPlansByCityResponse>(`/api/v1/subscriptions/plans?city=${encodeURIComponent(city)}`);
       return response.data.data.plans;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch subscription plans by city:', error);
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch subscription plans by city');
+      throw new Error(errorMessage);
     }
   }
 
@@ -80,7 +89,7 @@ export class SubscriptionService {
       const response = await apiClient.get<SubscriptionPlansResponse>(url);
       return {
         plans: response.data.data.plans,
-        location: response.data.data.location || {
+        location: {
           city: city || 'Unknown',
           state: 'Unknown',
           country: 'Turkey',
@@ -89,9 +98,10 @@ export class SubscriptionService {
           accuracy: 'low' as const
         }
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch subscription plans with location:', error);
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch subscription plans with location');
+      throw new Error(errorMessage);
     }
   }
 
@@ -105,13 +115,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch business subscription:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik bilgileri alınamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik bilgileri alınamadı'),
+          code: apiError?.code
         }
       };
     }
@@ -127,20 +138,21 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch business subscription with plan:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik ve plan bilgileri alınamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik ve plan bilgileri alınamadı'),
+          code: apiError?.code
         }
       };
     }
   }
 
   /**
-   * Create a new business subscription
+   * Create a new business subscription (legacy method)
    */
   async createBusinessSubscription(
     businessId: string, 
@@ -152,16 +164,83 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create business subscription:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik oluşturulamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik oluşturulamadı'),
+          code: apiError?.code
         }
       };
     }
+  }
+
+  /**
+   * Create a trial subscription (new API endpoint from documentation)
+   */
+  async createTrialSubscription(
+    businessId: string,
+    trialData: TrialSubscriptionRequest
+  ): Promise<SubscriptionServiceResponse<TrialSubscriptionResponse>> {
+    try {
+      const response = await apiClient.post(`/api/v1/subscriptions/business/${businessId}/subscribe`, trialData);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      console.error('Failed to create trial subscription:', error);
+      const apiError = extractApiError(error);
+      return {
+        success: false,
+        error: {
+          message: apiError?.message || extractErrorMessage(error, 'Deneme aboneliği oluşturulamadı'),
+          code: apiError?.code
+        }
+      };
+    }
+  }
+
+  /**
+   * Apply a discount code to an existing subscription
+   */
+  async applyDiscountCode(
+    businessId: string,
+    discountCode: string
+  ): Promise<SubscriptionServiceResponse<{ message: string }>> {
+    try {
+      const response = await apiClient.post(`/api/v1/subscriptions/business/${businessId}/apply-discount`, {
+        discountCode
+      });
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: unknown) {
+      console.error('Failed to apply discount code:', error);
+      const apiError = extractApiError(error);
+      return {
+        success: false,
+        error: {
+          message: apiError?.message || extractErrorMessage(error, 'İndirim kodu uygulanamadı'),
+          code: apiError?.code
+        }
+      };
+    }
+  }
+
+  /**
+   * Validate a discount code for a specific plan
+   */
+  async validateDiscountCode(
+    code: string,
+    planId: string,
+    amount: number,
+    userId: string
+  ) {
+    return await discountCodeService.validateDiscountCode(code, planId, amount, userId);
   }
 
   /**
@@ -178,38 +257,40 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update business subscription:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik güncellenemedi',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik güncellenemedi'),
+          code: apiError?.code
         }
       };
     }
   }
 
   /**
-   * Cancel business subscription
+   * Cancel business subscription (updated to use new API endpoint)
    */
   async cancelBusinessSubscription(
     businessId: string, 
-    subscriptionId: string
-  ): Promise<SubscriptionServiceResponse<BusinessSubscription>> {
+    cancelData: CancelSubscriptionRequest = { cancelAtPeriodEnd: true }
+  ): Promise<SubscriptionServiceResponse<CancelSubscriptionResponse>> {
     try {
-      const response = await apiClient.post(`/api/v1/subscriptions/business/${businessId}/cancel`);
+      const response = await apiClient.post(`/api/v1/subscriptions/business/${businessId}/cancel`, cancelData);
       return {
         success: true,
-        data: response.data.data
+        data: response.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to cancel business subscription:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik iptal edilemedi',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik iptal edilemedi'),
+          code: apiError?.code
         }
       };
     }
@@ -228,13 +309,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to reactivate business subscription:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik yeniden aktifleştirilemedi',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik yeniden aktifleştirilemedi'),
+          code: apiError?.code
         }
       };
     }
@@ -250,13 +332,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch subscription usage:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Kullanım istatistikleri alınamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Kullanım istatistikleri alınamadı'),
+          code: apiError?.code
         }
       };
     }
@@ -272,13 +355,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data || []
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch billing history:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Fatura geçmişi alınamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Fatura geçmişi alınamadı'),
+          code: apiError?.code
         }
       };
     }
@@ -301,18 +385,18 @@ export class SubscriptionService {
           message: response.data.message
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to change subscription plan:', error);
 
       // Enhanced error handling for payment scenarios
-      const errorMessage = error.response?.data?.message || 'Abonelik planı değiştirilemedi';
-      const errorCode = error.response?.data?.code;
+      const apiError = extractApiError(error);
+      const errorMessage = apiError?.message || extractErrorMessage(error, 'Abonelik planı değiştirilemedi');
 
       return {
         success: false,
         error: {
           message: errorMessage,
-          code: errorCode
+          code: apiError?.code
         }
       };
     }
@@ -328,13 +412,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data || []
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch payment methods:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Ödeme yöntemleri alınamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Ödeme yöntemleri alınamadı'),
+          code: apiError?.code
         }
       };
     }
@@ -353,13 +438,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to add payment method:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Ödeme yöntemi eklenemedi',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Ödeme yöntemi eklenemedi'),
+          code: apiError?.code
         }
       };
     }
@@ -381,13 +467,14 @@ export class SubscriptionService {
         success: true,
         data: response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to calculate plan change:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Plan değişikliği hesaplanamadı',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Plan değişikliği hesaplanamadı'),
+          code: apiError?.code
         }
       };
     }
@@ -422,13 +509,14 @@ export class SubscriptionService {
           error: response.error
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to change subscription plan:', error);
+      const apiError = extractApiError(error);
       return {
         success: false,
         error: {
-          message: error.response?.data?.message || 'Abonelik planı değiştirilemedi',
-          code: error.response?.data?.code
+          message: apiError?.message || extractErrorMessage(error, 'Abonelik planı değiştirilemedi'),
+          code: apiError?.code
         }
       };
     }

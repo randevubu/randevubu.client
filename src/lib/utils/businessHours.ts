@@ -99,8 +99,8 @@ export function getBusinessHoursForDate(business: Business, date: string): {
   }
 
   // Handle both data structures: openTime/closeTime (API format) and open/close (legacy format)
-  const openTime = dayHours.openTime || dayHours.open;
-  const closeTime = dayHours.closeTime || dayHours.close;
+  const openTime = (dayHours as any).openTime || dayHours.open;
+  const closeTime = (dayHours as any).closeTime || dayHours.close;
 
   return {
     isOpen: dayHours.isOpen,

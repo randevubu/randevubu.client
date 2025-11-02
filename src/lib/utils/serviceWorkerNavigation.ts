@@ -8,8 +8,6 @@ export function setupServiceWorkerNavigation() {
 
   // Listen for messages from service worker
   navigator.serviceWorker.addEventListener('message', (event) => {
-    console.log('Received message from service worker:', event.data);
-    
     if (event.data && event.data.type === 'NAVIGATE') {
       const url = event.data.url;
       

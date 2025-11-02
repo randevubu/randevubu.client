@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { IyzicoCardData, IyzicoBuyerData, CreatePaymentRequest } from '../../types/payment';
 import { SubscriptionPlan } from '../../types/subscription';
+import DiscountCodeInput from './DiscountCodeInput';
 
 interface PaymentFormProps {
   selectedPlan: SubscriptionPlan;
@@ -37,6 +38,12 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
 
   const [installment, setInstallment] = useState('1');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string;
+    discountAmount: number;
+    finalAmount: number;
+    discountType: 'PERCENTAGE' | 'FIXED';
+  } | null>(null);
 
   const validateCard = (card: IyzicoCardData): Record<string, string> => {
     const newErrors: Record<string, string> = {};
@@ -84,9 +91,9 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
       newErrors.email = 'Geçersiz e-posta formatı';
     }
     if (!buyer.phone.trim()) newErrors.phone = 'Telefon gereklidir';
-    if (!buyer.address.trim()) newErrors.address = 'Adres gereklidir';
-    if (!buyer.city.trim()) newErrors.city = 'Şehir gereklidir';
-    if (!buyer.zipCode.trim()) newErrors.zipCode = 'Posta kodu gereklidir';
+    if (buyer.address && !buyer.address.trim()) newErrors.address = 'Adres gereklidir';
+    if (buyer.city && !buyer.city.trim()) newErrors.city = 'Şehir gereklidir';
+    if (buyer.zipCode && !buyer.zipCode.trim()) newErrors.zipCode = 'Posta kodu gereklidir';
 
     return newErrors;
   };
@@ -110,6 +117,19 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleDiscountApplied = (discount: {
+    code: string;
+    discountAmount: number;
+    finalAmount: number;
+    discountType: 'PERCENTAGE' | 'FIXED';
+  }) => {
+    setAppliedDiscount(discount);
+  };
+
+  const handleDiscountRemoved = () => {
+    setAppliedDiscount(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -126,6 +146,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
         },
         buyer: buyerData,
         installment,
+        discountCode: appliedDiscount?.code
       };
       onSubmit(paymentData);
     }
@@ -449,6 +470,16 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </div>
           </div>
         </div>
+
+        {/* Discount Code Input */}
+        <DiscountCodeInput
+          planId={selectedPlan.id}
+          originalAmount={selectedPlan.price}
+          onDiscountApplied={handleDiscountApplied}
+          onDiscountRemoved={handleDiscountRemoved}
+          appliedDiscount={appliedDiscount}
+          className="mt-6"
+        />
 
           <div className="pt-4 space-y-3">
             <button

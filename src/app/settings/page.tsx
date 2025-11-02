@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Bell, Building, ChevronRight, Download, Settings, Shield, Trash2, User } from 'lucide-react';
+import { AlertTriangle, Bell, ChevronRight, Download, Settings, Shield, Trash2, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useErrorTranslation } from '../../lib/hooks/useErrorTranslation';
 import { userService } from '../../lib/services/user';
 import { UpdateUserData } from '../../types/auth';
+import { extractApiError, isAxiosError } from '../../lib/utils/errorExtractor';
 
 function SettingsContent() {
   const { user, isAuthenticated, hasInitialized, logout, refreshUser } = useAuth();
@@ -203,6 +204,12 @@ function SettingsContent() {
 
       if (response.success) {
         await refreshUser(); // Refresh user context
+        
+        // Sync language preference with API client if language was updated
+        if (cleanedData.language && (cleanedData.language === 'tr' || cleanedData.language === 'en')) {
+          const { setCurrentLocale } = await import('../../lib/api');
+          setCurrentLocale(cleanedData.language);
+        }
 
         // Check if we need to redirect back to onboarding
         const redirect = searchParams.get('redirect');
@@ -214,7 +221,9 @@ function SettingsContent() {
         }
       } else {
         // Handle API response with success: false
-        toast.error('Profil güncellenirken bir hata oluştu');
+        // Use backend's translated error message if available
+        const errorMessage = response.error?.message || 'Profil güncellenirken bir hata oluştu';
+        toast.error(errorMessage);
 
         if (response.error?.code === 'VALIDATION_ERROR' && response.error?.details?.field) {
           // Handle field-specific validation errors with translation
@@ -232,11 +241,13 @@ function SettingsContent() {
           setProfileErrors({ general: message });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Clear previous errors
       setProfileErrors({});
 
-      const errorData = error?.response?.data;
+      // Use backend's translated error message if available
+      const axiosError = isAxiosError(error);
+      const errorData = axiosError && error.response ? error.response.data : null;
 
       if (errorData?.error?.code === 'VALIDATION_ERROR' && errorData?.error?.details?.field) {
         // Handle field-specific validation errors with translation
@@ -299,7 +310,6 @@ function SettingsContent() {
     { key: 'theme', label: 'Tema', icon: Settings },
     { key: 'notifications', label: 'Bildirimler', icon: Bell },
     { key: 'privacy', label: 'Gizlilik', icon: Shield },
-    { key: 'business', label: 'İşletme', icon: Building },
     { key: 'account', label: 'Hesap', icon: User },
   ];
 
@@ -648,75 +658,6 @@ function SettingsContent() {
                             />
                           </button>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'business' && (
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-[var(--theme-foreground)] mb-4 sm:mb-6 transition-colors duration-300">İşletme Ayarları</h3>
-                  <div className="space-y-4 sm:space-y-6 max-w-3xl">
-                    <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
-                      <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Çalışma Saatleri</h4>
-                      <div className="space-y-3 sm:space-y-4">
-                        {days.map((day) => {
-                          const daySettings = settings.business.workingHours[day.key as keyof typeof settings.business.workingHours];
-                          return (
-                            <div key={day.key} className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-4 min-w-0">
-                              <div className="w-full lg:w-20 flex-shrink-0">
-                                <span className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">{day.label}</span>
-                              </div>
-                              <div className="flex items-center space-x-2 lg:space-x-2 min-w-0 flex-1 lg:flex-none">
-                                <button
-                                  onClick={() => handleWorkingHoursChange(day.key, 'closed', !daySettings.closed)}
-                                  className={`px-2 lg:px-3 py-1 rounded text-xs font-medium transition-colors duration-300 flex-shrink-0 ${daySettings.closed ? 'bg-[var(--theme-error)]/20 text-[var(--theme-error)]' : 'bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foregroundSecondary)]'
-                                    }`}
-                                >
-                                  {daySettings.closed ? 'Kapalı' : 'Açık'}
-                                </button>
-                                {!daySettings.closed && (
-                                  <>
-                                    <input
-                                      type="time"
-                                      value={daySettings.start}
-                                      onChange={(e) => handleWorkingHoursChange(day.key, 'start', e.target.value)}
-                                      className="px-2 py-1 border border-[var(--theme-border)] bg-[var(--theme-background)] text-[var(--theme-foreground)] rounded text-xs focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-colors duration-300 w-20"
-                                    />
-                                    <span className="text-[var(--theme-foregroundMuted)] transition-colors duration-300 text-xs">-</span>
-                                    <input
-                                      type="time"
-                                      value={daySettings.end}
-                                      onChange={(e) => handleWorkingHoursChange(day.key, 'end', e.target.value)}
-                                      className="px-2 py-1 border border-[var(--theme-border)] bg-[var(--theme-background)] text-[var(--theme-foreground)] rounded text-xs focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent transition-colors duration-300 w-20"
-                                    />
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="bg-[var(--theme-card)] rounded-lg p-4 sm:p-6 border border-[var(--theme-border)] transition-colors duration-300">
-                      <h4 className="text-base sm:text-lg font-semibold text-[var(--theme-foreground)] mb-3 sm:mb-4 transition-colors duration-300">Randevu Ayarları</h4>
-                      <div className="flex items-start lg:items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h5 className="text-sm font-medium text-[var(--theme-foreground)] transition-colors duration-300">Otomatik Onay</h5>
-                          <p className="text-xs lg:text-sm text-[var(--theme-foregroundSecondary)] transition-colors duration-300 leading-relaxed">Gelen randevuları otomatik olarak onayla</p>
-                        </div>
-                        <button
-                          onClick={() => handleBusinessChange('autoConfirm')}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 flex-shrink-0 ${settings.business.autoConfirm ? 'bg-[var(--theme-primary)]' : 'bg-[var(--theme-backgroundSecondary)]'
-                            }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.business.autoConfirm ? 'translate-x-6' : 'translate-x-1'
-                              }`}
-                          />
-                        </button>
                       </div>
                     </div>
                   </div>

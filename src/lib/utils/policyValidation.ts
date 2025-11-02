@@ -79,7 +79,7 @@ export const checkBookingEligibility = async (
       eligible: true,
       status
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If we can't check status, allow booking but log the error
     console.error('Failed to check booking eligibility:', error);
     return {
@@ -124,7 +124,7 @@ export const checkCancellationEligibility = (
       hoursUntilAppointment: Math.floor(hoursUntilAppointment),
       minHoursRequired: minCancellationHours
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to check cancellation eligibility:', error);
     // If we can't parse the date, don't allow cancellation
     return {
@@ -151,7 +151,7 @@ export const calculateHoursUntil = (appointmentStartTime: string | Date): number
     const hoursUntil = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
     return hoursUntil;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to calculate hours until appointment:', error);
     return 0;
   }
@@ -163,8 +163,12 @@ export const calculateHoursUntil = (appointmentStartTime: string | Date): number
  * @param error - Error message or object
  * @returns User-friendly error message
  */
-export const getPolicyErrorMessage = (error: any): string => {
-  let errorMessage = typeof error === 'string' ? error : error?.message || '';
+export const getPolicyErrorMessage = (error: unknown): string => {
+  let errorMessage = typeof error === 'string' 
+    ? error 
+    : (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string')
+      ? error.message
+      : '';
 
   // Strip English prefixes from API errors
   const prefixesToRemove = [

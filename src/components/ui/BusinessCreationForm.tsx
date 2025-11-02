@@ -8,10 +8,40 @@ import { CreateBusinessData, BusinessType, Business } from '../../types/business
 import { debugBusinessCreationFlow } from '../../lib/utils/debugAuth';
 import { getAccessToken } from '../../lib/api';
 import { debugTokenState } from '../../lib/utils/tokenDebug';
+import { extractErrorMessage } from '../../lib/utils/errorExtractor';
 
 interface BusinessCreationFormProps {
   onSuccess?: (business: Business) => void;
   onError?: (error: string) => void;
+}
+
+/**
+ * Get current date/time as ISO string in Istanbul timezone
+ * Matches the format returned from the database
+ */
+function getIstanbulDateTimeString(): string {
+  const now = new Date();
+  // Format as ISO string in Istanbul timezone
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Istanbul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const year = parts.find(p => p.type === 'year')?.value || '';
+  const month = parts.find(p => p.type === 'month')?.value || '';
+  const day = parts.find(p => p.type === 'day')?.value || '';
+  const hour = parts.find(p => p.type === 'hour')?.value || '';
+  const minute = parts.find(p => p.type === 'minute')?.value || '';
+  const second = parts.find(p => p.type === 'second')?.value || '';
+  
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`;
 }
 
 export default function BusinessCreationForm({ onSuccess, onError }: BusinessCreationFormProps) {
@@ -32,7 +62,6 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
     city: '',
     state: '',
     country: 'Turkey',
-    postalCode: '',
     timezone: 'Europe/Istanbul',
     primaryColor: '#FF6B6B',
     tags: []
@@ -48,20 +77,22 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
           setBusinessTypes(response.data);
         } else {
           // Use fallback business types
+          const now = getIstanbulDateTimeString();
           setBusinessTypes([
-            { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'spa', name: 'spa', displayName: 'Spa', description: 'Wellness and spa services', category: 'Wellness', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'clinic', name: 'clinic', displayName: 'Medical Clinic', description: 'Healthcare services', category: 'Healthcare', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'fitness', name: 'fitness', displayName: 'Fitness Center', description: 'Gym and fitness services', category: 'Fitness', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+            { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
+            { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
+            { id: 'spa', name: 'spa', displayName: 'Spa', description: 'Wellness and spa services', icon: null, category: 'Wellness', isActive: true, createdAt: now, updatedAt: now },
+            { id: 'clinic', name: 'clinic', displayName: 'Medical Clinic', description: 'Healthcare services', icon: null, category: 'Healthcare', isActive: true, createdAt: now, updatedAt: now },
+            { id: 'fitness', name: 'fitness', displayName: 'Fitness Center', description: 'Gym and fitness services', icon: null, category: 'Fitness', isActive: true, createdAt: now, updatedAt: now }
           ]);
         }
       } catch (err) {
         console.error('Error fetching business types:', err);
         // Use fallback business types
+        const now = getIstanbulDateTimeString();
         setBusinessTypes([
-          { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', category: 'Beauty', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+          { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
+          { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now }
         ]);
       } finally {
         setLoadingTypes(false);
@@ -153,8 +184,8 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
         setErrors({ general: error });
         onError?.(error);
       }
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || err.message || 'Failed to create business';
+    } catch (err: unknown) {
+      const errorMessage = extractErrorMessage(err, 'Failed to create business');
       setErrors({ general: errorMessage });
       onError?.(errorMessage);
       console.error('Error creating business:', err);
@@ -346,8 +377,8 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
                 <label className="block text-sm font-medium text-gray-700 mb-2">Postal Code</label>
                 <input
                   type="text"
-                  value={formData.postalCode}
-                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                  value=""
+                  onChange={() => {}}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="34710"
                   disabled={loading}

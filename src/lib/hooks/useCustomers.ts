@@ -34,9 +34,10 @@ export function useCustomers(params: Partial<GetCustomersParams> = {}) {
       throw new Error(response.message || 'Failed to fetch customers');
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 401/403 errors
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
+      const axiosError = isAxiosError(error);
+      if (axiosError && (error.response?.status === 401 || error.response?.status === 403)) {
         return false;
       }
       return failureCount < 2;

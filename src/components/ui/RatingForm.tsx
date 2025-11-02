@@ -11,7 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, Send, X, AlertCircle } from 'lucide-react';
 import { useRatingSubmission } from '../../lib/hooks/useRatings';
 import { RATING_CONSTANTS } from '../../types/rating';
-import type { RatingFormProps, RatingFormData, RatingFormErrors } from '../../types/rating';
+import type { RatingFormProps, RatingFormData, RatingFormErrors, SubmitRatingRequest } from '../../types/rating';
 
 export const RatingForm: React.FC<RatingFormProps> = ({
   businessId,
@@ -77,7 +77,7 @@ export const RatingForm: React.FC<RatingFormProps> = ({
         rating: formData.rating,
         comment: formData.comment.trim() || undefined,
         isAnonymous: formData.isAnonymous,
-      });
+      } as SubmitRatingRequest);
 
       onRatingSubmitted(rating);
       
