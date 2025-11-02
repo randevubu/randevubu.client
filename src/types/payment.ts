@@ -10,11 +10,11 @@ export interface Payment {
   paymentProvider: string;
   providerPaymentId?: string;
   metadata?: Record<string, any>;
-  paidAt?: Date;
-  failedAt?: Date;
-  refundedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  paidAt?: string;
+  failedAt?: string;
+  refundedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AppointmentPayment {
@@ -24,8 +24,8 @@ export interface AppointmentPayment {
   currency: string;
   status: PaymentStatus;
   paymentMethod: string;
-  paidAt?: Date;
-  createdAt: Date;
+  paidAt?: string;
+  createdAt: string;
 }
 
 export interface CreatePaymentData {
@@ -42,9 +42,9 @@ export interface UpdatePaymentData {
   status?: PaymentStatus;
   providerPaymentId?: string;
   metadata?: Record<string, any>;
-  paidAt?: Date;
-  failedAt?: Date;
-  refundedAt?: Date;
+  paidAt?: string;
+  failedAt?: string;
+  refundedAt?: string;
 }
 
 export interface CreateAppointmentPaymentData {
@@ -56,7 +56,7 @@ export interface CreateAppointmentPaymentData {
 
 export interface UpdateAppointmentPaymentData {
   status?: PaymentStatus;
-  paidAt?: Date;
+  paidAt?: string;
 }
 
 export interface PaymentSearchFilters {
@@ -64,8 +64,8 @@ export interface PaymentSearchFilters {
   status?: PaymentStatus;
   paymentMethod?: string;
   paymentProvider?: string;
-  dateFrom?: Date;
-  dateTo?: Date;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface IyzicoCardData {
@@ -81,10 +81,10 @@ export interface IyzicoBuyerData {
   surname: string;
   email: string;
   phone: string;
-  address: string;
-  city: string;
-  country: string;
-  zipCode: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  zipCode?: string;
 }
 
 export interface CreatePaymentRequest {
@@ -92,7 +92,7 @@ export interface CreatePaymentRequest {
   card: IyzicoCardData;
   buyer: IyzicoBuyerData;
   installment?: string;
-
+  discountCode?: string;
 }
 
 export interface PaymentResponse {

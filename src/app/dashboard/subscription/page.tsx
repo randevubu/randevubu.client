@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useDashboardUser, useDashboardBusiness } from '../../../context/DashboardContext';
 import { useSubscription, useCancelSubscription } from '../../../lib/hooks/useSubscription';
 import Pricing from '../../../components/ui/Pricing';
 import PlanChangeFlow from '../../../components/ui/PlanChangeFlow';
+import ApplyDiscountCode from '../../../components/ui/ApplyDiscountCode';
+import toast from 'react-hot-toast';
 
 import { SubscriptionPlan } from '../../../types/subscription';
 import { SubscriptionStatus } from '../../../types/enums';
@@ -18,8 +21,12 @@ export default function SubscriptionPage() {
   const business = useDashboardBusiness(); // DashboardGuard ensures business exists
 
   // TanStack Query hooks
-  const { subscription, isLoading: subscriptionLoading, refetch: refetchSubscription } = useSubscription();
+  const queryClient = useQueryClient();
+  const { subscription, isLoading: subscriptionLoading, refetch } = useSubscription();
   const cancelSubscriptionMutation = useCancelSubscription();
+  
+  // Store stable references for use in callbacks
+  const currentBusinessId = business?.id;
 
   // UI state
   const [showPlanChangeFlow, setShowPlanChangeFlow] = useState(false);
@@ -102,10 +109,21 @@ export default function SubscriptionPage() {
     }
   };
 
-  const handlePlanChangeSuccess = () => {
+  const handlePlanChangeSuccess = useCallback(() => {
     // Reload subscription data after successful plan change
-    refetchSubscription();
-  };
+    refetch();
+  }, [refetch]);
+
+  const handleRefetchSubscription = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  // Handler for discount code success
+  const handleDiscountCodeSuccess = useCallback((message: string) => {
+    toast.success(message);
+    // Refresh subscription data to show updated discount info
+    refetch();
+  }, [refetch]);
 
   const handleCancel = async () => {
     if (!subscription || !business) return;
@@ -113,7 +131,7 @@ export default function SubscriptionPage() {
     try {
       await cancelSubscriptionMutation.mutateAsync({
         businessId: business.id,
-        subscriptionId: subscription.id,
+        cancelAtPeriodEnd,
       });
 
       setShowCancelModal(false);
@@ -169,6 +187,7 @@ export default function SubscriptionPage() {
       handlePlanChangeSuccess={handlePlanChangeSuccess}
       handleCancel={handleCancel}
       handlePlanSelect={handlePlanSelect}
+      handleDiscountCodeSuccess={handleDiscountCodeSuccess}
       formatDate={formatDate}
       formatPrice={formatPrice}
       getStatusColor={getStatusColor}
@@ -290,6 +309,7 @@ interface SubscriptionPageContentProps {
   handlePlanChangeSuccess: () => void;
   handleCancel: () => void;
   handlePlanSelect: (plan: SubscriptionPlan) => void;
+  handleDiscountCodeSuccess: (message: string) => void;
   formatDate: (date: Date) => string;
   formatPrice: (price: number, currency: string | undefined) => string;
   getStatusColor: (status: SubscriptionStatus) => string;
@@ -312,6 +332,7 @@ const SubscriptionPageContent = ({
   handlePlanChangeSuccess,
   handleCancel,
   handlePlanSelect,
+  handleDiscountCodeSuccess,
   formatDate,
   formatPrice,
   getStatusColor,
@@ -411,6 +432,14 @@ const SubscriptionPageContent = ({
                             ⚠️ Bu dönem sonunda iptal edilecek
                           </div>
                         )}
+                        {subscription.metadata?.pendingDiscount && (
+                          <div className="text-green-700 font-medium bg-green-50 px-3 py-2 rounded-lg text-center text-xs sm:text-sm">
+                            🎟️ Aktif İndirim: {subscription.metadata.pendingDiscount.code} 
+                            ({subscription.metadata.pendingDiscount.discountType === 'PERCENTAGE' 
+                              ? `%${subscription.metadata.pendingDiscount.discountValue}` 
+                              : `${subscription.metadata.pendingDiscount.discountValue} TL`} indirim)
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -468,6 +497,25 @@ const SubscriptionPageContent = ({
             )}
           </div>
         </div>
+
+        {/* Discount Code Section */}
+        {subscription && business && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 mb-8 sm:mb-12">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">İndirim Kodu Uygula</h2>
+              <p className="text-gray-600 text-base sm:text-lg">Mevcut aboneliğinize indirim kodu uygulayabilirsiniz</p>
+            </div>
+            
+            <ApplyDiscountCode
+              businessId={business.id}
+              onSuccess={handleDiscountCodeSuccess}
+              onError={(error) => {
+                toast.error(error);
+              }}
+              className="max-w-2xl mx-auto"
+            />
+          </div>
+        )}
 
         {/* Available Plans - Using Pricing Component */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 mb-8 sm:mb-12">

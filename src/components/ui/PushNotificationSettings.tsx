@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import { X, Bell, AlertTriangle, CheckCircle, Check, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, Bell, AlertTriangle, CheckCircle, Check, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
 import { usePushNotifications, usePermissionInstructions } from '../../context/PushNotificationContext';
 
 export function PushNotificationSettings() {

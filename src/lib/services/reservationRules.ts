@@ -8,6 +8,7 @@
 
 import { apiClient } from '../api';
 import { ApiResponse } from '../../types/api';
+import { extractErrorMessage } from '../utils/errorExtractor';
 import {
   ReservationSettings,
   UpdateReservationSettingsRequest,
@@ -39,21 +40,10 @@ export const reservationRulesService = {
       }
       
       return response.data;
-    } catch (error: any) {
-      // Handle different error types
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else if (error.response?.status === 401) {
-        throw new Error('Unauthorized access - please log in again');
-      } else if (error.response?.status === 403) {
-        throw new Error('You do not have permission to access reservation settings');
-      } else if (error.response?.status === 400) {
-        throw new Error('Business context is required');
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        throw new Error('Network error - please check your connection');
-      } else {
-        throw new Error(error.message || 'Failed to fetch reservation settings');
-      }
+    } catch (error: unknown) {
+      // Use backend's translated error message if available
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch reservation settings');
+      throw new Error(errorMessage);
     }
   },
 
@@ -87,35 +77,10 @@ export const reservationRulesService = {
       }
       
       return response.data;
-    } catch (error: any) {
-      // Handle different error types
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else if (error.response?.status === 401) {
-        throw new Error('Unauthorized access - please log in again');
-      } else if (error.response?.status === 403) {
-        throw new Error('You do not have permission to edit reservation settings');
-      } else if (error.response?.status === 400) {
-        // Handle validation errors from server
-        const serverError = error.response.data.error;
-        if (serverError.includes('Max advance booking days')) {
-          throw new Error('Maximum advance booking is 365 days');
-        } else if (serverError.includes('Minimum notification period')) {
-          throw new Error('Minimum notification period is 1 hour');
-        } else if (serverError.includes('Maximum notification period')) {
-          throw new Error('Maximum notification period is 1 week (168 hours)');
-        } else if (serverError.includes('Minimum daily appointments')) {
-          throw new Error('Minimum daily appointments is 1');
-        } else if (serverError.includes('Maximum daily appointments')) {
-          throw new Error('Maximum daily appointments is 1000');
-        } else {
-          throw new Error(serverError);
-        }
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        throw new Error('Network error - please check your connection');
-      } else {
-        throw new Error(error.message || 'Failed to update reservation settings');
-      }
+    } catch (error: unknown) {
+      // Use backend's translated error message if available
+      const errorMessage = extractErrorMessage(error, 'Failed to update reservation settings');
+      throw new Error(errorMessage);
     }
   },
 
@@ -134,8 +99,9 @@ export const reservationRulesService = {
       };
 
       return await reservationRulesService.updateSettings(defaultSettings);
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to reset reservation settings to defaults');
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Failed to reset reservation settings to defaults');
+      throw new Error(errorMessage);
     }
   }
 };

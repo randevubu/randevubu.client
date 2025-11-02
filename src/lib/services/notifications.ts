@@ -335,19 +335,42 @@ export class NotificationError extends Error {
   }
 }
 
-export function handleNotificationError(error: any): string {
+export function handleNotificationError(error: unknown): string {
   console.error('Notification error:', error);
   
-  switch (error.code || error.name) {
-    case 'NotAllowedError':
-      return 'Lütfen tarayıcı ayarlarından bildirimlere izin verin';
-    case 'AbortError':
-      return 'Bildirim isteği iptal edildi';
-    case 'NotSupportedError':
-      return 'Push bildirimleri bu cihazda desteklenmiyor';
-    default:
-      return 'Bildirimlerle ilgili bir hata oluştu. Lütfen tekrar deneyin.';
+  // Check if error is a DOMException (browser notification API errors)
+  if (error instanceof DOMException) {
+    switch (error.name) {
+      case 'NotAllowedError':
+        return 'Lütfen tarayıcı ayarlarından bildirimlere izin verin';
+      case 'AbortError':
+        return 'Bildirim isteği iptal edildi';
+      case 'NotSupportedError':
+        return 'Push bildirimleri bu cihazda desteklenmiyor';
+      default:
+        return 'Bildirimlerle ilgili bir hata oluştu. Lütfen tekrar deneyin.';
+    }
   }
+  
+  // Check if error has code or name property
+  if (error && typeof error === 'object' && ('code' in error || 'name' in error)) {
+    const code = 'code' in error ? error.code : null;
+    const name = 'name' in error && typeof error.name === 'string' ? error.name : null;
+    const errorCode = code || name;
+    
+    switch (errorCode) {
+      case 'NotAllowedError':
+        return 'Lütfen tarayıcı ayarlarından bildirimlere izin verin';
+      case 'AbortError':
+        return 'Bildirim isteği iptal edildi';
+      case 'NotSupportedError':
+        return 'Push bildirimleri bu cihazda desteklenmiyor';
+      default:
+        return 'Bildirimlerle ilgili bir hata oluştu. Lütfen tekrar deneyin.';
+    }
+  }
+  
+  return 'Bildirimlerle ilgili bir hata oluştu. Lütfen tekrar deneyin.';
 }
 
 export function formatNotificationPayload(

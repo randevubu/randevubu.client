@@ -31,6 +31,27 @@ export function LocaleProvider({ children, locale }: LocaleProviderProps) {
     setCurrentLocale(currentLocale);
   }, [pathname]);
 
+  useEffect(() => {
+    // Listen for language detection from backend API responses
+    const handleLanguageDetected = (event: CustomEvent<{ language: string }>) => {
+      const detectedLang = event.detail.language.toLowerCase();
+      // Only update if it's a supported language
+      if (detectedLang === 'tr' || detectedLang === 'en') {
+        setCurrentLocale(detectedLang);
+        // Optionally reload the page to apply the new locale via middleware
+        // This would require coordination with Next.js i18n routing
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('language-detected', handleLanguageDetected as EventListener);
+      
+      return () => {
+        window.removeEventListener('language-detected', handleLanguageDetected as EventListener);
+      };
+    }
+  }, []);
+
   return (
     <LocaleContext.Provider value={{ locale }}>
       {children}

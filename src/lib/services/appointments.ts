@@ -174,13 +174,14 @@ export const appointmentService = {
   // Get monitor appointments data for display screens
   getMonitorAppointments: async (params: MonitorAppointmentsParams): Promise<MonitorAppointmentsResponse> => {
     const queryParams = new URLSearchParams();
-    
+
     if (params.date) queryParams.append('date', params.date);
     if (params.includeStats !== undefined) queryParams.append('includeStats', params.includeStats.toString());
     if (params.maxQueueSize) queryParams.append('maxQueueSize', params.maxQueueSize.toString());
+    if (params.live !== undefined) queryParams.append('live', params.live.toString());
 
     const url = `/api/v1/appointments/monitor/${params.businessId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    
+
     try {
       const response = await apiClient.get<MonitorAppointmentsResponse>(url);
       return response.data;

@@ -1,5 +1,6 @@
 import { apiClient } from '../api';
 import { ApiResponse } from '../../types/api';
+import { extractErrorMessage, extractApiError, isAxiosError } from '../utils/errorExtractor';
 
 // Types based on the Usage Tracking API documentation
 export interface MonthlyUsage {
@@ -104,13 +105,16 @@ export class UsageService {
         message: response.data.message,
         data: response.data.data?.data || response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = extractApiError(error);
+      const axiosError = isAxiosError(error);
+      const statusCode = axiosError && error.response ? error.response.status : 500;
       return {
         success: false,
-        message: error.response?.data?.error || 'Failed to fetch usage summary',
+        message: apiError?.message || extractErrorMessage(error, 'Failed to fetch usage summary'),
         error: {
-          code: (error.response?.status || 500).toString(),
-          message: error.response?.data?.error || 'Failed to fetch usage summary'
+          code: statusCode.toString(),
+          message: apiError?.message || extractErrorMessage(error, 'Failed to fetch usage summary')
         }
       };
     }
@@ -128,13 +132,16 @@ export class UsageService {
         message: response.data.message,
         data: response.data.data?.data || response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = extractApiError(error);
+      const axiosError = isAxiosError(error);
+      const statusCode = axiosError && error.response ? error.response.status : 500;
       return {
         success: false,
-        message: error.response?.data?.error || 'Failed to fetch usage alerts',
+        message: apiError?.message || extractErrorMessage(error, 'Failed to fetch usage alerts'),
         error: {
-          code: (error.response?.status || 500).toString(),
-          message: error.response?.data?.error || 'Failed to fetch usage alerts'
+          code: statusCode.toString(),
+          message: apiError?.message || extractErrorMessage(error, 'Failed to fetch usage alerts')
         }
       };
     }
@@ -147,13 +154,16 @@ export class UsageService {
     try {
       const response = await apiClient.get(`/api/v1/businesses/${businessId}/usage/sms-daily?days=${days}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = extractApiError(error);
+      const axiosError = isAxiosError(error);
+      const statusCode = axiosError && error.response ? error.response.status : 500;
       return {
         success: false,
-        message: error.response?.data?.error || 'Failed to fetch daily SMS usage',
+        message: apiError?.message || extractErrorMessage(error, 'Failed to fetch daily SMS usage'),
         error: {
-          code: (error.response?.status || 500).toString(),
-          message: error.response?.data?.error || 'Failed to fetch daily SMS usage'
+          code: statusCode.toString(),
+          message: apiError?.message || extractErrorMessage(error, 'Failed to fetch daily SMS usage')
         }
       };
     }
@@ -166,13 +176,16 @@ export class UsageService {
     try {
       const response = await apiClient.get(`/api/v1/businesses/${businessId}/usage/monthly-history?months=${months}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = extractApiError(error);
+      const axiosError = isAxiosError(error);
+      const statusCode = axiosError && error.response ? error.response.status : 500;
       return {
         success: false,
-        message: error.response?.data?.error || 'Failed to fetch monthly usage history',
+        message: apiError?.message || extractErrorMessage(error, 'Failed to fetch monthly usage history'),
         error: {
-          code: (error.response?.status || 500).toString(),
-          message: error.response?.data?.error || 'Failed to fetch monthly usage history'
+          code: statusCode.toString(),
+          message: apiError?.message || extractErrorMessage(error, 'Failed to fetch monthly usage history')
         }
       };
     }
@@ -190,13 +203,16 @@ export class UsageService {
         message: response.data.message,
         data: response.data.data?.data || response.data.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = extractApiError(error);
+      const axiosError = isAxiosError(error);
+      const statusCode = axiosError && error.response ? error.response.status : 500;
       return {
         success: false,
-        message: error.response?.data?.error || 'Failed to check usage limits',
+        message: apiError?.message || extractErrorMessage(error, 'Failed to check usage limits'),
         error: {
-          code: (error.response?.status || 500).toString(),
-          message: error.response?.data?.error || 'Failed to check usage limits'
+          code: statusCode.toString(),
+          message: apiError?.message || extractErrorMessage(error, 'Failed to check usage limits')
         }
       };
     }

@@ -35,7 +35,11 @@ export default function BusinessGuard({ children }: BusinessGuardProps) {
       
       if (response.success && response.data?.hasBusinesses) {
         const businesses = response.data.businesses || [];
-        const subscriptions = response.data.subscriptions || [];
+        
+        // Extract subscriptions from businesses (subscriptions are embedded in business objects)
+        const subscriptions = businesses
+          .filter(business => business.subscription)
+          .map(business => business.subscription!);
         
         // Check if user has any active subscription
         const hasActiveSubscription = subscriptions.some(sub => 

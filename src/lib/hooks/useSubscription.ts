@@ -77,7 +77,7 @@ export function useSubscription(): UseSubscriptionResult {
 }
 
 /**
- * Hook for canceling a business subscription
+ * Hook for canceling a business subscription (updated to use new API)
  */
 export function useCancelSubscription() {
   const queryClient = useQueryClient();
@@ -85,12 +85,12 @@ export function useCancelSubscription() {
   return useMutation({
     mutationFn: async ({
       businessId,
-      subscriptionId
+      cancelAtPeriodEnd = true
     }: {
       businessId: string;
-      subscriptionId: string;
+      cancelAtPeriodEnd?: boolean;
     }) => {
-      const response = await subscriptionService.cancelBusinessSubscription(businessId, subscriptionId);
+      const response = await subscriptionService.cancelBusinessSubscription(businessId, { cancelAtPeriodEnd });
 
       if (!response.success) {
         throw new Error(response.error?.message || 'Failed to cancel subscription');

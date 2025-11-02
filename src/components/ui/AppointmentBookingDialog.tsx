@@ -13,6 +13,7 @@ import { Service } from '../../types/service';
 import { useUsageLimits } from '../../lib/hooks/useUsageTracking';
 import { isQuotaError, getQuotaErrorData } from '../../lib/services/error';
 import { isApiError } from '../../lib/services/error';
+import { extractApiError, isAxiosError } from '../../lib/utils/errorExtractor';
 import CustomerSelector from './CustomerSelector';
 import QuotaExceededDialog from './QuotaExceededDialog';
 
@@ -262,11 +263,12 @@ export default function AppointmentBookingDialog({
       } else {
         throw new Error(response.message || 'Randevu oluşturulamadı');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create appointment:', error);
 
       // Check if this is a quota error
-      if (isApiError(error) && isQuotaError(error)) {
+      const axiosError = isAxiosError(error);
+      if (axiosError && isApiError(error) && isQuotaError(error)) {
         const quotaData = getQuotaErrorData(error);
         if (quotaData) {
           setQuotaError({

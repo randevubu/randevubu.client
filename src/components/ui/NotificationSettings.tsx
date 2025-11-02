@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { notificationService, NotificationSettings as Settings, handleNotificationError } from '../../lib/services/notifications';
-import { useServiceWorker } from '../../lib/hooks/useServiceWorker';
+import { 
+  getServiceWorkerRegistration, 
+  isServiceWorkerSupported, 
+  isServiceWorkerActive 
+} from '../../lib/utils/serviceWorkerRegistration';
 import toast from 'react-hot-toast';
 
 interface NotificationSettingsProps {
@@ -27,17 +31,38 @@ export default function NotificationSettings({ className = '' }: NotificationSet
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [error, setError] = useState<string | null>(null);
-  
-  const { registration, isSupported, isActive } = useServiceWorker();
+  const [isSupported, setIsSupported] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const initializedRef = useRef(false);
 
-  useEffect(() => {
-    if (registration && isActive) {
-      initializeNotifications();
-    }
-  }, [registration, isActive]);
+  // Initialize once using ref pattern (industry standard for one-time initialization)
+  if (typeof window !== 'undefined' && !initializedRef.current) {
+    initializedRef.current = true;
+    // Use Promise to avoid blocking render
+    Promise.resolve().then(async () => {
+      const supported = isServiceWorkerSupported();
+      setIsSupported(supported);
+      
+      if (supported) {
+        const active = await isServiceWorkerActive();
+        setIsActive(active);
+        
+        if (active) {
+          const registration = await getServiceWorkerRegistration();
+          if (registration) {
+            await initializeNotifications(registration);
+          }
+        } else {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    });
+  }
 
-  const initializeNotifications = async () => {
-    const initialized = await notificationService.initialize(registration!);
+  const initializeNotifications = async (registration: ServiceWorkerRegistration) => {
+    const initialized = await notificationService.initialize(registration);
     if (initialized) {
       loadSettings();
       checkSubscriptionStatus();
@@ -52,7 +77,6 @@ export default function NotificationSettings({ className = '' }: NotificationSet
       const currentSettings = await notificationService.getSettings();
       setSettings(currentSettings);
     } catch (error) {
-      console.error('Failed to load notification settings:', error);
       toast.error('Bildirim ayarları yüklenemedi');
     } finally {
       setIsLoading(false);
@@ -108,7 +132,10 @@ export default function NotificationSettings({ className = '' }: NotificationSet
     }
   };
 
-  const handleSettingChange = async (key: keyof Settings, value: any) => {
+  const handleSettingChange = async <K extends keyof Settings>(
+    key: K,
+    value: Settings[K]
+  ) => {
     const updatedSettings = { ...settings, [key]: value };
     setSettings(updatedSettings);
     

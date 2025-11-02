@@ -6,9 +6,9 @@ export interface Role {
   level: number;
   isSystem: boolean;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface Permission {
@@ -20,8 +20,8 @@ export interface Permission {
   action: string;
   conditions?: Record<string, any>;
   isSystem: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserRoleAssignment {
@@ -29,12 +29,12 @@ export interface UserRoleAssignment {
   userId: string;
   roleId: string;
   grantedBy?: string;
-  grantedAt: Date;
-  expiresAt?: Date;
+  grantedAt: string;
+  expiresAt?: string;
   isActive: boolean;
   metadata?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RolePermission {
@@ -43,10 +43,10 @@ export interface RolePermission {
   permissionId: string;
   conditions?: Record<string, any>;
   grantedBy?: string;
-  grantedAt: Date;
+  grantedAt: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateRoleData {
@@ -75,7 +75,7 @@ export interface CreatePermissionData {
 export interface AssignRoleData {
   userId: string;
   roleId: string;
-  expiresAt?: Date;
+  expiresAt?: string;
   metadata?: Record<string, any>;
 }
 

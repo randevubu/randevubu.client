@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import Button from '../../../components/ui/Button';
+import Card from '../../../components/ui/Card';
+import Dialog from '../../../components/ui/Dialog';
+import Input from '../../../components/ui/Input';
+import Select from '../../../components/ui/Select';
 import { useAuth } from '../../../context/AuthContext';
 import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Card } from '../../../components/ui/Card';
-import { Dialog } from '../../../components/ui/Dialog';
-import { Select } from '../../../components/ui/Select';
-import { useTranslations } from 'next-intl';
 
 interface TableColumn {
   id: string;
@@ -31,7 +31,7 @@ interface TableData {
 export default function TablesPage() {
   const t = useTranslations();
   const { user } = useAuth();
-  const { business, isLoading } = useMyBusiness();
+  const { isLoading } = useMyBusiness();
   
   const [tableData, setTableData] = useState<TableData>({
     columns: [
@@ -312,7 +312,7 @@ export default function TablesPage() {
             </label>
             <Select
               value={newColumn.type}
-              onValueChange={(value) => setNewColumn(prev => ({ ...prev, type: value as 'income' | 'expense' }))}
+              onChange={(e) => setNewColumn(prev => ({ ...prev, type: e.target.value as 'income' | 'expense' }))}
             >
               <option value="income">Gelir</option>
               <option value="expense">Gider</option>

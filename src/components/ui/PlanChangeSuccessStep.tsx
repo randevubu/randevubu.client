@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, Warning, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, X, Plus, Edit, Trash2, Save, RefreshCw, AlertCircle, CheckCircle, Clock, User, Phone, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, Info, AlertTriangle, Ban, Shield, Users, Building, Star, Heart, Zap, Lock, Unlock, Eye, EyeOff, Calendar, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Loader2, Moon, Sun, XCircle, Tag, Bell, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft } from 'lucide-react';
 import { PlanChangePreview, PaymentMethod } from '../../types/subscription';
 
 interface PlanChangeSuccessStepProps {
@@ -114,11 +114,11 @@ export default function PlanChangeSuccessStep({
           <div className="space-y-3 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-gray-700">Önceki Plan:</span>
-              <span className="font-medium text-gray-900">{preview?.currentPlan.name}</span>
+               <span className="font-medium text-gray-900">{preview?.currentPlan.name}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-700">Yeni Plan:</span>
-              <span className="font-medium text-green-700">{preview?.newPlan.name}</span>
+               <span className="font-medium text-green-700">{preview?.newPlan.name}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-700">Etkili Olma Tarihi:</span>

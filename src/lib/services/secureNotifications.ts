@@ -112,15 +112,19 @@ function formatValidationErrors(errors: NotificationValidationErrors): string {
 /**
  * Handle API errors with proper typing and user-friendly messages
  */
-function handleNotificationError(error: any): never {
-  const errorMessage = error.response?.data?.error || error.message || 'Failed to send notification';
-  const errorCode = error.response?.data?.errorCode;
+function handleNotificationError(error: unknown): never {
+  const { extractErrorMessage, extractApiError, isAxiosError } = require('../utils/errorExtractor');
+  const axiosError = isAxiosError(error);
+  const apiError = extractApiError(error);
+  
+  const errorMessage = extractErrorMessage(error, 'Failed to send notification');
+  const errorCode = apiError?.code || (axiosError && error.response?.data?.errorCode);
 
   console.error('[Secure Notifications] API Error:', {
     message: errorMessage,
     code: errorCode,
-    status: error.response?.status,
-    details: error.response?.data?.details,
+    status: axiosError ? error.response?.status : undefined,
+    details: axiosError ? error.response?.data?.details : undefined,
   });
 
   // Create enhanced error object

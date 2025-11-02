@@ -105,7 +105,7 @@ export default function PlanSelectionStep({
         <div className="text-center mb-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Yeni Plan Seçin</h3>
           <p className="text-gray-600">
-            Mevcut planınız: <span className="font-semibold">{currentSubscription?.plan?.name}</span>
+            Mevcut planınız: <span className="font-semibold">{currentSubscription?.plan?.displayName}</span>
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function PlanSelectionStep({
         <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 mb-8">
           <div className="text-center">
             <div className="text-sm text-gray-500 mb-2">Mevcut Planınız</div>
-            <h4 className="text-lg font-bold text-gray-900 mb-2">{currentSubscription?.plan?.name}</h4>
+            <h4 className="text-lg font-bold text-gray-900 mb-2">{currentSubscription?.plan?.displayName}</h4>
             <div className="text-xl font-bold text-gray-900">
               {formatPrice(currentSubscription?.plan?.price || 0, currentSubscription?.plan?.currency || 'TRY')}
               <span className="text-sm font-normal text-gray-600 ml-1">/ay</span>

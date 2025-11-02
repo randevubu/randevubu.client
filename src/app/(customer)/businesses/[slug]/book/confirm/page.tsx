@@ -188,9 +188,11 @@ export default function ConfirmationPage() {
         showErrorToast(errorMessage);
         setIsSubmitting(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Get user-friendly error message for policy violations
-      const errorMessage = getPolicyErrorMessage(error?.response?.data?.error || error);
+      const { extractApiError } = await import('../../../../lib/utils/errorExtractor');
+      const apiError = extractApiError(error);
+      const errorMessage = getPolicyErrorMessage(apiError || error);
       setBookingError(errorMessage);
       showErrorToast(errorMessage);
       setIsSubmitting(false);

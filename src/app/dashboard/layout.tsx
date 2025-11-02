@@ -63,29 +63,42 @@ export default function DashboardLayout({
     router.push('/');
   };
 
+  // Don't render provider if data is not ready (DashboardGuard will handle loading state)
+  if (!user || !business) {
+    return (
+      <DashboardGuard>
+        <div className="min-h-screen bg-[var(--theme-background)] flex items-center justify-center transition-colors duration-300">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[var(--theme-foregroundSecondary)] font-medium transition-colors duration-300">
+              Yükleniyor...
+            </span>
+          </div>
+        </div>
+      </DashboardGuard>
+    );
+  }
+
   return (
     <DashboardGuard>
-      {/* Guard ensures user and business exist, but we still handle the type properly */}
-      {user && business ? (
-        <DashboardProvider
-          user={user}
-          business={business}
-          navigationItems={navigationItems}
-          pathname={pathname}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={handleSetSidebarCollapsed}
-          logout={handleLogout}
-          refetchBusiness={refetchBusiness}
-          upcomingAppointments={upcomingAppointments}
-          isLoadingDashboardData={isLoadingDashboardData}
-        >
-          <DashboardContent>
-            {children}
-          </DashboardContent>
-        </DashboardProvider>
-      ) : null}
+      <DashboardProvider
+        user={user}
+        business={business}
+        navigationItems={navigationItems}
+        pathname={pathname}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={handleSetSidebarCollapsed}
+        logout={handleLogout}
+        refetchBusiness={refetchBusiness}
+        upcomingAppointments={upcomingAppointments}
+        isLoadingDashboardData={isLoadingDashboardData}
+      >
+        <DashboardContent>
+          {children}
+        </DashboardContent>
+      </DashboardProvider>
     </DashboardGuard>
   );
 }

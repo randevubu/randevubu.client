@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { isAxiosError } from '../lib/utils/errorExtractor';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 
@@ -26,16 +27,18 @@ export function QueryProvider({ children }: QueryProviderProps) {
             refetchOnWindowFocus: true, // Allow refetch on window focus
             refetchOnMount: true, // Allow refetch on mount for fresh data
             refetchOnReconnect: true, // Still refetch on reconnect
-            retry: (failureCount, error: any) => {
-              if (error?.response?.status === 404 || error?.response?.status === 401) {
+            retry: (failureCount, error: unknown) => {
+              const axiosError = isAxiosError(error);
+              if (axiosError && (error.response?.status === 404 || error.response?.status === 401)) {
                 return false;
               }
               return failureCount < 2;
             },
           },
           mutations: {
-            retry: (failureCount, error: any) => {
-              if (error?.response?.status >= 400 && error?.response?.status < 500) {
+            retry: (failureCount, error: unknown) => {
+              const axiosError = isAxiosError(error);
+              if (axiosError && error.response?.status >= 400 && error.response?.status < 500) {
                 return false;
               }
               return failureCount < 1;

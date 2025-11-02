@@ -4,12 +4,12 @@ export interface BusinessType {
   id: string;
   name: string;
   displayName: string;
-  description?: string;
-  icon?: string;
+  description: string | null;
+  icon: string | null;
   category: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Business {
@@ -44,9 +44,9 @@ export interface Business {
   };
   isActive: boolean;
   isVerified: boolean;
-  verifiedAt?: Date;
+  verifiedAt?: string;
   isClosed: boolean;
-  closedUntil?: Date;
+  closedUntil?: string;
   closureReason?: string;
   tags: string[];
   rating?: number;
@@ -64,9 +64,9 @@ export interface Business {
       embed: string;
     };
   };
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
   businessType?: {
     id: string;
     name: string;
@@ -78,8 +78,8 @@ export interface Business {
     id: string;
     status: string;
     planId: string;
-    currentPeriodStart: Date;
-    currentPeriodEnd: Date;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
     cancelAtPeriodEnd: boolean;
     plan: {
       id: string;
@@ -123,10 +123,10 @@ export interface BusinessStaff {
   role: BusinessStaffRole;
   permissions?: Record<string, any>;
   isActive: boolean;
-  joinedAt: Date;
-  leftAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  joinedAt: string;
+  leftAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BusinessImage {
@@ -137,7 +137,7 @@ export interface BusinessImage {
   type: string;
   sortOrder: number;
   isActive: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export type ImageType = 'logo' | 'cover' | 'profile' | 'gallery';

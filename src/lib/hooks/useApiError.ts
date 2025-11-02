@@ -7,17 +7,18 @@ import { useErrorTranslations, translateApiError } from '../utils/translations';
 
 export interface ApiErrorResponse {
   success: boolean;
+  statusCode?: number;
   error?: {
-    message: string;
-    code?: string;
-    details?: any;
+    code: string;
+    key: string; // Translation key (e.g., "errors.auth.unauthorized")
+    message: string; // Translated message from backend (already in detected language)
     requestId?: string;
+    details?: any;
   };
   // Legacy format support
   message?: string;
   code?: string;
   details?: any;
-  statusCode?: number;
 }
 
 export function useApiError() {
@@ -27,46 +28,62 @@ export function useApiError() {
     (error: AxiosError<ApiErrorResponse>, showToast: boolean = true): string => {
       let errorMessage: string;
 
-      // Prioritize frontend translations over backend messages
-      if (error.response?.data?.error?.code) {
-        // Handle nested error structure: { error: { code: "...", details: { field: "..." } } }
+      // Priority 1: Use backend's translated message (recommended approach)
+      // Backend already translated the message based on detected language
+      if (error.response?.data?.error?.message) {
+        errorMessage = error.response.data.error.message;
+      } 
+      // Priority 2: Use backend message (legacy format or direct message)
+      else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      // Priority 3: Try frontend translation using backend's translation key
+      else if (error.response?.data?.error?.key) {
+        try {
+          // Remove 'errors.' prefix if present and try frontend translation
+          const key = error.response.data.error.key.replace(/^errors\./, '');
+          // Try to translate using frontend i18n
+          const translated = errorTranslations(key);
+          if (translated && translated !== key) {
+            errorMessage = translated;
+          } else {
+            // Fallback to backend's translated message if frontend doesn't have translation
+            errorMessage = error.response.data.error.message || translateApiError(error.response.data.error.code, errorTranslations);
+          }
+        } catch {
+          // If translation fails, use backend message or fallback
+          errorMessage = error.response.data.error.message || translateApiError(error.response.data.error.code, errorTranslations);
+        }
+      }
+      // Priority 4: Translate error code (legacy support)
+      else if (error.response?.data?.error?.code) {
         const errorData = error.response.data.error;
         if (errorData.code === 'VALIDATION_ERROR' && errorData.details?.field) {
           const field = errorData.details.field;
           try {
             errorMessage = errorTranslations(`validation.${field}`);
           } catch {
-            // Fallback to general validation error
             errorMessage = errorTranslations('validation.general');
           }
-        } else if (errorData.code) {
-          // Translate error code using our translation system
-          errorMessage = translateApiError(errorData.code, errorTranslations);
         } else {
-          errorMessage = errorTranslations('system.internalError');
+          errorMessage = translateApiError(errorData.code, errorTranslations);
         }
-      } else if (error.response?.data?.code) {
-        // Handle legacy flat error structure
+      }
+      // Priority 5: Handle legacy flat error structure
+      else if (error.response?.data?.code) {
         if (error.response.data.code === 'VALIDATION_ERROR' && error.response.data.details?.field) {
           const field = error.response.data.details.field;
           try {
             errorMessage = errorTranslations(`validation.${field}`);
           } catch {
-            // Fallback to general validation error
             errorMessage = errorTranslations('validation.general');
           }
         } else {
-          // Translate error code using our translation system
           errorMessage = translateApiError(error.response.data.code, errorTranslations);
         }
-      } else if (error.response?.data?.error?.message) {
-        // Use nested backend message as fallback
-        errorMessage = error.response.data.error.message;
-      } else if (error.response?.data?.message) {
-        // Use backend message as fallback if no code is provided
-        errorMessage = error.response.data.message;
-      } else {
-        // Handle HTTP status codes with translations
+      }
+      // Priority 6: Handle HTTP status codes with translations
+      else {
         switch (error.response?.status) {
           case 401:
             errorMessage = errorTranslations('auth.unauthorized');
@@ -75,7 +92,7 @@ export function useApiError() {
             errorMessage = errorTranslations('auth.accessDenied');
             break;
           case 404:
-            errorMessage = errorTranslations('system.internalError'); // Generic fallback
+            errorMessage = errorTranslations('system.internalError');
             break;
           case 429:
             errorMessage = errorTranslations('system.rateLimitExceeded');

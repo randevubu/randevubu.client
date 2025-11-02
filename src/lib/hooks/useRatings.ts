@@ -79,11 +79,12 @@ export function useBusinessRatings(
     ratings: Rating[];
     averageRating: number;
     totalRatings: number;
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
+    ratingDistribution: {
+      1: number;
+      2: number;
+      3: number;
+      4: number;
+      5: number;
     };
   }, Error> = useQuery({
     queryKey: ['business-ratings', businessId, params.page, params.limit, params.minRating, params.maxRating],
@@ -91,10 +92,10 @@ export function useBusinessRatings(
       const response = await ratingService.getBusinessRatings(businessId, params);
       
       if (!response.success) {
-        throw new Error(response.message || 'Failed to fetch ratings');
+        throw new Error('Failed to fetch ratings');
       }
       
-      // Use the totalRatings field directly from the server response
+      // Return data from the server response
       return response.data;
     },
     enabled: !!user && isAuthenticated && hasInitialized && !authLoading && !!businessId,
@@ -117,14 +118,26 @@ export function useBusinessRatings(
   const ratings = data?.ratings || [];
   const averageRating = data?.averageRating || 0;
   const totalRatings = data?.totalRatings || 0;
-  const pagination = data?.pagination || {
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
+  const ratingDistribution = data?.ratingDistribution || {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  };
+  
+  // Extract pagination from response meta if available
+  const currentPage = params.page || 1;
+  const limit = params.limit || 10;
+  const total = totalRatings;
+  const totalPages = Math.ceil(total / limit);
+  const meta = {
+    page: currentPage,
+    total: totalRatings,
+    totalPages: totalPages,
   };
 
-  const hasMore = pagination.page < pagination.totalPages;
+  const hasMore = meta.page < meta.totalPages;
 
   const loadMore = () => {
     // This would typically trigger a new query with incremented page
@@ -138,7 +151,8 @@ export function useBusinessRatings(
     ratings,
     averageRating,
     totalRatings,
-    pagination,
+    ratingDistribution,
+    meta,
     loading: isLoading,
     error: isError ? error : null,
     refetch: () => refetch(),

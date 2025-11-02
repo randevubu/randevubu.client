@@ -23,7 +23,15 @@ export function useUserProfile(accessToken?: string | null, forceRoleRefresh = f
 
       const response = await authService.getProfile(forceRoleRefresh);
       if (response.success && response.data?.user) {
-        return response.data.user;
+        const user = response.data.user;
+        
+        // Sync user language preference with API client
+        if (user.language && (user.language === 'tr' || user.language === 'en')) {
+          const { setCurrentLocale } = require('../api');
+          setCurrentLocale(user.language);
+        }
+        
+        return user;
       }
       return null;
     },
@@ -110,6 +118,12 @@ export function useLogin() {
   onSuccess: (data) => {
     // Set token in API client
     setApiAccessToken(data.accessToken);
+    
+    // Sync user language preference with API client
+    if (data.user?.language && (data.user.language === 'tr' || data.user.language === 'en')) {
+      const { setCurrentLocale } = require('../api');
+      setCurrentLocale(data.user.language);
+    }
     
     // Note: hasAuth cookie is set by backend automatically
     // We don't need to set it manually for web clients
@@ -208,9 +222,11 @@ export function useAuthSession() {
           }
         } catch (error) {
           const authError = error as { status?: number; isAuthError?: boolean };
-          if (authError.status === 401 || authError.isAuthError) {
+          // Only clear auth state if it's a real auth error (401), not a connection error
+          if (authError.status === 401 || (authError.isAuthError && authError.status !== 0)) {
             await clearAuthState();
           }
+          // For connection errors (status: 0), just return null and let the UI handle it
           return null;
         }
       }

@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cancellationPoliciesService } from '../services/cancellationPolicies';
 import { CustomerPolicyStatus } from '../../types/cancellationPolicies';
+import { extractErrorMessage, isAxiosError } from '../utils/errorExtractor';
 
 interface UsePolicyStatusReturn {
   // Data
@@ -66,12 +67,15 @@ export const usePolicyStatus = (
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchInterval: refetchInterval,
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 401/403/400 errors
+      const axiosError = isAxiosError(error);
       if (
-        error?.response?.status === 401 ||
-        error?.response?.status === 403 ||
-        error?.response?.status === 400
+        axiosError && (
+          error.response?.status === 401 ||
+          error.response?.status === 403 ||
+          error.response?.status === 400
+        )
       ) {
         return false;
       }
@@ -85,8 +89,8 @@ export const usePolicyStatus = (
     try {
       setError(null);
       await queryRefetch();
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to refresh policy status';
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Failed to refresh policy status');
       setError(errorMessage);
     }
   }, [queryRefetch]);

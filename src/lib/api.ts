@@ -67,8 +67,9 @@ export const testTokenRefresh = async () => {
   try {
     const response = await apiClient.get('/api/v1/users/profile');
     return { success: true, data: response.data };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { success: false, error: errorMessage };
   }
 };
 
@@ -108,6 +109,30 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
   (response) => {
+    // Sync language from backend's detected language header
+    const detectedLanguage = response.headers['x-detected-language'] || response.headers['X-Detected-Language'];
+    if (detectedLanguage && typeof window !== 'undefined') {
+      const lang = detectedLanguage.toLowerCase();
+      // Only sync if it's a supported language and different from current
+      if ((lang === 'tr' || lang === 'en') && lang !== currentLocale) {
+        setCurrentLocale(lang);
+        // Dispatch event for language sync (can be handled by language context)
+        window.dispatchEvent(new CustomEvent('language-detected', {
+          detail: { language: lang }
+        }));
+      }
+    }
+
+    // Sync user language if user data is present in response
+    if (response.data?.data?.user?.language && typeof window !== 'undefined') {
+      const userLanguage = response.data.data.user.language.toLowerCase();
+      if ((userLanguage === 'tr' || userLanguage === 'en') && userLanguage !== currentLocale) {
+        setCurrentLocale(userLanguage);
+        window.dispatchEvent(new CustomEvent('language-detected', {
+          detail: { language: userLanguage }
+        }));
+      }
+    }
 
     if (response.data?.tokens?.accessToken) {
       setAccessToken(response.data.tokens.accessToken);

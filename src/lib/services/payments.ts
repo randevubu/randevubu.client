@@ -15,10 +15,10 @@ export interface IyzicoBuyerData {
   surname: string;
   email: string;
   phone: string;
-  address: string;
-  city: string;
-  country: string;
-  zipCode: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  zipCode?: string;
 }
 
 export interface CreatePaymentRequest {
@@ -26,7 +26,7 @@ export interface CreatePaymentRequest {
   card: IyzicoCardData;
   buyer: IyzicoBuyerData;
   installment?: string;
-
+  discountCode?: string;
 }
 
 export interface PaymentResponse {

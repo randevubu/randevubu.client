@@ -210,9 +210,11 @@ export default function AppointmentsPage() {
         const errorMessage = getPolicyErrorMessage(response.error || 'Randevu iptal edilirken bir hata oluştu');
         showErrorToast(errorMessage);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Get user-friendly error message from the error object
-      const errorMessage = getPolicyErrorMessage(error?.response?.data?.error || error);
+      const { extractApiError } = await import('../../../lib/utils/errorExtractor');
+      const apiError = extractApiError(error);
+      const errorMessage = getPolicyErrorMessage(apiError || error);
       showErrorToast(errorMessage);
     } finally {
       setIsCancelling(false);

@@ -15,8 +15,8 @@ export interface Service {
   maxAdvanceBooking: number;
   minAdvanceBooking: number;
   showPrice?: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ServiceStaff {
@@ -24,7 +24,7 @@ export interface ServiceStaff {
   serviceId: string;
   staffId: string;
   isActive: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface CreateServiceData {

@@ -47,11 +47,12 @@ export function usePushNotifications(): UsePushNotificationsState & UsePushNotif
             ...prev,
             isSubscribed
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('Error checking subscription status during init:', error);
+          const errorMessage = extractErrorMessage(error, 'Failed to check subscription status');
           setState(prev => ({
             ...prev,
-            error: error.message || 'Failed to check subscription status'
+            error: errorMessage
           }));
         }
       }
@@ -72,11 +73,12 @@ export function usePushNotifications(): UsePushNotificationsState & UsePushNotif
         isSubscribed,
         isLoading: false
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error checking subscription status:', error);
+      const errorMessage = extractErrorMessage(error, 'Failed to check subscription status');
       setState(prev => ({
         ...prev,
-        error: error.message || 'Failed to check subscription status',
+        error: errorMessage,
         isLoading: false
       }));
     }
@@ -108,14 +110,15 @@ export function usePushNotifications(): UsePushNotificationsState & UsePushNotif
         }));
         throw new Error('Bildirim izni reddedildi');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error requesting permission:', error);
+      const errorMessage = extractErrorMessage(error, 'Bildirim izni alınamadı');
       setState(prev => ({
         ...prev,
-        error: error.message || 'Failed to request permission',
+        error: errorMessage,
         isLoading: false
       }));
-      showErrorToast(error.message || 'Bildirim izni alınamadı');
+      showErrorToast(errorMessage);
     }
   }, []);
 
@@ -137,12 +140,12 @@ export function usePushNotifications(): UsePushNotificationsState & UsePushNotif
       } else {
         throw new Error(result.error?.message || 'Subscription failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error subscribing:', error);
-      let errorMessage = error.message || 'Push bildirimler aktifleştirilemedi';
+      let errorMessage = extractErrorMessage(error, 'Push bildirimler aktifleştirilemedi');
       
       // Handle development mode service worker issues
-      if (error.message?.includes('Service Worker not available in development mode')) {
+      if (errorMessage.includes('Service Worker not available in development mode')) {
         errorMessage = 'Push bildirimleri geliştirme modunda kullanılamıyor. Lütfen production modunda test edin.';
       }
 
@@ -168,9 +171,9 @@ export function usePushNotifications(): UsePushNotificationsState & UsePushNotif
         isLoading: false
       }));
       showSuccessToast('Push bildirimleri devre dışı bırakıldı');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error unsubscribing:', error);
-      const errorMessage = error.message || 'Push bildirimler devre dışı bırakılamadı';
+      const errorMessage = extractErrorMessage(error, 'Push bildirimler devre dışı bırakılamadı');
 
       setState(prev => ({
         ...prev,
@@ -194,9 +197,9 @@ export function usePushNotifications(): UsePushNotificationsState & UsePushNotif
       } else {
         throw new Error(result.error?.message || 'Test failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error testing notification:', error);
-      const errorMessage = error.message || 'Test bildirimi gönderilemedi';
+      const errorMessage = extractErrorMessage(error, 'Test bildirimi gönderilemedi');
 
       setState(prev => ({
         ...prev,

@@ -7,6 +7,7 @@
  */
 
 import { apiClient } from '../api';
+import { extractErrorMessage } from '../utils/errorExtractor';
 import { ApiResponse } from '../../types/api';
 import {
   CancellationPolicySettings,
@@ -40,21 +41,10 @@ export const cancellationPoliciesService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      // Handle different error types
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else if (error.response?.status === 401) {
-        throw new Error('Unauthorized access - please log in again');
-      } else if (error.response?.status === 403) {
-        throw new Error('Access denied - business role required');
-      } else if (error.response?.status === 400) {
-        throw new Error('Business context is required');
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        throw new Error('Network error - please check your connection');
-      } else {
-        throw new Error(error.message || 'Failed to fetch cancellation policies');
-      }
+    } catch (error: unknown) {
+      // Use backend's translated error message if available
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch cancellation policies');
+      throw new Error(errorMessage);
     }
   },
 
@@ -88,29 +78,10 @@ export const cancellationPoliciesService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      // Handle different error types
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else if (error.response?.status === 401) {
-        throw new Error('Unauthorized access - please log in again');
-      } else if (error.response?.status === 403) {
-        throw new Error('Access denied - business role required');
-      } else if (error.response?.status === 400) {
-        // Handle validation errors from server
-        const serverError = error.response.data.error;
-        if (serverError.includes('Invalid policy settings')) {
-          throw new Error('Invalid policy settings - please check your input');
-        } else if (serverError.includes('autoBanEnabled')) {
-          throw new Error('Ban duration is required when auto-ban is enabled');
-        } else {
-          throw new Error(serverError);
-        }
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        throw new Error('Network error - please check your connection');
-      } else {
-        throw new Error(error.message || 'Failed to update cancellation policies');
-      }
+    } catch (error: unknown) {
+      // Use backend's translated error message if available
+      const errorMessage = extractErrorMessage(error, 'Failed to update cancellation policies');
+      throw new Error(errorMessage);
     }
   },
 
@@ -136,21 +107,10 @@ export const cancellationPoliciesService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      // Handle different error types
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else if (error.response?.status === 401) {
-        throw new Error('Unauthorized access - please log in again');
-      } else if (error.response?.status === 403) {
-        throw new Error('Access denied - business role required');
-      } else if (error.response?.status === 400) {
-        throw new Error('Customer ID is required');
-      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-        throw new Error('Network error - please check your connection');
-      } else {
-        throw new Error(error.message || 'Failed to fetch customer policy status');
-      }
+    } catch (error: unknown) {
+      // Use backend's translated error message if available
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch customer policy status');
+      throw new Error(errorMessage);
     }
   },
 
@@ -175,8 +135,9 @@ export const cancellationPoliciesService = {
       };
 
       return await cancellationPoliciesService.updatePolicies(defaultPolicies);
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to reset cancellation policies to defaults');
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Failed to reset cancellation policies to defaults');
+      throw new Error(errorMessage);
     }
   }
 };

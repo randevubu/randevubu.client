@@ -90,17 +90,22 @@ export interface GetBusinessRatingsRequest {
 
 export interface GetBusinessRatingsResponse {
   success: boolean;
-  message: string;
   data: {
     ratings: Rating[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
     averageRating: number;
     totalRatings: number;
+    ratingDistribution: {
+      1: number;
+      2: number;
+      3: number;
+      4: number;
+      5: number;
+    };
+  };
+  meta: {
+    page: number;
+    totalPages: number;
+    total: number;
   };
 }
 
@@ -185,9 +190,15 @@ export interface UseBusinessRatingsResult {
   ratings: Rating[];
   averageRating: number;
   totalRatings: number;
-  pagination: {
+  ratingDistribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+  meta: {
     page: number;
-    limit: number;
     total: number;
     totalPages: number;
   };
@@ -199,7 +210,7 @@ export interface UseBusinessRatingsResult {
 }
 
 export interface UseRatingSubmissionResult {
-  submitRating: (data: SubmitRatingRequest) => Promise<Rating>;
+  submitRating: (businessId: string, data: SubmitRatingRequest) => Promise<Rating>;
   isSubmitting: boolean;
   error: Error | null;
 }

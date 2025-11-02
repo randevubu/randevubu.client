@@ -7,11 +7,12 @@ export interface SubscriptionPlan {
   description: string;
   price: number;
   currency: string;
-  billingInterval: 'MONTHLY' | 'YEARLY';
+  billingInterval: 'monthly' | 'yearly';
   maxBusinesses: number;
   maxStaffPerBusiness: number;
   maxAppointmentsPerDay: number;
   features: {
+    trialDays: number;
     appointmentBooking: boolean;
     staffManagement: boolean;
     basicReports: boolean;
@@ -42,15 +43,19 @@ export interface BusinessSubscription {
   planId: string;
   plan?: SubscriptionPlan; // Include full plan data when available
   status: SubscriptionStatus;
-  currentPeriodStart: Date;
-  currentPeriodEnd: Date;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
-  canceledAt?: Date;
-  trialStart?: Date;
-  trialEnd?: Date;
+  canceledAt?: string;
+  trialStart?: string;
+  trialEnd?: string;
+  autoRenewal: boolean;
+  paymentMethodId?: string;
+  nextBillingDate?: string;
+  failedPaymentCount: number;
   metadata?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateSubscriptionPlanData {
@@ -85,9 +90,79 @@ export interface UpdateSubscriptionPlanData {
 export interface CreateBusinessSubscriptionData {
   businessId: string;
   planId: string;
-  trialStart?: Date;
-  trialEnd?: Date;
+  trialStart?: string;
+  trialEnd?: string;
   metadata?: Record<string, any>;
+}
+
+// New trial subscription types based on API documentation
+export interface TrialSubscriptionRequest {
+  planId: string;
+  card?: {
+    cardHolderName: string;
+    cardNumber: string;
+    expireMonth: string;
+    expireYear: string;
+    cvc: string;
+  };
+  buyer?: {
+    name: string;
+    surname: string;
+    email: string;
+    gsmNumber: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    zipCode?: string;
+  };
+  discountCode?: string;
+}
+
+export interface TrialSubscriptionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    businessId: string;
+    planId: string;
+    status: 'TRIAL';
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    trialStart: string;
+    trialEnd: string;
+    cancelAtPeriodEnd: boolean;
+    autoRenewal: boolean;
+    paymentMethodId: string;
+    metadata: {
+      trialDays: number;
+      requiresPaymentMethod: boolean;
+      createdAt: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export interface CancelSubscriptionRequest {
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface CancelSubscriptionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    businessId: string;
+    planId: string;
+    status: string;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+    canceledAt: string | null;
+    autoRenewal: boolean;
+    paymentMethodId: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 export interface UpdateBusinessSubscriptionData {

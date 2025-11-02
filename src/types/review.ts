@@ -8,8 +8,8 @@ export interface Review {
   response?: string;
   isVerified: boolean;
   isPublic: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateReviewData {
@@ -35,8 +35,8 @@ export interface ReviewSearchFilters {
   rating?: number;
   isVerified?: boolean;
   isPublic?: boolean;
-  dateFrom?: Date;
-  dateTo?: Date;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface ReviewStats {

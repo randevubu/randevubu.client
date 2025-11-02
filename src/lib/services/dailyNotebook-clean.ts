@@ -84,7 +84,7 @@ class DailyNotebookService {
           const appointmentsColumn = sortedColumns.find(c => c.isSystem && c.name === 'Randevular');
           if (appointmentsColumn) {
             const mapped: MonthlyData = {} as MonthlyData;
-            Object.entries(notebook.appointmentRevenue as Record<string, number>).forEach(([dayStr, amount]) => {
+            Object.entries(notebook.appointmentRevenue || {}).forEach(([dayStr, amount]) => {
               const dayNum = parseInt(dayStr, 10);
               if (!Number.isNaN(dayNum)) {
                 mapped[dayNum] = { [appointmentsColumn.id]: Number(amount || 0) };
@@ -296,12 +296,12 @@ class DailyNotebookService {
       const response = await apiClient.get(`${this.baseUrl}/${businessId}/appointment-revenue/${year}/${month}`);
       
       if (response.data.success && response.data.data?.appointmentRevenue) {
-        // Transform from { "1": 1200, "2": 1800 } to { 1: { appointments: 1200 }, 2: { appointments: 1800 } }
-        const transformed: MonthlyData = {};
+        // Transform from { "1": 1200, "2": 1800 } to { 1: 1200, 2: 1800 }
+        const transformed: { [day: number]: number } = {};
         Object.entries(response.data.data.appointmentRevenue).forEach(([dayStr, amount]) => {
           const dayNum = parseInt(dayStr, 10);
           if (!Number.isNaN(dayNum)) {
-            transformed[dayNum] = { appointments: Number(amount || 0) };
+            transformed[dayNum] = Number(amount || 0);
           }
         });
         
@@ -324,3 +324,4 @@ class DailyNotebookService {
 }
 
 export const dailyNotebookService = new DailyNotebookService();
+

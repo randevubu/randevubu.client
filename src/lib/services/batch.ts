@@ -1,4 +1,5 @@
 import { apiClient } from '../api';
+import { isAxiosError } from '../utils/errorExtractor';
 import { ApiResponse } from '../../types/api';
 import { Business } from '../../types/business';
 import { Appointment } from '../../types';
@@ -62,9 +63,10 @@ export const batchService = {
       const url = `/api/v1/dashboard/batch?${queryParams.toString()}`;
       const response = await apiClient.get<ApiResponse<DashboardBatchData>>(url);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If batch endpoint doesn't exist (404), fall back to individual requests
-      if (error.response?.status === 404) {
+      const axiosError = isAxiosError(error);
+      if (axiosError && error.response?.status === 404) {
         return await batchService.getDashboardDataFallback(params);
       }
       throw error;
@@ -151,9 +153,11 @@ export const batchService = {
         message: 'Dashboard data fetched successfully',
         data: result
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Batch fallback failed:', error);
-      throw error;
+      const { extractErrorMessage } = await import('../utils/errorExtractor');
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch dashboard data');
+      throw new Error(errorMessage);
     }
   },
 
@@ -164,7 +168,9 @@ export const batchService = {
   prefetchDashboardData: async (params: DashboardBatchParams = {}): Promise<void> => {
     try {
       await batchService.getDashboardData(params);
-    } catch (error) {
+    } catch (error: unknown) {
+      // Silently fail for prefetch - not critical
+      console.debug('Prefetch failed:', error);
     }
   }
 };

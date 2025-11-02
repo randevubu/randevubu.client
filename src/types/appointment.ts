@@ -20,15 +20,15 @@ export interface Appointment {
   currency: string;
   customerNotes?: string;
   internalNotes?: string;
-  bookedAt: Date;
-  confirmedAt?: Date;
-  completedAt?: Date;
-  canceledAt?: Date;
+  bookedAt: string;
+  confirmedAt?: string;
+  completedAt?: string;
+  canceledAt?: string;
   cancelReason?: string;
   reminderSent: boolean;
-  reminderSentAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  reminderSentAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface WorkingHours {
@@ -40,22 +40,22 @@ export interface WorkingHours {
   endTime: string;
   isActive: boolean;
   breaks?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateAppointmentData {
   businessId: string;
   serviceId: string;
   staffId?: string;
-  date: Date;
-  startTime: Date;
+  date: string;
+  startTime: string;
   customerNotes?: string;
 }
 
 export interface UpdateAppointmentData {
-  date?: Date;
-  startTime?: Date;
+  date?: string;
+  startTime?: string;
   status?: AppointmentStatus;
   customerNotes?: string;
   internalNotes?: string;
@@ -83,19 +83,19 @@ export interface AppointmentSearchFilters {
   staffId?: string;
   customerId?: string;
   status?: AppointmentStatus;
-  dateFrom?: Date;
-  dateTo?: Date;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface AvailabilitySlot {
-  startTime: Date;
-  endTime: Date;
+  startTime: string;
+  endTime: string;
   staffId?: string;
 }
 
 export interface AvailabilityRequest {
   businessId: string;
   serviceId: string;
-  date: Date;
+  date: string;
   staffId?: string;
 }

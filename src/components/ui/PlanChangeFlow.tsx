@@ -128,13 +128,13 @@ export default function PlanChangeFlow({
           changeType: planToUse.price > (currentSubscription.plan?.price || 0) ? 'upgrade' : 'downgrade',
           currentPlan: {
             id: currentSubscription.planId,
-            name: currentSubscription.plan?.name || 'Unknown Plan',
+            name: currentSubscription.plan?.displayName || 'Unknown Plan',
             price: currentSubscription.plan?.price || 0,
             currency: currentSubscription.plan?.currency || 'TRY'
           },
           newPlan: {
             id: planToUse.id,
-            name: planToUse.name,
+            name: planToUse.displayName,
             price: planToUse.price,
             currency: planToUse.currency
           },
@@ -162,13 +162,13 @@ export default function PlanChangeFlow({
         changeType: planToUse.price > (currentSubscription.plan?.price || 0) ? 'upgrade' : 'downgrade',
         currentPlan: {
           id: currentSubscription.planId,
-          name: currentSubscription.plan?.name || 'Unknown Plan',
+          name: currentSubscription.plan?.displayName || 'Unknown Plan',
           price: currentSubscription.plan?.price || 0,
           currency: currentSubscription.plan?.currency || 'TRY'
         },
         newPlan: {
           id: planToUse.id,
-          name: planToUse.name,
+          name: planToUse.displayName,
           price: planToUse.price,
           currency: planToUse.currency
         },

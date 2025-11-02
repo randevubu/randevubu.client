@@ -175,7 +175,7 @@ export default function PlanChangePreviewStep({
         }`}>
           <div className="text-center">
             <div className="text-sm text-blue-100 mb-2">Yeni Plan</div>
-            <h4 className="text-lg font-bold mb-3">{preview.newPlan.name}</h4>
+             <h4 className="text-lg font-bold mb-3">{preview.newPlan.name}</h4>
             <div className="text-2xl font-bold">
               {formatPrice(preview.newPlan.price, preview.newPlan.currency)}
               <span className="text-sm font-normal text-blue-100 ml-1">/ay</span>

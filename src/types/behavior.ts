@@ -7,45 +7,45 @@ export interface UserBehavior {
   canceledAppointments: number;
   noShowAppointments: number;
   completedAppointments: number;
-  lastCancelDate?: Date;
+  lastCancelDate?: string;
   cancelationsThisMonth: number;
   cancelationsThisWeek: number;
-  lastNoShowDate?: Date;
+  lastNoShowDate?: string;
   noShowsThisMonth: number;
   noShowsThisWeek: number;
   isBanned: boolean;
-  bannedUntil?: Date;
+  bannedUntil?: string;
   banReason?: string;
   banCount: number;
   currentStrikes: number;
-  lastStrikeDate?: Date;
-  strikeResetDate?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  lastStrikeDate?: string;
+  strikeResetDate?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface BusinessClosure {
   id: string;
   businessId: string;
-  startDate: Date;
-  endDate?: Date;
+  startDate: string;
+  endDate?: string;
   reason: string;
   type: ClosureType;
   isActive: boolean;
   createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateBusinessClosureData {
-  startDate: Date;
-  endDate?: Date;
+  startDate: string;
+  endDate?: string;
   reason: string;
   type: ClosureType;
 }
 
 export interface UpdateBusinessClosureData {
-  endDate?: Date;
+  endDate?: string;
   reason?: string;
   type?: ClosureType;
   isActive?: boolean;
@@ -57,7 +57,7 @@ export interface UpdateUserBehaviorData {
   noShowAppointments?: number;
   completedAppointments?: number;
   isBanned?: boolean;
-  bannedUntil?: Date;
+  bannedUntil?: string;
   banReason?: string;
   currentStrikes?: number;
 }

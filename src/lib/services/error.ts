@@ -3,10 +3,19 @@ import toast from 'react-hot-toast';
 
 // Error response structure from your backend
 export interface ApiErrorResponse {
-  message: string;
+  success?: boolean;
+  statusCode?: number;
+  message?: string;
+  error?: {
+    code: string;
+    key: string; // Translation key (e.g., "errors.auth.unauthorized")
+    message: string; // Translated message from backend
+    requestId?: string;
+    details?: any;
+  };
+  // Legacy format support
   code?: string;
   details?: any;
-  statusCode: number;
 }
 
 // Handle API errors and show appropriate toast messages
@@ -17,42 +26,59 @@ export function handleApiError(
 ): string {
   let errorMessage: string;
 
-  if (error.response?.data?.message) {
+  // Priority 1: Use backend's translated error message (new structure)
+  if (error.response?.data?.error?.message) {
+    // Use the message from the backend (already translated based on Accept-Language)
+    errorMessage = error.response.data.error.message;
+  }
+  // Priority 2: Use backend message (legacy format or direct message)
+  else if (error.response?.data?.message) {
     // Use the message from the backend (already translated based on Accept-Language)
     errorMessage = error.response.data.message;
   } else if (error.response?.data?.code && translateError) {
     // If we have an error code and translation function, use it
     errorMessage = translateError(error.response.data.code);
   } else if (error.response?.status) {
-    // Handle HTTP status codes
-    switch (error.response.status) {
-      case 401:
-        errorMessage = 'Unauthorized access';
-        break;
-      case 403:
-        errorMessage = 'Access forbidden';
-        break;
-      case 404:
-        errorMessage = 'Resource not found';
-        break;
-      case 429:
-        errorMessage = 'Too many requests. Please wait.';
-        break;
-      case 500:
-        errorMessage = 'Internal server error';
-        break;
-      case 503:
-        errorMessage = 'Service unavailable';
-        break;
-      default:
-        errorMessage = `Request failed with status ${error.response.status}`;
+    // Handle HTTP status codes - these should be rare as backend should provide messages
+    // Check if backend provided any message first
+    const backendMessage = error.response?.data?.error?.message || error.response?.data?.message;
+    if (backendMessage) {
+      errorMessage = backendMessage;
+    } else {
+      // Fallback to status code messages (should rarely happen)
+      switch (error.response.status) {
+        case 401:
+          errorMessage = 'Unauthorized access';
+          break;
+        case 403:
+          errorMessage = 'Access forbidden';
+          break;
+        case 404:
+          errorMessage = 'Resource not found';
+          break;
+        case 429:
+          errorMessage = 'Too many requests. Please wait.';
+          break;
+        case 500:
+          errorMessage = 'Internal server error';
+          break;
+        case 503:
+          errorMessage = 'Service unavailable';
+          break;
+        default:
+          errorMessage = `Request failed with status ${error.response.status}`;
+      }
     }
   } else if (error.code === 'NETWORK_ERROR') {
-    errorMessage = 'Network error. Please check your connection.';
+    // Network errors - check if backend provided message during connection attempt
+    errorMessage = error.response?.data?.error?.message || 'Network error. Please check your connection.';
   } else if (error.code === 'ECONNABORTED') {
-    errorMessage = 'Request timeout. Please try again.';
+    errorMessage = error.response?.data?.error?.message || 'Request timeout. Please try again.';
   } else {
-    errorMessage = 'An unexpected error occurred';
+    // Final fallback - try to get any backend message
+    errorMessage = error?.response?.data?.error?.message 
+      || error?.response?.data?.message 
+      || 'An unexpected error occurred';
   }
 
   if (showToast) {

@@ -1,4 +1,5 @@
 import { apiClient } from '../api';
+import { isAxiosError, extractApiError, extractErrorMessage } from '../utils/errorExtractor';
 import { ApiResponse, MyBusinessResponse, CreateBusinessResponse } from '../../types/api';
 import { 
   Business, 
@@ -211,9 +212,11 @@ export const businessService = {
     try {
       const response = await apiClient.get<ApiResponse<any[]>>(url);
       return response.data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         // If the endpoint doesn't work, try as a POST with businessId in body as a workaround
-        if (error.response?.status === 400 && error.response?.data?.error === 'Business ID is required') {
+        const axiosError = isAxiosError(error);
+        const apiError = extractApiError(error);
+        if (axiosError && error.response?.status === 400 && (apiError?.message === 'Business ID is required' || apiError?.code === 'BUSINESS_ID_REQUIRED')) {
         try {
           const postUrl = '/api/v1/businesses/hours/overrides/list';
           const postResponse = await apiClient.post<ApiResponse<any[]>>(postUrl, {
@@ -248,14 +251,20 @@ export const businessService = {
       // Try the my-business endpoint first (more RESTful)
       const response = await apiClient.put<ApiResponse<Business>>('/api/v1/businesses/my-business', data);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       // Fallback to the original method if the my-business endpoint doesn't support PUT
-      const myBusiness = await businessService.getMyBusiness();
-      if (myBusiness.success && myBusiness.data?.businesses && myBusiness.data.businesses.length > 0) {
-        const businessId = myBusiness.data.businesses[0].id;
-        return await businessService.updateBusiness(businessId, data);
+      try {
+        const myBusiness = await businessService.getMyBusiness();
+        if (myBusiness.success && myBusiness.data?.businesses && myBusiness.data.businesses.length > 0) {
+          const businessId = myBusiness.data.businesses[0].id;
+          return await businessService.updateBusiness(businessId, data);
+        }
+        const errorMessage = extractErrorMessage(error, 'No business found to update');
+        throw new Error(errorMessage);
+      } catch (fallbackError: unknown) {
+        const errorMessage = extractErrorMessage(error, 'Failed to update business');
+        throw new Error(errorMessage);
       }
-      throw new Error('No business found to update');
     }
   },
 
@@ -293,7 +302,7 @@ export const businessService = {
     startDate?: string;
     endDate?: string;
     reason?: string;
-    type?: 'VACATION' | 'MAINTENANCE' | 'EMERGENCY' | 'OTHER';
+    type?: ClosureType;
     isActive?: boolean;
   }): Promise<ApiResponse<any>> => {
     const response = await apiClient.put<ApiResponse<any>>(`/api/v1/closures/${closureId}`, data);
@@ -317,9 +326,10 @@ export const businessService = {
     try {
       const response = await apiClient.post<ApiResponse<any>>('/api/v1/closures/enhanced', data);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       // Fallback to basic closure creation if enhanced endpoint not available
-      throw error;
+      const errorMessage = extractErrorMessage(error, 'Failed to create enhanced closure');
+      throw new Error(errorMessage);
     }
   },
 
@@ -358,7 +368,7 @@ export const businessService = {
         estimatedRevenueLoss: backendData.impactSummary.estimatedRevenueLoss,
         suggestedRescheduleSlots: [] // TODO: Map from backend data when available
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Return mock data for development
       
       // Simulate realistic scenario - some dates have no appointments
@@ -392,7 +402,7 @@ export const businessService = {
     try {
       const response = await apiClient.post<ApiResponse<NotificationResult[]>>('/api/v1/notifications/closure', data);
       return response.data.data || [];
-    } catch (error) {
+    } catch (error: unknown) {
       // Return mock success response
       return data.channels.map(channel => ({
         success: true,
@@ -408,8 +418,9 @@ export const businessService = {
     try {
       const response = await apiClient.get<ApiResponse<any[]>>(`/api/v1/closures/${closureId}/affected-appointments`);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch affected appointments');
+      throw new Error(errorMessage);
     }
   },
 
@@ -418,7 +429,8 @@ export const businessService = {
     try {
       const response = await apiClient.get<ApiResponse<RescheduleSuggestion[]>>(`/api/v1/closures/${closureId}/reschedule-suggestions`);
       return response.data.data || [];
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Failed to fetch reschedule suggestions:', error);
       return [];
     }
   },
@@ -439,7 +451,7 @@ export const businessService = {
         throw new Error('No analytics data received');
       }
       return response.data.data;
-    } catch (error) {
+    } catch (error: unknown) {
       // Return mock analytics data
       return {
         totalClosures: Math.floor(Math.random() * 50) + 10,
@@ -467,7 +479,7 @@ export const businessService = {
         throw new Error('No customer impact data received');
       }
       return response.data.data;
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         totalAffectedCustomers: Math.floor(Math.random() * 100) + 20,
         notificationsSent: Math.floor(Math.random() * 95) + 18,
@@ -488,8 +500,9 @@ export const businessService = {
     try {
       const response = await apiClient.post<ApiResponse<any>>('/api/v1/businesses/availability-alerts', data);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch affected appointments');
+      throw new Error(errorMessage);
     }
   },
 
@@ -498,7 +511,7 @@ export const businessService = {
     try {
       const response = await apiClient.get<ApiResponse<any>>(`/api/v1/businesses/${businessId}/closure-status`);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: true,
         data: {
@@ -524,8 +537,9 @@ export const businessService = {
     try {
       const response = await apiClient.post<ApiResponse<any>>('/api/v1/closures/auto-reschedule', data);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch affected appointments');
+      throw new Error(errorMessage);
     }
   },
 
@@ -780,6 +794,56 @@ export const businessService = {
   // Get business staff (for business owners/staff - internal use)
   getBusinessStaff: async (businessId: string): Promise<ApiResponse<any[]>> => {
     const response = await apiClient.get<ApiResponse<any[]>>(`/api/v1/businesses/${businessId}/staff`);
+    return response.data;
+  },
+
+  // ================================
+  // PUBLIC AVAILABLE SLOTS ENDPOINT
+  // ================================
+
+  /**
+   * Get available time slots for booking (PUBLIC - No Auth Required)
+   * @param businessId - Business ID
+   * @param params - Query parameters (date, serviceId, staffId)
+   */
+  getAvailableSlots: async (
+    businessId: string,
+    params: {
+      date: string;       // YYYY-MM-DD format
+      serviceId: string;  // Required
+      staffId?: string;   // Optional - filter by specific staff
+    }
+  ): Promise<ApiResponse<{
+    date: string;
+    businessId: string;
+    serviceId: string;
+    staffId?: string;
+    slots: Array<{
+      startTime: string;      // ISO 8601
+      endTime: string;        // ISO 8601
+      available: boolean;     // true = free, false = booked
+      staffId?: string;
+      staffName?: string;
+    }>;
+    businessHours: {
+      isOpen: boolean;
+      openTime?: string;      // "HH:MM"
+      closeTime?: string;     // "HH:MM"
+    };
+    closures: Array<{
+      reason: string;
+      type: string;
+    }>;
+  }>> => {
+    const queryParams = new URLSearchParams({
+      date: params.date,
+      serviceId: params.serviceId,
+      ...(params.staffId && { staffId: params.staffId })
+    });
+
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/api/v1/public/businesses/${businessId}/available-slots?${queryParams.toString()}`
+    );
     return response.data;
   },
 };

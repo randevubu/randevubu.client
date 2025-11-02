@@ -1,10 +1,12 @@
 export interface ApiResponse<T = any> {
   success: boolean;
-  message: string;
+  statusCode?: number;
+  message?: string;
   data?: T;
   error?: {
-    message: string;
     code: string;
+    key: string; // Translation key for i18n (e.g., "errors.auth.unauthorized")
+    message: string; // Translated message in detected language
     requestId?: string;
     details?: any;
   };
@@ -18,13 +20,15 @@ export interface ApiResponse<T = any> {
 
 export interface ProfileResponse {
   success: boolean;
-  message: string;
+  statusCode?: number;
+  message?: string;
   data?: {
     user: import('./auth').User;
   };
   error?: {
-    message: string;
     code: string;
+    key: string; // Translation key for i18n
+    message: string; // Translated message in detected language
     requestId?: string;
     details?: any;
   };
@@ -32,7 +36,8 @@ export interface ProfileResponse {
 
 export interface MyBusinessResponse {
   success: boolean;
-  message: string;
+  statusCode?: number;
+  message?: string;
   data?: {
     businesses: import('./business').Business[];
     hasBusinesses: boolean;
@@ -45,8 +50,9 @@ export interface MyBusinessResponse {
     };
   };
   error?: {
-    message: string;
     code: string;
+    key: string; // Translation key for i18n
+    message: string; // Translated message in detected language
     requestId?: string;
     details?: any;
   };
@@ -54,7 +60,8 @@ export interface MyBusinessResponse {
 
 export interface CreateBusinessResponse {
   success: boolean;
-  message: string;
+  statusCode?: number;
+  message?: string;
   data?: import('./business').Business;
   tokens?: {
     accessToken: string;
@@ -62,8 +69,9 @@ export interface CreateBusinessResponse {
     expiresIn?: number;
   };
   error?: {
-    message: string;
     code: string;
+    key: string; // Translation key for i18n
+    message: string; // Translated message in detected language
     requestId?: string;
     details?: any;
   };
