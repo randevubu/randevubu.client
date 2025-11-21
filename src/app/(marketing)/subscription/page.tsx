@@ -15,6 +15,8 @@ import { PaymentResponse } from '../../../lib/services/payments';
 
 import ProfileGuard from '../../../components/ui/ProfileGuard';
 import SubscriptionPageSkeleton from '../../../components/ui/SubscriptionPageSkeleton';
+import BusinessInfoDialog from '../../../components/ui/BusinessInfoDialog';
+import { Business } from '../../../types/business';
 
 function SubscriptionContent() {
   const searchParams = useSearchParams();
@@ -22,7 +24,9 @@ function SubscriptionContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [business, setBusiness] = useState<Business | null>(null);
   const [currentStep, setCurrentStep] = useState<'plans' | 'payment' | 'success' | 'error'>('plans');
+  const [showBusinessDialog, setShowBusinessDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(null);
@@ -61,6 +65,7 @@ function SubscriptionContent() {
         console.log('Subscription - No active subscription, showing subscription plans');
         setBusinessId(primaryBusiness.id);
         setBusinessName(primaryBusiness.name);
+        setBusiness(primaryBusiness); // Store full business object
 
         // Check if this is a newly created business (from query param or recently created)
         const fromOnboarding = searchParams.get('from') === 'onboarding';
@@ -430,9 +435,22 @@ function SubscriptionContent() {
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold text-green-900">İşletme Başarıyla Oluşturuldu! 🎉</h3>
                 </div>
-                <p className="text-sm sm:text-base text-green-800">
+                <p className="text-sm sm:text-base text-green-800 mb-3">
                   <span className="font-semibold text-green-900">{businessName}</span> artık sistemde kayıtlı. Şimdi devam etmek için bir abonelik planı seçin.
                 </p>
+                {business && (
+                  <div className="flex justify-center mt-3">
+                    <button
+                      onClick={() => setShowBusinessDialog(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      İşletme Bilgilerini Görüntüle
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -518,6 +536,13 @@ function SubscriptionContent() {
         
         {currentStep === 'error' && renderErrorStep()}
       </section>
+
+      {/* Business Info Dialog */}
+      <BusinessInfoDialog
+        isOpen={showBusinessDialog}
+        onClose={() => setShowBusinessDialog(false)}
+        business={business}
+      />
     </div>
   );
 }

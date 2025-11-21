@@ -126,6 +126,12 @@ export const authService = {
   },
 
   logout: async (): Promise<ApiResponse<{ success: boolean }>> => {
+    // IMPORTANT: Backend logout endpoint MUST clear cookies with matching options
+    // When clearing cookies, Express requires matching ALL options (including httpOnly) that were used when setting them
+    // Required cookie clearing options:
+    // - refreshToken: { httpOnly: true, secure: true, sameSite: 'lax', path: '/' }
+    // - csrf-token: { httpOnly: true, secure: true, sameSite: 'lax', path: '/' }
+    // - hasAuth: { httpOnly: false, sameSite: 'lax', path: '/' }
     const response = await apiClient.post<ApiResponse<{ success: boolean }>>('/api/v1/auth/logout');
     return response.data;
   },

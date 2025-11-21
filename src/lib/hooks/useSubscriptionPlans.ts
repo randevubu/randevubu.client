@@ -2,7 +2,8 @@
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { subscriptionService } from '../services/subscription';
-import { SubscriptionPlan, PricingTier, PRICING_TIERS } from '../../types/subscription';
+import { SubscriptionPlan, PricingTier, PRICING_TIERS, Location } from '../../types/subscription';
+import { useLocationDetection } from './useLocationDetection';
 
 export interface UseSubscriptionPlansResult {
   plans: SubscriptionPlan[];
@@ -25,6 +26,24 @@ export interface UseSubscriptionPlansByCityResult {
   plans: SubscriptionPlan[];
   city: string;
   tier: 'TIER_1' | 'TIER_2' | 'TIER_3';
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export interface UseSubscriptionPlansWithAutoDetectionResult {
+  plans: SubscriptionPlan[];
+  detectedCity: string;
+  tier: 'TIER_1' | 'TIER_2' | 'TIER_3';
+  location: {
+    city: string;
+    state: string;
+    country: string;
+    detected: boolean;
+    source: 'ip_geolocation' | 'manual' | 'fallback';
+    accuracy: 'high' | 'medium' | 'low';
+  } | null;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -142,6 +161,73 @@ export function useSubscriptionPlansByCity(city: string): UseSubscriptionPlansBy
     city,
     tier: getTierForCity(city),
     isLoading,
+    isError,
+    error,
+    refetch: () => {
+      refetch();
+    },
+  };
+}
+
+/**
+ * Hook to fetch subscription plans with automatic frontend location detection
+ * 
+ * @param city - Optional city parameter. If provided, uses it explicitly (useful for development/testing).
+ *               If not provided, detects city on frontend using IP geolocation and sends it as parameter.
+ * 
+ * Usage:
+ * - Production: useSubscriptionPlansWithAutoDetection() - frontend detects city and sends as parameter
+ * - Development: useSubscriptionPlansWithAutoDetection('Antalya') - explicit city for testing
+ * - URL param: useSubscriptionPlansWithAutoDetection(searchParams.get('city') || undefined)
+ * 
+ * Returns plans, detected city, tier, and location metadata
+ */
+export function useSubscriptionPlansWithAutoDetection(city?: string): UseSubscriptionPlansWithAutoDetectionResult {
+  // Use reusable location detection hook
+  const { detectedCity, isLoading: isDetecting } = useLocationDetection(city, !city);
+
+  // Only fetch plans when city is detected (or explicitly provided)
+  const queryResult: UseQueryResult<{ plans: SubscriptionPlan[]; location: Location | null }, Error> = useQuery({
+    queryKey: ['subscription-plans-auto-detect', detectedCity],
+    queryFn: () => subscriptionService.getSubscriptionPlansWithLocationData(detectedCity),
+    enabled: !isDetecting, // Only run when city is detected
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: (failureCount, error) => {
+      if (error.message.includes('401') || error.message.includes('403')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  });
+
+  const { data, isLoading, isError, error, refetch } = queryResult;
+
+  // Determine tier based on detected city
+  const getTierForCity = (cityName: string): 'TIER_1' | 'TIER_2' | 'TIER_3' => {
+    const tier1Cities = PRICING_TIERS.find(t => t.id === 'TIER_1')?.cities || [];
+    const tier2Cities = PRICING_TIERS.find(t => t.id === 'TIER_2')?.cities || [];
+    
+    if (tier1Cities.some(city => city.toLowerCase() === cityName.toLowerCase())) {
+      return 'TIER_1';
+    }
+    if (tier2Cities.some(city => city.toLowerCase() === cityName.toLowerCase())) {
+      return 'TIER_2';
+    }
+    return 'TIER_3';
+  };
+
+  const tier = getTierForCity(detectedCity);
+
+  return {
+    plans: data?.plans || [],
+    detectedCity,
+    tier,
+    location: data?.location || null,
+    isLoading: isLoading || isDetecting,
     isError,
     error,
     refetch: () => {

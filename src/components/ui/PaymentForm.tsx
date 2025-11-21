@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { IyzicoCardData, IyzicoBuyerData, CreatePaymentRequest } from '../../types/payment';
 import { SubscriptionPlan } from '../../types/subscription';
 import DiscountCodeInput from './DiscountCodeInput';
@@ -16,6 +16,7 @@ type PaymentStep = 'card' | 'billing';
 
 export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = false }: PaymentFormProps) {
   const [currentStep, setCurrentStep] = useState<PaymentStep>('card');
+  const billingSectionRef = useRef<HTMLDivElement>(null);
 
   const [cardData, setCardData] = useState<IyzicoCardData>({
     cardHolderName: '',
@@ -106,10 +107,21 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
 
     if (Object.keys(cardErrors).length === 0) {
       setCurrentStep('billing');
-      // Scroll to top when moving to billing step
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // Scroll to billing section when step changes to billing
+  useEffect(() => {
+    if (currentStep === 'billing' && billingSectionRef.current) {
+      // Small delay to ensure the DOM has updated
+      setTimeout(() => {
+        billingSectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 100);
+    }
+  }, [currentStep]);
 
   const handleBillingBack = () => {
     setCurrentStep('card');
@@ -331,8 +343,9 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
       )}
 
       {currentStep === 'billing' && (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-4">
+        <div ref={billingSectionRef}>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -513,6 +526,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
             </button>
           </div>
         </form>
+        </div>
       )}
     </div>
   );

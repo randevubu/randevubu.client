@@ -223,21 +223,98 @@ export function hasBusinessAndSubscription(user: User | null, subscriptions?: Bu
 
 /**
  * Check if user has business access using the businesses array from API
+ * Trusts the API data - if businesses array is empty, user has no businesses
  */
 export function hasBusinessAccessFromAPI(user: User | null, businesses: any[]): boolean {
   if (!user || !businesses) return false;
   
-  // Check if user has businesses from API
-  if (businesses.length > 0) return true;
-  
-  // Fallback to role-based check
-  if (user.roles) {
-    return user.roles.some(role => 
-      ['OWNER', 'STAFF', 'MANAGER'].includes(role.name)
-    );
+  // Trust the API data - if businesses array is empty, user has no businesses
+  // Don't fall back to role checks as the API is the source of truth
+  return businesses.length > 0;
+}
+
+/**
+ * Navbar button state type
+ */
+export type NavButtonState = 
+  | { type: 'loading' }
+  | { type: 'business-with-sub' }
+  | { type: 'business-no-sub' }
+  | { type: 'create-business' }
+  | { type: 'customer-only' }
+  | { type: 'none' };
+
+/**
+ * Get navbar button state - optimized single-pass check
+ * Consolidates all permission checks to avoid redundant calculations
+ * 
+ * Security: API response (hasBusinesses) is source of truth for business existence
+ * Role checks determine button visibility (owner vs staff vs customer)
+ */
+export function getNavButtonState(
+  isDataLoading: boolean,
+  user: User | null,
+  hasBusinesses: boolean,
+  canCreateBusiness: boolean,
+  businesses: any[],
+  subscriptions?: BusinessSubscription[]
+): NavButtonState {
+  // Early exit: loading state
+  if (isDataLoading || !user) {
+    return { type: 'loading' };
   }
-  
-  return false;
+
+  // Early exit: no businesses - avoids expensive role checks
+  if (!hasBusinesses) {
+    if (canCreateBusiness) {
+      return { type: 'create-business' };
+    }
+    // Fallback to customer-only check only if needed
+    if (isCustomerOnly(user)) {
+      return { type: 'customer-only' };
+    }
+    return { type: 'none' };
+  }
+
+  // User has businesses - now check roles and subscription
+  // Cache role checks in single pass to avoid multiple array iterations
+  let isOwnerUser = false;
+  let isStaffUser = false;
+  let isManagerUser = false;
+  let isCustomerUser = false;
+
+  if (user.roles && user.roles.length > 0) {
+    // Single iteration over roles array
+    for (const role of user.roles) {
+      if (role.name === 'OWNER') isOwnerUser = true;
+      else if (role.name === 'STAFF') isStaffUser = true;
+      else if (role.name === 'MANAGER') isManagerUser = true;
+      else if (role.name === 'CUSTOMER') isCustomerUser = true;
+    }
+  } else {
+    // No roles means customer by default
+    isCustomerUser = true;
+  }
+
+  // Check subscription status (only once)
+  const hasActiveSub = subscriptions && subscriptions.length > 0 && subscriptions.some(sub => 
+    sub.status === SubscriptionStatus.ACTIVE || sub.status === SubscriptionStatus.TRIAL
+  );
+
+  // Staff and managers always see dashboard (regardless of subscription)
+  if (isStaffUser || isManagerUser) {
+    return { type: 'business-with-sub' };
+  }
+
+  // Owners: check subscription status
+  if (isOwnerUser) {
+    return hasActiveSub 
+      ? { type: 'business-with-sub' }
+      : { type: 'business-no-sub' };
+  }
+
+  // Fallback: no matching state
+  return { type: 'none' };
 }
 
 /**

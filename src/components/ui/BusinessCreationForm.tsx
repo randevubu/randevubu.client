@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { businessService } from '../../lib/services/business';
@@ -46,6 +47,7 @@ function getIstanbulDateTimeString(): string {
 
 export default function BusinessCreationForm({ onSuccess, onError }: BusinessCreationFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
@@ -170,6 +172,10 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
           console.log('⚠️ Falling back to force role refresh...');
           await refreshUser(true); // Force role refresh
         }
+        
+        // Invalidate the my-business query cache to force navbar and other components to refetch
+        // This ensures the navbar immediately shows "Abonelik" instead of "İşletme Oluştur"
+        queryClient.invalidateQueries({ queryKey: ['my-business'] });
         
         // Debug the complete flow
         debugBusinessCreationFlow();

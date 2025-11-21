@@ -1,51 +1,23 @@
 'use client';
 
 import { AlertCircle, ArrowRight, BarChart3, Building, Calendar, CheckCircle, Info, Link, Users } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import BusinessGuard from '../../../components/ui/BusinessGuard';
 import CitySelector from '../../../components/ui/CitySelector';
-import ProfileGuard from '../../../components/ui/ProfileGuard';
 import OnboardingPageSkeleton from '../../../components/ui/OnboardingPageSkeleton';
+import ProfileGuard from '../../../components/ui/ProfileGuard';
 import { useAuth } from '../../../context/AuthContext';
+import { useLocationDetection } from '../../../lib/hooks/useLocationDetection';
 import { useMyBusiness } from '../../../lib/hooks/useMyBusiness';
 import { businessService } from '../../../lib/services/business';
-import { PaymentsService } from '../../../lib/services/payments';
 import { BusinessType, CreateBusinessData } from '../../../types/business';
-import { Location } from '../../../types/subscription';
 import { SubscriptionStatus } from '../../../types/enums';
-
-/**
- * Get current date/time as ISO string in Istanbul timezone
- * Matches the format returned from the database
- */
-function getIstanbulDateTimeString(): string {
-  const now = new Date();
-  // Format as ISO string in Istanbul timezone
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Istanbul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  
-  const parts = formatter.formatToParts(now);
-  const year = parts.find(p => p.type === 'year')?.value || '';
-  const month = parts.find(p => p.type === 'month')?.value || '';
-  const day = parts.find(p => p.type === 'day')?.value || '';
-  const hour = parts.find(p => p.type === 'hour')?.value || '';
-  const minute = parts.find(p => p.type === 'minute')?.value || '';
-  const second = parts.find(p => p.type === 'second')?.value || '';
-  
-  return `${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`;
-}
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
   const { hasBusinesses, isFirstTimeUser, canCreateBusiness, businesses, subscriptions, isLoading: businessLoading } = useMyBusiness(true);
   const [currentStep, setCurrentStep] = useState<'business' | 'success'>('business');
@@ -54,17 +26,23 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
-  const [location, setLocation] = useState<Location | null>(null);
-  const [locationLoading, setLocationLoading] = useState(true);
   
-  const [formData, setFormData] = useState<CreateBusinessData>({
+  // Use reusable location detection hook
+  const { detectedCity, isLoading: locationLoading, setCity } = useLocationDetection();
+  
+  // Track if user manually changed city and last synced city
+  const [cityManuallyChanged, setCityManuallyChanged] = useState(false);
+  const lastSyncedCityRef = useRef<string>(detectedCity || 'Istanbul');
+  
+  // Initialize form data with detected city and user phone
+  const [formData, setFormData] = useState<CreateBusinessData>(() => ({
     name: '',
     businessTypeId: '',
     description: '',
-    phone: '',
+    phone: user?.phoneNumber || '',
     website: '',
     address: '',
-    city: 'Istanbul', // Default fallback
+    city: detectedCity || 'Istanbul',
     state: '',
     country: 'Turkey',
     neighborhood: '',
@@ -74,7 +52,16 @@ export default function OnboardingPage() {
     timezone: 'Europe/Istanbul',
     primaryColor: '#6366F1',
     tags: []
-  });
+  }));
+  
+  // Sync detected city to formData when it changes (only if not manually changed)
+  // Using async pattern to avoid setState during render
+  if (!cityManuallyChanged && detectedCity && detectedCity !== lastSyncedCityRef.current && detectedCity !== formData.city) {
+    lastSyncedCityRef.current = detectedCity;
+    Promise.resolve().then(() => {
+      setFormData(prev => ({ ...prev, city: detectedCity }));
+    });
+  }
 
   const [websiteSlug, setWebsiteSlug] = useState('');
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
@@ -88,104 +75,43 @@ export default function OnboardingPage() {
   );
   const hasBusinessButNoSubscription = hasBusinesses && !hasActiveSubscription;
 
-  // Debug logging
-  console.log('Onboarding Debug:', {
-    hasBusinesses,
-    subscriptions: subscriptions.length,
-    subscriptionStatuses: subscriptions.map(sub => sub.status),
-    hasActiveSubscription,
-    hasBusinessButNoSubscription,
-    businesses: businesses.length,
-    businessData: businesses.map(b => ({
-      id: b.id,
-      name: b.name,
-      hasSubscription: !!b.subscription,
-      subscriptionStatus: b.subscription?.status
-    })),
-    rawBusinessData: businesses[0] // Show the first business object
-  });
   
 
 
 
 
-  useEffect(() => {
-    if (authLoading || businessLoading) return;
-    
+  // Track data fetching state
+  const hasFetchedTypesRef = useRef(false);
+  const redirectInitiatedRef = useRef(false);
+  
+  // Handle routing without useEffect - use refs to prevent multiple calls
+  if (!authLoading && !businessLoading && !redirectInitiatedRef.current) {
     if (!isAuthenticated) {
-      router.push('/auth');
-      return;
-    }
-
-    // If user has businesses but no active subscription, show business info instead of form
-    if (hasBusinessButNoSubscription) {
-      setLoadingTypes(false); // Don't need to load business types
-      setLocationLoading(false); // Don't need to detect location
-      return; // Don't redirect, show the business info view
-    }
-
-    // If user has businesses with active subscription, redirect to dashboard
-    if (hasBusinesses && hasActiveSubscription) {
-      setLoadingTypes(false); // Don't need to load business types
-      setLocationLoading(false); // Don't need to detect location
-      router.push('/dashboard');
-      return;
-    }
-
-    // If user is not a first-time user but has no businesses, something is wrong
-    if (!isFirstTimeUser && !hasBusinesses) {
-    }
-
-    // Only proceed with onboarding form if user is a first-time user or can create business
-    // AND doesn't have businesses (to avoid loading business types unnecessarily)
-    if ((isFirstTimeUser || canCreateBusiness) && !hasBusinesses) {
-      fetchBusinessTypes();
-      detectLocation();
-    }
-  }, [user, isAuthenticated, authLoading, businessLoading, hasBusinesses, hasActiveSubscription, hasBusinessButNoSubscription, isFirstTimeUser, canCreateBusiness, router]);
-
-
-  const detectLocation = async () => {
-    try {
-      setLocationLoading(true);
-      const { location: detectedLocation } = await PaymentsService.getSubscriptionPlansWithLocation();
-      setLocation(detectedLocation);
-      
-      // Update form data with detected city or keep Istanbul as fallback
-      if (detectedLocation?.city) {
-        setFormData(prev => ({
-          ...prev,
-          city: detectedLocation.city
-        }));
+      redirectInitiatedRef.current = true;
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth';
       }
-    } catch (error) {
-      console.error('Error detecting location:', error);
-      // Keep Istanbul as fallback
-    } finally {
-      setLocationLoading(false);
+      return null;
     }
-  };
-
-  // Populate phone from profile and keep it immutable in the form
-  useEffect(() => {
-    if (user?.phoneNumber) {
-      setFormData(prev => (prev.phone === user.phoneNumber ? prev : { ...prev, phone: user.phoneNumber }));
+    
+    if (hasBusinesses && hasActiveSubscription) {
+      redirectInitiatedRef.current = true;
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard';
+      }
+      return null;
     }
-  }, [user?.phoneNumber]);
-
+  }
+  
   const fetchBusinessTypes = async () => {
     try {
-      console.log('🔄 Fetching business types...');
       const response = await businessService.getBusinessTypes();
-      console.log('📦 Business types API response:', response);
       
       if (response.success && response.data) {
-        console.log('✅ Business types loaded successfully:', response.data.length, 'types');
-        console.log('📋 First few business types:', response.data.slice(0, 3));
         setBusinessTypes(response.data);
       } else {
-        // Use fallback business types
-        const now = getIstanbulDateTimeString();
+        // Use fallback business types - server handles timestamps, just use ISO string
+        const now = new Date().toISOString();
         setBusinessTypes([
           { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
           { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
@@ -195,10 +121,8 @@ export default function OnboardingPage() {
         ]);
       }
     } catch (err) {
-      console.error('❌ Error fetching business types:', err);
-      console.log('🔄 Using fallback business types');
-      // Use fallback business types
-      const now = getIstanbulDateTimeString();
+      // Use fallback business types - server handles timestamps, just use ISO string
+      const now = new Date().toISOString();
       setBusinessTypes([
         { id: 'beauty_salon', name: 'beauty_salon', displayName: 'Beauty Salon', description: 'Hair and beauty services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now },
         { id: 'barbershop', name: 'barbershop', displayName: 'Barbershop', description: 'Men\'s grooming services', icon: null, category: 'Beauty', isActive: true, createdAt: now, updatedAt: now }
@@ -210,14 +134,15 @@ export default function OnboardingPage() {
 
   const validateForm = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
+    const phoneNumber = user?.phoneNumber || formData.phone;
 
     if (!formData.name.trim()) newErrors.name = 'İşletme adı gereklidir';
     else if (formData.name.trim().length < 3) newErrors.name = 'İşletme adı en az 3 karakter olmalıdır';
     else if (formData.name.trim().length > 100) newErrors.name = 'İşletme adı en fazla 100 karakter olmalıdır';
     if (!formData.businessTypeId) newErrors.businessTypeId = 'İşletme türü gereklidir';
     
-    if (!formData.phone?.trim()) newErrors.phone = 'Telefon numarası gereklidir';
-    else if (!/^[\+]?[0-9\s\-\(\)]{10,}$/.test(formData.phone.trim())) {
+    if (!phoneNumber?.trim()) newErrors.phone = 'Telefon numarası gereklidir';
+    else if (!/^[\+]?[0-9\s\-\(\)]{10,}$/.test(phoneNumber.trim())) {
       newErrors.phone = 'Geçersiz telefon numarası formatı';
     }
     if (!formData.city?.trim()) newErrors.city = 'Şehir gereklidir';
@@ -273,6 +198,7 @@ export default function OnboardingPage() {
 
       const businessData: CreateBusinessData = {
         ...formData,
+        phone: user?.phoneNumber || formData.phone,
         address: addressParts,
         tags: tagsArray
       };
@@ -285,6 +211,10 @@ export default function OnboardingPage() {
 
         // Refresh user profile to get updated business/role information
         await refreshUser(true); // Force role refresh
+
+        // Invalidate the my-business query cache to force navbar and other components to refetch
+        // This ensures the navbar immediately shows "Abonelik" instead of "İşletme Oluştur"
+        queryClient.invalidateQueries({ queryKey: ['my-business'] });
 
         setCreatedBusiness(response.data);
 
@@ -354,36 +284,40 @@ export default function OnboardingPage() {
   };
 
   const handleCityChange = (city: string) => {
-    // Mark that user has interacted with the form
+    // Mark that user has interacted with the form and manually changed city
     if (!hasInteracted) {
       setHasInteracted(true);
     }
+    setCityManuallyChanged(true);
+    // Update both form data and location detection hook
     handleInputChange('city', city);
+    setCity(city); // Update the detected city in the hook (user override)
   };
 
-  // Debug loading states
-  console.log('Loading states:', {
-    authLoading,
-    businessLoading,
-    loadingTypes,
-    locationLoading,
-    hasBusinesses,
-    hasBusinessButNoSubscription,
-    shouldShowLoading: authLoading || (businessLoading && !hasBusinesses) || (loadingTypes && !hasBusinesses) || locationLoading
-  });
-
+  // Trigger data fetching when conditions are met (only once, via callback pattern)
+  // Use a callback ref pattern to trigger fetch without useEffect
+  const fetchTriggeredRef = useRef(false);
+  if (!authLoading && !businessLoading && isAuthenticated && 
+      (isFirstTimeUser || canCreateBusiness) && !hasBusinesses && !fetchTriggeredRef.current) {
+    fetchTriggeredRef.current = true;
+    // Trigger fetch asynchronously to avoid calling during render
+    Promise.resolve().then(() => fetchBusinessTypes());
+  }
+  
+  // Update loading state when we have business but no subscription
+  if (hasBusinessButNoSubscription && loadingTypes) {
+    // Update state asynchronously to avoid setState during render
+    Promise.resolve().then(() => setLoadingTypes(false));
+  }
+  
   // Show loading while checking authentication and business status
   // But don't show loading if we already have business data and can show business info
-  if (authLoading || (businessLoading && !hasBusinesses) || (loadingTypes && !hasBusinesses) || locationLoading) {
+  const isLoading = authLoading || (businessLoading && !hasBusinesses) || 
+    (loadingTypes && !hasBusinesses && !hasBusinessButNoSubscription) || locationLoading;
+  
+  if (isLoading) {
     return <OnboardingPageSkeleton />;
   }
-
-  // Show business information if user has businesses but no subscription
-  console.log('Checking business info condition:', {
-    hasBusinessButNoSubscription,
-    businessesLength: businesses.length,
-    shouldShowBusinessInfo: hasBusinessButNoSubscription && businesses.length > 0
-  });
   
   if (hasBusinessButNoSubscription && businesses.length > 0) {
     const primaryBusiness = businesses[0]; // Get the first business
@@ -860,7 +794,14 @@ export default function OnboardingPage() {
                     <CitySelector
                       onCityChange={handleCityChange}
                       currentCity={formData.city || ''}
-                      detectedLocation={location || undefined}
+                      detectedLocation={{
+                        city: detectedCity,
+                        state: '',
+                        country: 'Turkey',
+                        detected: true,
+                        source: 'ip_geolocation',
+                        accuracy: 'medium'
+                      }}
                       className="w-full"
                     />
                   )}
@@ -977,7 +918,7 @@ export default function OnboardingPage() {
                       name="phone"
                       data-field="phone"
                       type="tel"
-                      value={formData.phone}
+                      value={user?.phoneNumber || formData.phone}
                       className={`w-full px-4 py-4 border-2 rounded-2xl focus:ring-0 transition-all mobile-form-field ${
                         hasInteracted && errors.phone ? 'border-red-400 bg-red-50' : 'bg-indigo-50 border-indigo-200'
                       } cursor-not-allowed text-gray-700`}

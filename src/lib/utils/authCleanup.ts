@@ -52,14 +52,21 @@ export const clearAuthState = async (): Promise<void> => {
     });
   }
 
-  // Attempt to clear cookies (note: HttpOnly cookies can only be cleared by backend)
+  // Clear cookies (note: HttpOnly cookies can ONLY be cleared by backend)
+  // When clearing cookies, Express requires matching ALL options (including httpOnly) that were used when setting them
+  // IMPORTANT: HttpOnly cookies (refreshToken, csrf-token) cannot be cleared from JavaScript
+  // They MUST be cleared by the backend logout endpoint with matching options:
+  // - refreshToken: httpOnly: true, Secure: true, SameSite: Lax, path: /
+  // - csrf-token: httpOnly: true, Secure: true, SameSite: Lax, path: /
+  // - hasAuth: httpOnly: false, SameSite: Lax, path: /
   if (typeof window !== 'undefined') {
-    // Clear hasAuth cookie (this one is not HttpOnly)
+    // Clear hasAuth cookie (httpOnly: false) - this one we can clear from frontend
+    // Must match: path=/, SameSite=Lax (httpOnly=false is default, so not needed)
     document.cookie = 'hasAuth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
 
-    // Attempt to clear refreshToken cookie (likely HttpOnly, so this may not work)
-    // The backend should clear this when it sends 401
-    document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
+    // Note: refreshToken and csrf-token cookies are HttpOnly and CANNOT be cleared from JavaScript
+    // The backend logout endpoint (/api/v1/auth/logout) MUST clear these cookies
+    // Backend must use matching options: httpOnly: true, Secure: true, SameSite: Lax, path: /
   }
 
   // Broadcast auth-cleared event to other parts of the app

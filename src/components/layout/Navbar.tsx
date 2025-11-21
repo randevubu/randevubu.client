@@ -2,15 +2,13 @@
 
 import { AlertCircle, BarChart3, Calendar, CheckCircle, CreditCard, Globe, LogOut, Mail, Menu, Plus, Search, Settings, User, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import useClickOutside from '../../lib/hooks/useClickOutside';
 import { useMyBusiness } from '../../lib/hooks/useMyBusiness';
 import {
-  hasBusinessAndSubscriptionFromAPI,
-  hasBusinessNoSubscriptionFromAPI,
-  isCustomer,
-  isCustomerOnly
+  getNavButtonState,
+  isCustomer
 } from '../../lib/utils/permissions';
 import ThemeSelector from '../ui/ThemeSelector';
 
@@ -34,6 +32,17 @@ export default function Navbar() {
   // Only show loading if we're actually loading AND don't have any data yet
   const isDataLoading = businessesLoading && !hasBusinesses;
 
+  // Memoize navbar button state to avoid recalculating on every render
+  const navButtonState = useMemo(() => {
+    return getNavButtonState(
+      isDataLoading,
+      user,
+      hasBusinesses,
+      canCreateBusiness,
+      businesses,
+      subscriptions
+    );
+  }, [isDataLoading, user, hasBusinesses, canCreateBusiness, businesses, subscriptions]);
 
   // Use custom hook for click outside behavior
   useClickOutside(profileRef, () => setIsProfileOpen(false));
@@ -87,10 +96,10 @@ export default function Navbar() {
             ) : isAuthenticated ? (
               <>
                 {/* Conditional navigation based on user state */}
-                {isDataLoading ? (
+                {navButtonState.type === 'loading' ? (
                   // Show loading state only when we don't have data yet
                   <div className="hidden sm:block w-24 h-8 bg-[var(--theme-secondary)] animate-pulse rounded-lg"></div>
-                ) : hasBusinessAndSubscriptionFromAPI(user, businesses, subscriptions) ? (
+                ) : navButtonState.type === 'business-with-sub' ? (
                   // User has business and subscription - show both İşletmem and Randevu Al
                   <>
                     <Link 
@@ -110,7 +119,7 @@ export default function Navbar() {
                       <span className="md:hidden">İşletme</span>
                     </Link>
                   </>
-                ) : hasBusinessNoSubscriptionFromAPI(user, businesses, subscriptions) ? (
+                ) : navButtonState.type === 'business-no-sub' ? (
                   // User has business but no subscription - show only subscription button
                   <Link 
                     href="/subscription" 
@@ -120,7 +129,17 @@ export default function Navbar() {
                     <span className="hidden md:inline">Abonelik</span>
                     <span className="md:hidden">Abone</span>
                   </Link>
-                ) : isCustomerOnly(user) ? (
+                ) : navButtonState.type === 'create-business' ? (
+                  // User has no business but can create one - show İşletme Oluştur
+                  <Link 
+                    href="/onboarding" 
+                    className="hidden sm:inline-flex bg-[var(--theme-accent)] text-white px-3 sm:px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-accentHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-xs sm:text-sm"
+                    title="İşletme Oluştur"
+                  >
+                    <span className="hidden md:inline">İşletme Oluştur</span>
+                    <span className="md:hidden">Oluştur</span>
+                  </Link>
+                ) : navButtonState.type === 'customer-only' ? (
                   // Customer only - show both Randevu Al and İşletme Oluştur
                   <>
                     <Link 
@@ -201,11 +220,11 @@ export default function Navbar() {
                         )}
                         
                         {/* Conditional mobile navigation based on user state */}
-                        {isDataLoading ? (
+                        {navButtonState.type === 'loading' ? (
                           <div className="px-3 py-3 sm:hidden">
                             <div className="w-full h-12 bg-gray-200 animate-pulse rounded-xl"></div>
                           </div>
-                        ) : hasBusinessAndSubscriptionFromAPI(user, businesses, subscriptions) ? (
+                        ) : navButtonState.type === 'business-with-sub' ? (
                           // User has business and subscription - show both Randevu Al and İşletmem
                           <>
                             <Link 
@@ -229,7 +248,7 @@ export default function Navbar() {
                               <span className="font-semibold">İşletmem</span>
                             </Link>
                           </>
-                        ) : hasBusinessNoSubscriptionFromAPI(user, businesses, subscriptions) ? (
+                        ) : navButtonState.type === 'business-no-sub' ? (
                           // User has business but no subscription - show only subscription button
                           <Link 
                             href="/subscription" 
@@ -241,7 +260,19 @@ export default function Navbar() {
                             </div>
                             <span className="font-semibold">Abonelik</span>
                           </Link>
-                        ) : isCustomerOnly(user) ? (
+                        ) : navButtonState.type === 'create-business' ? (
+                          // User has no business but can create one - show İşletme Oluştur
+                          <Link 
+                            href="/onboarding" 
+                            className="flex items-center space-x-3 px-3 py-3 text-sm text-gray-900 hover:bg-indigo-50 rounded-xl transition-all duration-200 group sm:hidden"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                              <Plus className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <span className="font-semibold">İşletme Oluştur</span>
+                          </Link>
+                        ) : navButtonState.type === 'customer-only' ? (
                           // Customer only - show both Randevu Al and İşletme Oluştur
                           <>
                             <Link 

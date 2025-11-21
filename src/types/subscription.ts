@@ -308,6 +308,7 @@ export interface SubscriptionPlansResponse {
   message: string;
   data: {
     plans: SubscriptionPlan[];
+    location?: Location; // Location is included when no city parameter is provided (backend auto-detection)
     pagination: {
       total: number;
       page: number;

@@ -33,6 +33,7 @@ export interface SubscriptionServiceResponse<T> {
 export class SubscriptionService {
   /**
    * Get all available subscription plans
+   * When city is not provided, backend auto-detects location from IP
    */
   async getSubscriptionPlans(city?: string): Promise<SubscriptionPlan[]> {
     try {
@@ -45,6 +46,28 @@ export class SubscriptionService {
     } catch (error: unknown) {
       console.error('Failed to fetch subscription plans:', error);
       const errorMessage = extractErrorMessage(error, 'Failed to fetch subscription plans');
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Get subscription plans with location information
+   * When city is not provided, backend auto-detects location from IP and returns it in response
+   */
+  async getSubscriptionPlansWithLocationData(city?: string): Promise<{ plans: SubscriptionPlan[]; location: Location | null }> {
+    try {
+      const url = city 
+        ? `/api/v1/subscriptions/plans?city=${encodeURIComponent(city)}`
+        : '/api/v1/subscriptions/plans';
+      
+      const response = await apiClient.get<SubscriptionPlansResponse>(url);
+      return {
+        plans: response.data.data.plans,
+        location: response.data.data.location || null
+      };
+    } catch (error: unknown) {
+      console.error('Failed to fetch subscription plans with location:', error);
+      const errorMessage = extractErrorMessage(error, 'Failed to fetch subscription plans with location');
       throw new Error(errorMessage);
     }
   }
@@ -79,6 +102,7 @@ export class SubscriptionService {
 
   /**
    * Get subscription plans with location information (legacy method for backward compatibility)
+   * Now extracts real location from API response instead of creating fake location
    */
   async getSubscriptionPlansWithLocation(city?: string): Promise<{ plans: SubscriptionPlan[]; location: Location }> {
     try {
@@ -87,16 +111,20 @@ export class SubscriptionService {
         : '/api/v1/subscriptions/plans';
       
       const response = await apiClient.get<SubscriptionPlansResponse>(url);
+      
+      // Extract location from API response if available, otherwise create fallback
+      const location = response.data.data.location || {
+        city: city || 'Istanbul',
+        state: 'Unknown',
+        country: 'Turkey',
+        detected: false,
+        source: city ? 'manual' as const : 'fallback' as const,
+        accuracy: 'low' as const
+      };
+      
       return {
         plans: response.data.data.plans,
-        location: {
-          city: city || 'Unknown',
-          state: 'Unknown',
-          country: 'Turkey',
-          detected: false,
-          source: 'manual' as const,
-          accuracy: 'low' as const
-        }
+        location
       };
     } catch (error: unknown) {
       console.error('Failed to fetch subscription plans with location:', error);

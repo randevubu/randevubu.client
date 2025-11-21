@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { businessService } from '../../../lib/services/business';
-import { useSubscriptionPlans } from '../../../lib/hooks/useSubscriptionPlans';
+import { useSubscriptionPlansWithAutoDetection } from '../../../lib/hooks/useSubscriptionPlans';
 import { useTrialSubscription, usePlanTrialInfo } from '../../../lib/hooks/useTrialSubscription';
 import TrialCard from '../../../components/ui/TrialCard';
 import TrialPaymentForm from '../../../components/ui/TrialPaymentForm';
@@ -31,8 +31,12 @@ function TrialSubscriptionContent() {
   const [isNewBusiness, setIsNewBusiness] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
 
-  // Hooks
-  const { plans, isLoading: plansLoading, isError: plansError } = useSubscriptionPlans();
+  // Check for city in URL params (for development/testing), otherwise use backend auto-detection
+  const cityFromUrl = searchParams?.get('city') || undefined;
+  
+  // Hooks - use backend auto-detection for location-based pricing
+  // If city is explicitly provided via URL, use it; otherwise backend detects from IP
+  const { plans, isLoading: plansLoading, isError: plansError } = useSubscriptionPlansWithAutoDetection(cityFromUrl);
   const { createTrialSubscription, isLoading: trialLoading } = useTrialSubscription();
 
   const checkBusinessAccess = useCallback(async () => {
