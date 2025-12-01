@@ -2,7 +2,8 @@
 
 import { AlertCircle, BarChart3, Calendar, CheckCircle, CreditCard, Globe, LogOut, Mail, Menu, Plus, Search, Settings, User, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import useClickOutside from '../../lib/hooks/useClickOutside';
 import { useMyBusiness } from '../../lib/hooks/useMyBusiness';
@@ -11,10 +12,14 @@ import {
   isCustomer
 } from '../../lib/utils/permissions';
 import ThemeSelector from '../ui/ThemeSelector';
+import BrandLogo from '../ui/BrandLogo';
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isHomePage = pathname === '/' || pathname === '';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user, isAuthenticated, logout, hasInitialized, isLoading } = useAuth();
   const { 
     businesses, 
@@ -47,35 +52,60 @@ export default function Navbar() {
   // Use custom hook for click outside behavior
   useClickOutside(profileRef, () => setIsProfileOpen(false));
 
+  // Scroll detection for homepage navbar background
+  useEffect(() => {
+    if (!isHomePage) return;
+
+    const handleScroll = () => {
+      // Show background immediately when scrolling starts (even 1px)
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isHomePage]);
+
   return (
-    <nav className="bg-[var(--theme-navbar)] backdrop-blur-xl border-b border-[var(--theme-border)] sticky top-0 z-50 transition-colors duration-300">
+    <nav
+      data-homepage={isHomePage ? 'true' : 'false'}
+      className={`${
+        isHomePage
+          ? isScrolled
+            ? 'bg-white backdrop-blur-xl border-b border-[var(--theme-border)]'
+            : 'navbar-transparent'
+          : 'bg-white backdrop-blur-xl border-b border-[var(--theme-border)]'
+      } sticky top-0 z-50 transition-all duration-300`}
+    >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center h-16">
           {/* Logo - Left side */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-9 h-9 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-xl flex items-center justify-center shadow-lg">
-                <Calendar className="w-5 h-5 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <span className="text-xl sm:text-lg font-black text-[var(--theme-navbarForeground)]">
-                RandevuBu
-              </span>
+            <Link href="/">
+              <BrandLogo
+                size="md"
+                className="gap-2"
+                textClassName={`text-xl sm:text-lg font-bold ${isHomePage && !isScrolled ? 'text-white' : 'text-[var(--theme-navbarForeground)]'}`}
+                priority
+              />
             </Link>
           </div>
 
           {/* Navigation links - Center */}
           <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2">
             <div className="flex items-center space-x-6">
-              <Link href="/features" className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
+              <Link href="/features" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 Özellikler
               </Link>
-              <Link href="/pricing" className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
+              <Link href="/pricing" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 Fiyatlandırma
               </Link>
-              <Link href="/contact" className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
+              <Link href="/contact" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 İletişim
               </Link>
-              <Link href="/about" className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
+              <Link href="/about" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 Hakkımızda
               </Link>
             </div>
@@ -165,7 +195,7 @@ export default function Navbar() {
                 <div className="relative" ref={profileRef}>
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors p-2 rounded-xl hover:bg-[var(--theme-backgroundSecondary)] min-h-[44px] min-w-[44px]"
+                    className={`flex items-center ${isHomePage && !isScrolled ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] hover:bg-[var(--theme-backgroundSecondary)]'} transition-colors p-2 rounded-xl min-h-[44px] min-w-[44px]`}
                   >
                     <div className="w-10 h-10 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-full flex items-center justify-center shadow-lg">
                       <User className="w-5 h-5 sm:w-4 sm:h-4 text-white" />
@@ -332,16 +362,14 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                {/* Mobile-enhanced Giriş Yap button */}
-                <Link href="/auth" className="md:hidden inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--theme-border)] text-[var(--theme-navbarForeground)] font-semibold shadow-sm hover:bg-[var(--theme-backgroundSecondary)] active:scale-[0.98] transition-all text-sm">
-                  Giriş Yap
-                </Link>
-                {/* Desktop simple link */}
-                <Link href="/auth" className="hidden md:inline-flex text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors text-sm">
-                  Giriş Yap
-                </Link>
-                <Link href="/auth" className="hidden md:inline-flex bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--theme-primaryHover)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm">
-                  Başla
+                <Link
+                  href="/auth"
+                  className={`${isHomePage && !isScrolled ? 'bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20' : 'bg-[var(--theme-primary)] text-[var(--theme-primaryForeground)] hover:bg-[var(--theme-primaryHover)]'} inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>Giriş Yap</span>
+                  <span className="opacity-80">/</span>
+                  <span>Kayıt Ol</span>
                 </Link>
               </>
             )}
@@ -350,7 +378,7 @@ export default function Navbar() {
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] p-3 rounded-xl hover:bg-[var(--theme-backgroundSecondary)] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] hover:bg-[var(--theme-backgroundSecondary)]'} p-3 rounded-xl transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center`}
             >
               {isMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -395,14 +423,12 @@ export default function Navbar() {
           
           {/* Menu header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200" style={{ backgroundColor: '#ffffff', borderColor: '#e5e5e5' }}>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-md">
-                <Calendar className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-bold text-gray-900">
-                RandevuBu
-              </span>
-            </div>
+            <BrandLogo
+              size="md"
+              className="gap-2"
+              textClassName="text-lg font-bold text-gray-900"
+              priority
+            />
             
             <button
               onClick={() => setIsMenuOpen(false)}

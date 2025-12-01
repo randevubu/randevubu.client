@@ -164,17 +164,14 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ mobile = false, compact =
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center space-x-2 p-2 rounded-lg hover:bg-[var(--theme-backgroundSecondary)] transition-colors border border-[var(--theme-border)] ${
+        className={`flex items-center justify-center rounded-lg bg-white text-[var(--theme-foregroundSecondary)] hover:bg-white/80 transition-colors border border-[var(--theme-border)] ${
           compact ? 'p-1.5' : 'p-2'
         }`}
         title="Theme Settings"
       >
-        <div className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} rounded-full bg-gradient-to-br ${getVariantColor(variant)} shadow-sm`} />
-        {!compact && (
-          <div className="text-[var(--theme-foregroundSecondary)]">
-            {getModeIcon(mode)}
-          </div>
-        )}
+        <div className="text-[var(--theme-foregroundSecondary)]">
+          {getModeIcon(mode)}
+        </div>
       </button>
 
       {isOpen && (

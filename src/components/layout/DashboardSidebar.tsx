@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import {
-  Calendar,
   Home,
   Users,
   CalendarDays,
@@ -17,6 +16,7 @@ import {
   Package
 } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
+import BrandLogo from '../ui/BrandLogo';
 
 const DashboardSidebar = memo(() => {
   const { user, business, navigationItems, pathname, sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, logout } = useDashboard();
@@ -44,13 +44,14 @@ const DashboardSidebar = memo(() => {
     <div className={`flex items-center h-16 border-b border-[var(--theme-border)] transition-all duration-300 ${
       sidebarCollapsed ? 'lg:justify-center lg:px-4 px-6' : 'px-6'
     }`}>
-      <Link href="/" className="flex items-center space-x-2" aria-label="RandevuBu Home">
-        <div className="w-8 h-8 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-lg flex items-center justify-center flex-shrink-0">
-          <Calendar className="w-5 h-5 text-white" />
-        </div>
-        <span className={`text-lg font-bold text-[var(--theme-foreground)] transition-all duration-300 whitespace-nowrap ${
-          sidebarCollapsed ? 'lg:hidden' : ''
-        }`}>RandevuBu</span>
+      <Link href="/" className="inline-flex" aria-label="RandevuBu Home">
+        <BrandLogo
+          size="sm"
+          className="gap-2"
+          textClassName={`text-lg font-bold text-[var(--theme-foreground)] transition-all duration-300 whitespace-nowrap ${
+            sidebarCollapsed ? 'lg:hidden' : ''
+          }`}
+        />
       </Link>
     </div>
 

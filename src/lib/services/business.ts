@@ -39,6 +39,8 @@ export interface PublicBusiness {
   tags: string[];
   rating?: number;
   totalReviews: number;
+  averageRating?: number;
+  totalRatings?: number;
   businessType: {
     id: string;
     name: string;

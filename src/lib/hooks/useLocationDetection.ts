@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { detectUserCity } from '../utils/locationDetection';
+import { detectUserCity, isValidCity } from '../utils/locationDetection';
 
 export interface UseLocationDetectionResult {
   detectedCity: string;
@@ -56,7 +56,9 @@ export function useLocationDetection(
     detectUserCity()
       .then((detected) => {
         if (!cancelled) {
-          setDetectedCity(detected);
+          // Validate the detected city exists in the list
+          const cityToUse = isValidCity(detected) ? detected : 'Istanbul';
+          setDetectedCity(cityToUse);
           setIsLoading(false);
         }
       })
@@ -89,6 +91,7 @@ export function useLocationDetection(
     setCity,
   };
 }
+
 
 
 

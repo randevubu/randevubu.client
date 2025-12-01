@@ -1,4 +1,4 @@
-import { AuditAction, VerificationPurpose } from './enums';
+import { AuditAction } from './enums';
 
 export interface AuditLog {
   id: string;
@@ -15,7 +15,6 @@ export interface AuditLog {
 export interface PhoneVerification {
   id: string;
   code: string;
-  purpose: VerificationPurpose;
   attempts: number;
   createdAt: string;
   expiresAt: string;
@@ -92,7 +91,6 @@ export interface UpdateUserData {
 
 export interface PhoneVerificationRequest {
   phoneNumber: string;
-  purpose: VerificationPurpose;
 }
 
 export interface PhoneVerificationConfirm {

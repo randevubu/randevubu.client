@@ -8,11 +8,15 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiError } from '../../lib/hooks/useApiError';
 import { authService } from '../../lib/services/auth';
 import { formatPhoneForAPI, formatPhoneForDisplay } from '../../lib/utils/phone';
-import { VerificationPurpose } from '../../types/enums';
+import BrandLogo from './BrandLogo';
 
 type AuthStep = 'phone' | 'otp' | 'register';
 
-export default function PhoneAuth() {
+type PhoneAuthProps = {
+  className?: string;
+};
+
+export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
   const [step, setStep] = useState<AuthStep>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
@@ -37,15 +41,17 @@ export default function PhoneAuth() {
     }
   }, [isAuthenticated, router]);
 
+  const containerClassName =
+    className ??
+    'bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)] transition-colors duration-300';
+
   // Show loading while checking authentication
   if (!hasInitialized) {
     return (
-      <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)] transition-colors duration-300">
+      <div className={containerClassName}>
         <div className="text-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-6">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
+          <div className="flex justify-center mb-6">
+            <BrandLogo showText={false} size="md" />
           </div>
           <div className="flex items-center justify-center space-x-2">
             <div className="w-6 h-6 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
@@ -59,12 +65,10 @@ export default function PhoneAuth() {
   // Show loading screen if redirecting
   if (shouldRedirect) {
     return (
-      <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)] transition-colors duration-300">
+      <div className={containerClassName}>
         <div className="text-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-6">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
+          <div className="flex justify-center mb-6">
+            <BrandLogo showText={false} size="md" />
           </div>
           <div className="flex items-center justify-center space-x-2">
             <div className="w-6 h-6 border-4 border-[var(--theme-primary)] border-t-transparent rounded-full animate-spin"></div>
@@ -86,8 +90,7 @@ export default function PhoneAuth() {
     
     try {
       const response = await authService.sendVerification({
-        phoneNumber: formattedPhoneNumber,
-        purpose: VerificationPurpose.REGISTRATION
+        phoneNumber: formattedPhoneNumber
       });
       
       if (response.success) {
@@ -151,16 +154,15 @@ export default function PhoneAuth() {
   };
 
   return (
-    <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)] transition-colors duration-300">
+    <div className={containerClassName}>
       {/* Header */}
       <div className="text-center mb-8">
-        <Link href="/" className="inline-flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-2xl flex items-center justify-center shadow-lg transition-colors duration-300">
-            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <span className="text-2xl font-black text-[var(--theme-cardForeground)] transition-colors duration-300">RandevuBu</span>
+        <Link href="/" className="inline-flex mb-6">
+          <BrandLogo
+            size="md"
+            className="gap-3"
+            textClassName="text-2xl font-black text-[var(--theme-cardForeground)] transition-colors duration-300"
+          />
         </Link>
         
         {step === 'phone' && (
@@ -364,11 +366,11 @@ export default function PhoneAuth() {
       <div className="mt-8 text-center">
         <p className="text-sm text-[var(--theme-foregroundMuted)] transition-colors duration-300">
           Devam ederek{' '}
-          <Link href="#" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium transition-colors duration-300">
+          <Link href="/terms" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium transition-colors duration-300">
             Kullanım Şartları
           </Link>{' '}
           ve{' '}
-          <Link href="#" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium transition-colors duration-300">
+          <Link href="/privacy" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium transition-colors duration-300">
             Gizlilik Politikası
           </Link>
           'nı kabul etmiş olursunuz.

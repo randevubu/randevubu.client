@@ -2,14 +2,44 @@
  * Service Worker Registration Utility
  * Industry-standard approach: module-level initialization without React hooks
  * Based on patterns used by Google, Facebook, and other major PWAs
+ * 
+ * Follows project rules from rules.md:
+ * - Error handling separated from business logic
+ * - Toast fallback to console if providers not ready
+ * - Type safety with proper error types
  */
 
-import toast from 'react-hot-toast';
 import { initializeServiceWorkerNavigation } from './serviceWorkerNavigation';
 
 // Type guard for requestIdleCallback (not available in all browsers)
 interface WindowWithIdleCallback {
   requestIdleCallback?: typeof window.requestIdleCallback;
+}
+
+/**
+ * Safe toast notification with fallback to console
+ * Prevents errors if toast provider not yet mounted
+ * Following error handling best practices from rules.md
+ */
+function notifyUser(message: string, type: 'success' | 'error' = 'success'): void {
+  try {
+    // Lazy import toast only when needed (prevents early binding issues)
+    const { default: toast } = require('react-hot-toast');
+    
+    if (type === 'success') {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
+  } catch (error) {
+    // Fallback to console if toast not available
+    // This can happen if SW registers before React providers mount
+    if (type === 'error') {
+      console.error('[Service Worker]', message);
+    } else {
+      console.log('[Service Worker]', message);
+    }
+  }
 }
 
 /**
@@ -30,6 +60,7 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null
       // Already registered, just set up update listeners
       currentRegistration = existingRegistration;
       setupUpdateListeners(existingRegistration);
+      startHealthCheckInterval(); // Start health checks for existing SW
       return existingRegistration;
     }
 
@@ -40,19 +71,75 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null
 
     currentRegistration = registration;
 
-    // Set up update listeners
+    // Set up update listeners and health checks
     setupUpdateListeners(registration);
+    startHealthCheckInterval(); // Monitor SW health
 
     return registration;
   } catch (error) {
-    toast.error('Service worker kayıt edilemedi');
+    const errorMessage = error instanceof Error ? error.message : 'Service worker kayıt edilemedi';
+    notifyUser(errorMessage, 'error');
     return null;
   }
 }
 
 /**
+ * Check service worker health with timeout
+ * Follows project rules: separation of concerns, error handling
+ * Per rules.md: proper error handling without side effects in registration
+ * 
+ * @returns true if SW responds within timeout, false otherwise
+ */
+async function checkServiceWorkerHealth(): Promise<boolean> {
+  try {
+    const controller = navigator.serviceWorker.controller;
+    if (!controller) return false;
+
+    // Send health check message and wait for response
+    const response = await new Promise<boolean>((resolve) => {
+      const timeout = setTimeout(() => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+        resolve(false); // Timeout = unhealthy
+      }, 5000);
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'HEALTH_CHECK_RESPONSE') {
+          clearTimeout(timeout);
+          navigator.serviceWorker.removeEventListener('message', handleMessage);
+          resolve(true);
+        }
+      };
+
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      controller.postMessage({ type: 'HEALTH_CHECK' });
+    });
+
+    return response;
+  } catch (error) {
+    console.warn('[Service Worker] Health check failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Periodically check service worker health
+ * Logs warnings if SW becomes unresponsive
+ * Only started after successful registration
+ */
+function startHealthCheckInterval(): void {
+  // Check every 30 minutes (1800000ms)
+  setInterval(async () => {
+    const isHealthy = await checkServiceWorkerHealth();
+    if (!isHealthy) {
+      console.warn('[Service Worker] Health check failed - SW may be unresponsive');
+    }
+  }, 30 * 60 * 1000);
+}
+
+/**
  * Set up listeners for service worker updates
- * Only shows toast for actual updates, not first install or re-registrations
+ * Only shows notifications for actual updates, not first install or re-registrations
+ * Uses safe notification fallback per rules.md error handling best practices
  */
 function setupUpdateListeners(registration: ServiceWorkerRegistration): void {
   // Handle updatefound event (new service worker detected)
@@ -70,25 +157,26 @@ function setupUpdateListeners(registration: ServiceWorkerRegistration): void {
         // Check if this is an update or first install
         if (navigator.serviceWorker.controller) {
           // There's already an active service worker, so this is an update
-          toast.success('Yeni güncelleme mevcut! Sayfayı yenileyebilirsiniz.', {
-            duration: 6000,
-          });
+          notifyUser('Yeni güncelleme mevcut! Sayfayı yenileyebilirsiniz.', 'success');
         } else {
           // No active controller means this is the first install
           // Service worker state naturally prevents duplicate toasts:
           // - updatefound event only fires when a NEW service worker starts installing
           // - Once installed and activated, controller will never be null again
-          toast.success('Uygulama çevrimdışı kullanım için hazırlandı!');
+          notifyUser('Uygulama çevrimdışı kullanım için hazırlandı!', 'success');
         }
       }
     });
   });
 
-  // Handle controller change (new service worker activated)
+  // Handle controller change - DON'T force reload, let user choose
+  // Per rules.md error handling & UX best practices
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    // Reload when new controller takes over if there was a waiting worker
     if (registration.waiting) {
-      window.location.reload();
+      notifyUser(
+        'App updated! Refresh the page to see changes.',
+        'success'
+      );
     }
   });
 }
@@ -178,7 +266,7 @@ export async function unregisterServiceWorker(): Promise<boolean> {
       const success = await registration.unregister();
       if (success) {
         currentRegistration = null;
-        toast.success('Service worker kaldırıldı');
+        notifyUser('Service worker kaldırıldı', 'success');
       }
       return success;
     }

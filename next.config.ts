@@ -4,8 +4,20 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
+// Build hash is injected directly into SW by inject-build-hash.js script
+// This ensures automatic cache busting on each deployment
+// No need to set it via env - the build script handles it
+
 const nextConfig: NextConfig = {
   // SVG configuration removed - Turbopack doesn't support @svgr/webpack
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
 };
 
 export default withNextIntl(

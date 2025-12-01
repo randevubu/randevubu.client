@@ -5,7 +5,6 @@ import { Phone, ArrowRight, Loader2, AlertCircle, CheckCircle } from 'lucide-rea
 import Dialog from './Dialog';
 import { authService } from '@/src/lib/services/auth';
 import { userService } from '@/src/lib/services/user';
-import { VerificationPurpose } from '@/src/types/enums';
 import { extractErrorMessage, extractApiError } from '@/src/lib/utils/errorExtractor';
 import toast from 'react-hot-toast';
 
@@ -79,7 +78,6 @@ export default function PhoneNumberUpdateModal({
       // Send with full phone number including country code
       await authService.sendVerification({
         phoneNumber: `+90${newPhoneNumber}`,
-        purpose: VerificationPurpose.PHONE_CHANGE,
       });
 
       toast.success('Doğrulama kodu gönderildi!');

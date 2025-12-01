@@ -1,7 +1,8 @@
 'use client';
 
-import { Calendar, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import BrandLogo from '../ui/BrandLogo';
 
 // Define footer links outside component to prevent hydration issues
 const footerLinks = {
@@ -60,13 +61,13 @@ export default function Footer() {
         <div className="px-4 py-8">
           {/* Mobile Brand */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className={`w-8 h-8 bg-gradient-to-br ${getVariantColor(variant)} rounded-xl flex items-center justify-center shadow-lg`}>
-                <Calendar className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-xl font-black bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] bg-clip-text text-transparent">
-                RandevuBu
-              </span>
+            <div className="flex justify-center mb-4">
+              <BrandLogo
+                size="md"
+                className="gap-2"
+                textClassName="text-xl font-black bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] bg-clip-text text-transparent"
+                priority
+              />
             </div>
             <p className="text-sm text-[var(--theme-foregroundSecondary)] leading-relaxed max-w-xs mx-auto">
               Modern salon rezervasyon deneyimi
@@ -133,13 +134,13 @@ export default function Footer() {
           <div className="grid gap-8 lg:grid-cols-6">
             {/* Desktop: Brand Section */}
             <div className="lg:col-span-2">
-              <div className="flex items-center space-x-2 mb-6">
-                <div className={`w-8 h-8 bg-gradient-to-br ${getVariantColor(variant)} rounded-lg flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110 hover:shadow-xl`}>
-                  <Calendar className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] bg-clip-text text-transparent">
-                  RandevuBu
-                </span>
+              <div className="mb-6">
+                <BrandLogo
+                  size="md"
+                  className="gap-2"
+                  textClassName="text-2xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] bg-clip-text text-transparent"
+                  priority
+                />
               </div>
               
               <p className="text-[var(--theme-foregroundSecondary)] mb-6 max-w-md transition-colors duration-300 leading-relaxed">

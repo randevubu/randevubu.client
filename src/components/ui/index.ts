@@ -5,6 +5,7 @@ export { default as TierSelector } from './TierSelector';
 export { default as PricingCard } from './PricingCard';
 export { default as Hero } from './Hero';
 export { default as HowItWorks } from './HowItWorks';
+export { default as RecommendedBusinesses } from './RecommendedBusinesses';
 export { PriceSettingsForm } from './PriceSettingsForm';
 export { default as PhoneAuth } from './PhoneAuth';
 export { default as CustomerGuard } from './CustomerGuard';
