@@ -240,7 +240,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={cardData.cardHolderName}
                       onChange={(e) => setCardData({ ...cardData, cardHolderName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="John Doe"
                     />
                     {errors.cardHolderName && (
@@ -256,7 +256,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={cardData.cardNumber}
                       onChange={(e) => setCardData({ ...cardData, cardNumber: formatCardNumber(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="1234 5678 9012 3456"
                       maxLength={19}
                     />
@@ -273,7 +273,8 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       <select
                         value={cardData.expireMonth}
                         onChange={(e) => setCardData({ ...cardData, expireMonth: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ colorScheme: 'light' }}
                       >
                         <option value="">MM</option>
                         {Array.from({ length: 12 }, (_, i) => (
@@ -294,7 +295,8 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       <select
                         value={cardData.expireYear}
                         onChange={(e) => setCardData({ ...cardData, expireYear: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ colorScheme: 'light' }}
                       >
                         <option value="">YYYY</option>
                         {Array.from({ length: 10 }, (_, i) => {
@@ -319,7 +321,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                         type="text"
                         value={cardData.cvc}
                         onChange={(e) => setCardData({ ...cardData, cvc: e.target.value.replace(/\D/g, '') })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="123"
                         maxLength={4}
                       />
@@ -363,7 +365,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={buyerData.name}
                       onChange={(e) => setBuyerData({ ...buyerData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.name && (
                       <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -378,7 +380,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={buyerData.surname}
                       onChange={(e) => setBuyerData({ ...buyerData, surname: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.surname && (
                       <p className="mt-1 text-sm text-red-600">{errors.surname}</p>
@@ -393,7 +395,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="email"
                       value={buyerData.email}
                       onChange={(e) => setBuyerData({ ...buyerData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.email && (
                       <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -408,7 +410,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="tel"
                       value={buyerData.gsmNumber}
                       onChange={(e) => setBuyerData({ ...buyerData, gsmNumber: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="+905350000000"
                     />
                     {errors.gsmNumber && (
@@ -424,7 +426,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={buyerData.address}
                       onChange={(e) => setBuyerData({ ...buyerData, address: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.address && (
                       <p className="mt-1 text-sm text-red-600">{errors.address}</p>
@@ -439,7 +441,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={buyerData.city}
                       onChange={(e) => setBuyerData({ ...buyerData, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.city && (
                       <p className="mt-1 text-sm text-red-600">{errors.city}</p>
@@ -454,7 +456,7 @@ export default function TrialPaymentForm({ selectedPlan, onSubmit, onBack, loadi
                       type="text"
                       value={buyerData.zipCode}
                       onChange={(e) => setBuyerData({ ...buyerData, zipCode: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 text-gray-900 placeholder-gray-500 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {errors.zipCode && (
                       <p className="mt-1 text-sm text-red-600">{errors.zipCode}</p>

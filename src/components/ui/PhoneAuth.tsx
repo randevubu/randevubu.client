@@ -221,7 +221,7 @@ export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
                   value={phoneNumber}
                   onChange={handlePhoneChange}
                   className="flex-1 px-4 py-4 text-lg placeholder-[var(--theme-foregroundMuted)] focus:outline-none bg-transparent text-[var(--theme-foreground)] transition-colors duration-300 rounded-r-2xl"
-                  placeholder="0555 123 45 67"
+                  placeholder="555 123 45 67"
                 />
               </div>
               

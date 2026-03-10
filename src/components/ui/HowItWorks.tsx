@@ -108,7 +108,7 @@ export default function HowItWorks() {
               <div className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] bg-clip-text text-transparent mb-2 transition-colors duration-300">
                 %75
               </div>
-              <div className="text-[var(--theme-foregroundSecondary)] font-medium text-sm transition-colors duration-300">Daha Az Gelmeyen Müşteri</div>
+              <div className="text-[var(--theme-foregroundSecondary)] font-medium text-sm transition-colors duration-300">Daha Az Randevu Kaybı</div>
             </div>
             <div>
               <div className="text-3xl font-bold bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] bg-clip-text text-transparent mb-2 transition-colors duration-300">

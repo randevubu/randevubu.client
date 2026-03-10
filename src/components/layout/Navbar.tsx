@@ -87,7 +87,7 @@ export default function Navbar() {
               <BrandLogo
                 size="md"
                 className="gap-2"
-                textClassName={`text-xl sm:text-lg font-bold ${isHomePage && !isScrolled ? 'text-white' : 'text-[var(--theme-navbarForeground)]'}`}
+                textClassName={`text-xl sm:text-lg font-bold ${isHomePage && !isScrolled ? 'text-white' : 'text-gray-900'}`}
                 priority
               />
             </Link>
@@ -96,16 +96,16 @@ export default function Navbar() {
           {/* Navigation links - Center */}
           <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2">
             <div className="flex items-center space-x-6">
-              <Link href="/features" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
+              <Link href="/features" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-gray-900 hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 Özellikler
               </Link>
-              <Link href="/pricing" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
+              <Link href="/pricing" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-gray-900 hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 Fiyatlandırma
               </Link>
-              <Link href="/contact" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
+              <Link href="/contact" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-gray-900 hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 İletişim
               </Link>
-              <Link href="/about" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
+              <Link href="/about" className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white' : 'text-gray-900 hover:text-[var(--theme-primary)]'} font-medium transition-colors text-sm`}>
                 Hakkımızda
               </Link>
             </div>
@@ -378,7 +378,7 @@ export default function Navbar() {
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] hover:bg-[var(--theme-backgroundSecondary)]'} p-3 rounded-xl transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center`}
+              className={`${isHomePage && !isScrolled ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-gray-900 hover:text-[var(--theme-primary)] hover:bg-gray-100'} p-3 rounded-xl transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center`}
             >
               {isMenuOpen ? (
                 <X className="w-6 h-6" />

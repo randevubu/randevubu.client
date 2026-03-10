@@ -24,7 +24,7 @@ export default function Testimonials() {
   ];
 
   const stats = [
-    { number: "2,500+", label: "Aktif Salon" },
+    { number: "100+", label: "Aktif Salon" },
     { number: "%95", label: "Müşteri Memnuniyeti" },
     { number: "1M+", label: "Rezervasyon Yapıldı" },
     { number: "%30", label: "Ortalama Gelir Artışı" }

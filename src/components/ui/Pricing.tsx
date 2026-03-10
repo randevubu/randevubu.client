@@ -16,12 +16,12 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('pricing');
-  
+
   // Check for city in URL params (for development/testing) or prop, otherwise use frontend auto-detection
   // Example: /pricing?city=Antalya or /?city=Antalya
   const cityFromUrl = searchParams?.get('city') || undefined;
   const explicitCity = cityProp || cityFromUrl;
-  
+
   // Use frontend auto-detection - detects city via IP geolocation and sends as parameter
   // If city is explicitly provided (via prop or URL), uses it; otherwise detects from IP
   const { plans, detectedCity, tier, location, isLoading, isError, error } = useSubscriptionPlansWithAutoDetection(explicitCity);
@@ -34,18 +34,18 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
     }
   };
 
-  // Create Pro plan data
+  // Create Pro plan data (fallback when not returned from API)
   const proPlan: SubscriptionPlan = {
-    id: 'pro_plan',
+    id: 'plan_pro',
     name: 'pro',
     displayName: 'Pro Plan',
     description: 'Özel ihtiyaçlarınız için özelleştirilmiş çözüm',
-    price: 0,
+    price: 2999,
     currency: 'TRY',
     billingInterval: 'monthly',
-    maxBusinesses: -1,
-    maxStaffPerBusiness: -1,
-    maxAppointmentsPerDay: -1,
+    maxBusinesses: 1,
+    maxStaffPerBusiness: 999,
+    maxAppointmentsPerDay: 0,
     features: {
       trialDays: 0,
       appointmentBooking: true,
@@ -59,21 +59,30 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
       multiLocation: true,
       prioritySupport: true,
       integrations: ['whatsapp', 'calendar', 'google', 'outlook', 'analytics', 'custom'],
-      maxServices: -1,
-      maxCustomers: -1,
-      smsQuota: -1,
-      pricingTier: tier,
+      maxServices: 0,
+      maxCustomers: 0,
+      smsQuota: 0,
+      pricingTier: tier, // Pro uses tier for display; backend uses 'PRO'
       description: [
-        'Sınırsız personel',
-        'Sınırsız randevu',
-        'Sınırsız müşteri',
-        'Sınırsız SMS',
-        'Özel entegrasyonlar',
-        'Öncelikli destek',
-        'Özel eğitim',
-        'Dedicated hesap yöneticisi',
-        'Özel raporlama',
-        'API erişimi'
+        'Unlimited staff',
+        'Unlimited SMS',
+        'Unlimited customers',
+        'Email & SMS notifications',
+        'Mobile app access',
+        'Advanced reports',
+        'WhatsApp integration',
+        'Google Calendar & Outlook integration',
+        'Unlimited appointments',
+        'Customer management',
+        'Service management',
+        'Advanced customer segmentation',
+        'API access',
+        'Dedicated account manager',
+        'Custom integrations',
+        'Priority support',
+        'Custom reporting',
+        'Custom branding',
+        'Multi-location support'
       ]
     },
     isActive: true,
@@ -106,8 +115,8 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
             <p className="text-red-600 mb-4">
               {error?.message || 'Abonelik planları yüklenemedi'}
             </p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
             >
               Tekrar Dene
@@ -135,11 +144,11 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
           <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
             💳 Abonelik Planları
           </div>
-          
+
           <h2 className="text-3xl lg:text-4xl font-black text-gray-900 mb-4 leading-tight">
             İşiniz İçin Doğru Planı Seçin
           </h2>
-          
+
           <p className="text-base lg:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
             İşinizin ihtiyaçlarına uygun planı seçin. Fiyatlandırma şehrinize göre otomatik olarak belirlenir.
           </p>
@@ -185,7 +194,7 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
               Tüm Planlar Dahil
             </h3>
-            
+
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -193,14 +202,14 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
                 </div>
                 <span className="text-gray-900 font-medium">Ücretsiz Deneme</span>
               </div>
-              
+
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <Info className="w-5 h-5 text-blue-600" />
                 </div>
                 <span className="text-gray-900 font-medium">İstediğiniz Zaman İptal</span>
               </div>
-              
+
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                   <Phone className="w-5 h-5 text-purple-600" />

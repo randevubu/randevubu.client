@@ -28,7 +28,7 @@ export default function FeaturesPage() {
           {/* Quick Stats */}
           <div className="grid md:grid-cols-4 gap-6 mb-16">
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-              <div className="text-3xl font-bold text-indigo-600 mb-2">2,500+</div>
+              <div className="text-3xl font-bold text-indigo-600 mb-2">100+</div>
               <div className="text-sm text-gray-600">Aktif Salon</div>
             </div>
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
@@ -37,7 +37,7 @@ export default function FeaturesPage() {
             </div>
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <div className="text-3xl font-bold text-emerald-600 mb-2">%75</div>
-              <div className="text-sm text-gray-600">Daha Az No-Show</div>
+              <div className="text-sm text-gray-600">Daha Az Randevu Kaybı</div>
             </div>
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <div className="text-3xl font-bold text-orange-600 mb-2">24/7</div>
@@ -70,8 +70,8 @@ export default function FeaturesPage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Veri Güvenliği</h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Müşteri bilgileriniz SSL şifrelemesi ve KVKK uyumluluğu ile korunur.
-                Düzenli yedekleme sistemi ile verileriniz güvende.
+                Müşteri bilgileriniz şifreleme teknolojileri ve KVKK uyumluluğu ile korunur.
+                Düzenli yedekleme sistemi ile verileriniz güvende kalır.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-center text-sm text-gray-600">
@@ -101,7 +101,7 @@ export default function FeaturesPage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Hızlı Performans</h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Bulut tabanlı altyapı ile yüksek hızlı performans.
+                Bulut tabanlı altyapı ile yüksek hızlı performans sağlar.
                 Mobil uyumlu arayüz ile her cihazda sorunsuz çalışır.
               </p>
               <ul className="space-y-2">

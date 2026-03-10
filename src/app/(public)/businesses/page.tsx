@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, Star, MapPin, ListFilter, ChevronDown, ChevronRight, CheckCircle, Calendar, SlidersHorizontal } from 'lucide-react';
 import { businessService, PublicBusiness } from '@/src/lib/services/business';
 import { TURKISH_CITIES, getCityLabel } from '@/src/data/turkishCities';
@@ -169,28 +170,40 @@ export default function BusinessesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3">
-        {/* Search and Filter Section */}
-        <section className="py-8 px-4 bg-white/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto">
+        {/* Search and Filter Section - Same background as home page */}
+        <section className="relative py-12 px-4 overflow-hidden">
+          <div className="absolute inset-0">
+            <Image
+              src="/hero-background.jpg"
+              alt="Salon background"
+              fill
+              className="object-cover"
+              priority
+              quality={90}
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/50" />
+          </div>
+          <div className="relative max-w-7xl mx-auto">
             {/* Search Bar */}
             <div className="max-w-5xl mx-auto mb-6">
-              <div className="bg-white/95 backdrop-blur border border-[var(--theme-border)] rounded-3xl shadow-xl">
-                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[var(--theme-border)]">
+              <div className="bg-white border border-gray-200 rounded-3xl shadow-xl">
+                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200">
                   {/* Query Input */}
                   <div className="flex flex-1 items-center gap-3 px-5 py-4">
-                    <Search className="h-5 w-5 text-[var(--theme-foregroundMuted)] shrink-0" />
+                    <Search className="h-5 w-5 text-gray-500 shrink-0" />
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="İşletme veya hizmet ara"
-                      className="flex-1 bg-transparent focus:outline-none text-base text-[var(--theme-foreground)] placeholder-[var(--theme-foregroundMuted)]"
+                      className="flex-1 bg-transparent focus:outline-none text-base text-gray-900 placeholder-gray-500"
                     />
                     {searchTerm && (
                       <button
                         type="button"
                         onClick={() => setSearchTerm('')}
-                        className="text-[var(--theme-foregroundMuted)] hover:text-[var(--theme-foreground)] transition-colors"
+                        className="text-gray-500 hover:text-gray-900 transition-colors"
                         aria-label="Aramayı temizle"
                       >
                         ✕
@@ -205,12 +218,12 @@ export default function BusinessesPage() {
                         type="button"
                         className="w-full px-5 py-4 flex items-center gap-3 text-left focus:outline-none"
                       >
-                        <MapPin className="h-5 w-5 text-[var(--theme-foregroundMuted)] shrink-0" />
+                        <MapPin className="h-5 w-5 text-gray-500 shrink-0" />
                         <div className="flex flex-col flex-1">
-                          <span className="text-xs uppercase tracking-wide text-[var(--theme-foregroundMuted)] leading-none">
+                          <span className="text-xs uppercase tracking-wide text-gray-500 leading-none">
                             Şehir
                           </span>
-                          <span className="text-[var(--theme-foreground)] font-medium">
+                          <span className="text-gray-900 font-medium">
                             {selectedCityLabel || 'Şehir seç'}
                           </span>
                         </div>
@@ -229,13 +242,13 @@ export default function BusinessesPage() {
                                 setSelectedCity('');
                               }
                             }}
-                            className="text-[var(--theme-foregroundMuted)] hover:text-[var(--theme-foreground)] transition-colors cursor-pointer"
+                            className="text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
                             aria-label="Şehir seçimini temizle"
                           >
                             ✕
                           </span>
                         )}
-                        <ChevronDown className="h-4 w-4 text-[var(--theme-foregroundMuted)]" />
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent 
@@ -269,12 +282,12 @@ export default function BusinessesPage() {
                         type="button"
                         className="w-full px-5 py-4 flex items-center gap-3 text-left focus:outline-none"
                       >
-                        <ListFilter className="h-5 w-5 text-[var(--theme-foregroundMuted)] shrink-0" />
+                        <ListFilter className="h-5 w-5 text-gray-500 shrink-0" />
                         <div className="flex flex-col flex-1">
-                          <span className="text-xs uppercase tracking-wide text-[var(--theme-foregroundMuted)] leading-none">
+                          <span className="text-xs uppercase tracking-wide text-gray-500 leading-none">
                             Kategori
                           </span>
-                          <span className="text-[var(--theme-foreground)] font-medium">
+                          <span className="text-gray-900 font-medium">
                             {selectedCategoryLabel || 'Kategori seç'}
                           </span>
                         </div>
@@ -293,13 +306,13 @@ export default function BusinessesPage() {
                                 setSelectedCategory('');
                               }
                             }}
-                            className="text-[var(--theme-foregroundMuted)] hover:text-[var(--theme-foreground)] transition-colors cursor-pointer"
+                            className="text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
                             aria-label="Kategori seçimini temizle"
                           >
                             ✕
                           </span>
                         )}
-                        <ChevronDown className="h-4 w-4 text-[var(--theme-foregroundMuted)]" />
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent 
@@ -357,14 +370,14 @@ export default function BusinessesPage() {
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] text-sm font-medium transition-colors"
+                    className="text-gray-700 hover:text-indigo-600 text-sm font-medium transition-colors"
                   >
                     Aramayı Temizle ✕
                   </button>
                 )}
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--theme-foreground)] bg-white border border-[var(--theme-border)] rounded-lg hover:bg-[var(--theme-backgroundSecondary)] transition-colors">
+                    <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                       <SlidersHorizontal className="w-4 h-4" />
                       Filtrele
                     </button>

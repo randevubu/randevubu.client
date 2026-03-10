@@ -359,7 +359,7 @@ export default function ContactPage() {
                       disabled={isSubmitting || rateLimitCooldown}
                       className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.phone ? 'border-red-300' : 'border-gray-300'
                         }`}
-                      placeholder="0555 123 45 67"
+                      placeholder="555 123 45 67"
                     />
                     {errors.phone && (
                       <p className="mt-1 text-sm text-red-600">{errors.phone}</p>

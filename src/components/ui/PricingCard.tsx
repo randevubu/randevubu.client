@@ -16,14 +16,14 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
   const t = useTranslations('pricing');
 
   // Check if this is the Pro plan
-  const isProPlan = plan.id === 'pro_plan';
+  const isProPlan = plan.id === 'plan_pro' || plan.id === 'pro_plan' || plan.name === 'pro';
 
   // Translate plan descriptions to Turkish
   const getTranslatedDescription = (plan: SubscriptionPlan) => {
     if (isProPlan) {
       return plan.description; // Already in Turkish
     }
-    
+
     // Translate common English descriptions to Turkish
     const descriptionMap: Record<string, string> = {
       'Perfect for small businesses in major cities': 'Büyük şehirlerdeki küçük işletmeler için mükemmel',
@@ -33,7 +33,7 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
       'Perfect for small businesses in smaller cities': 'Küçük şehirlerdeki küçük işletmeler için mükemmel',
       'Advanced features for growing businesses in smaller cities': 'Küçük şehirlerde büyüyen işletmeler için gelişmiş özellikler'
     };
-    
+
     return descriptionMap[plan.description] || plan.description;
   };
 
@@ -44,7 +44,7 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
       'Premium Plan': 'Premium Plan',
       'Pro Plan': 'Pro Plan'
     };
-    
+
     return planNameMap[planName] || planName;
   };
 
@@ -85,9 +85,18 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
       'Revenue analytics': 'Gelir analizi',
       'Customer feedback system': 'Müşteri geri bildirim sistemi',
       'Advanced notification settings': 'Gelişmiş bildirim ayarları',
-      'Custom business rules': 'Özel iş kuralları'
+      'Custom business rules': 'Özel iş kuralları',
+      'Unlimited staff': 'Sınırsız personel',
+      'Unlimited SMS': 'Sınırsız SMS',
+      'Advanced reports': 'Gelişmiş Raporlar',
+      'Dedicated account manager': 'Özel hesap yöneticisi',
+      'Custom integrations': 'Özel entegrasyonlar',
+      'Custom reporting': 'Özel raporlama',
+      'Custom branding': 'Özel Markalama',
+      'Multi-location support': 'Çoklu Lokasyon Desteği',
+      'Priority support': 'Öncelikli destek'
     };
-    
+
     return featureMap[feature] || feature;
   };
 
@@ -208,13 +217,12 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
 
   return (
     <div
-      className={`relative ${colors.cardBg} rounded-3xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-        isProPlan
-          ? `${colors.cardBorder} ring-2 ${colors.ring}`
-          : plan.isPopular
-            ? `${colors.border} ring-2 ${colors.ring}`
-            : 'border-gray-200 hover:border-gray-300'
-      } ${className}`}
+      className={`relative ${colors.cardBg} rounded-3xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${isProPlan
+        ? `${colors.cardBorder} ring-2 ${colors.ring}`
+        : plan.isPopular
+          ? `${colors.border} ring-2 ${colors.ring}`
+          : 'border-gray-200 hover:border-gray-300'
+        } ${className}`}
     >
       {/* Popular Badge */}
       {plan.isPopular && !isProPlan && (
@@ -239,45 +247,44 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
 
       <div className="p-8">
         {/* Header */}
-         <div className="text-center mb-8">
-           <h3 className="text-2xl font-bold text-gray-900 mb-2">
-             {getTranslatedPlanName(plan.displayName.replace(' - Tier 1', '').replace(' - Tier 2', '').replace(' - Tier 3', ''))}
-           </h3>
-          
+        <div className="text-center mb-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            {getTranslatedPlanName(plan.displayName.replace(' - Tier 1', '').replace(' - Tier 2', '').replace(' - Tier 3', ''))}
+          </h3>
+
           <p className="text-gray-600 mb-6">
             {getTranslatedDescription(plan)}
           </p>
-          
-           {/* Price */}
-           <div className="mb-6">
-             <div className="flex items-baseline justify-center">
-               {isProPlan ? (
-                 <div className="text-5xl font-black bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent leading-none pt-2 pb-2">
-                   Özel
-                 </div>
-               ) : (
-                 <>
-                   <span className="text-5xl font-black text-gray-900">
-                     {formatPrice(plan.price, plan.currency)}
-                   </span>
-                   <span className="text-xl text-gray-500 ml-2">
-                     /{plan.billingInterval.toLowerCase() === 'monthly' ? 'ay' : 'yıl'}
-                   </span>
-                 </>
-               )}
-             </div>
-           </div>
+
+          {/* Price */}
+          <div className="mb-6">
+            <div className="flex items-baseline justify-center">
+              {isProPlan ? (
+                <div className="text-5xl font-black bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent leading-none pt-2 pb-2">
+                  Özel
+                </div>
+              ) : (
+                <>
+                  <span className="text-5xl font-black text-gray-900">
+                    {formatPrice(plan.price, plan.currency)}
+                  </span>
+                  <span className="text-xl text-gray-500 ml-2">
+                    /{plan.billingInterval.toLowerCase() === 'monthly' ? 'ay' : 'yıl'}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Select Button */}
           <button
             onClick={handleSelect}
-            className={`w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-xl ${
-              isProPlan
+            className={`w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-xl ${isProPlan
+              ? `bg-gradient-to-r ${colors.gradient} text-white hover:shadow-2xl`
+              : plan.isPopular
                 ? `bg-gradient-to-r ${colors.gradient} text-white hover:shadow-2xl`
-                : plan.isPopular
-                  ? `bg-gradient-to-r ${colors.gradient} text-white hover:shadow-2xl`
-                  : 'bg-gray-900 text-white hover:bg-gray-800'
-            }`}
+                : 'bg-gray-900 text-white hover:bg-gray-800'
+              }`}
           >
             {isProPlan ? 'İletişime Geç' : plan.isPopular ? 'Hemen Başla' : 'Planı Seç'}
           </button>
@@ -285,102 +292,192 @@ export default function PricingCard({ plan, tier, onSelect, className = '' }: Pr
 
         {/* Features */}
         <div className="space-y-4">
-          {/* Staff Limit */}
-          {plan.maxStaffPerBusiness > 0 && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                En fazla {plan.maxStaffPerBusiness} personel
-              </span>
-            </div>
-          )}
-
-          {/* SMS Quota */}
-          {plan.features.smsQuota > 0 && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                Aylık {plan.features.smsQuota.toLocaleString('tr-TR')} SMS
-              </span>
-            </div>
-          )}
-
-          {/* Key Features */}
-          {plan.features.apiAccess && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                API Erişimi
-              </span>
-            </div>
-          )}
-
-          {plan.features.customBranding && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                Özel Markalama
-              </span>
-            </div>
-          )}
-
-          {plan.features.multiLocation && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                Çoklu Lokasyon Desteği
-              </span>
-            </div>
-          )}
-
-          {plan.features.advancedReports && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                Gelişmiş Raporlar
-              </span>
-            </div>
-          )}
-
-          {plan.features.prioritySupport && (
-            <div className="flex items-start space-x-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-gray-700 text-sm leading-relaxed">
-                Öncelikli Destek
-              </span>
-            </div>
-          )}
-
-          {/* Description Features */}
-          {plan.features.description && Array.isArray(plan.features.description) && (
-            <>
-              {plan.features.description.slice(0, 5).map((feature, index) => {
-                const Icon = getFeatureIcon(feature);
-                return (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                      <Check className="w-3 h-3 text-white" />
+          {isProPlan ? (
+            /* Pro plan: use only description array from seed - no derived sections */
+            plan.features.description && Array.isArray(plan.features.description) && (
+              <>
+                {plan.features.description.map((feature, index) => {
+                  let cleanedFeature = feature;
+                  if (cleanedFeature === 'Sınırsız randevu, Mobil uygulama erişimi') {
+                    cleanedFeature = 'Sınırsız randevu';
+                  }
+                  return (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-gray-700 text-sm leading-relaxed">
+                        {getTranslatedFeature(cleanedFeature)}
+                      </span>
                     </div>
-                     <span className="text-gray-700 text-sm leading-relaxed">
-                       {getTranslatedFeature(feature)}
-                     </span>
+                  );
+                })}
+              </>
+            )
+          ) : (
+            <>
+              {/* Staff Limit */}
+              {plan.maxStaffPerBusiness > 0 && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
                   </div>
-                );
-              })}
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    En fazla {plan.maxStaffPerBusiness} personel
+                  </span>
+                </div>
+              )}
+
+              {/* SMS Quota */}
+              {plan.features.smsQuota > 0 && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    Aylık {plan.features.smsQuota.toLocaleString('tr-TR')} SMS
+                  </span>
+                </div>
+              )}
+
+              {/* Unlimited Customers */}
+              {(!plan.features.maxCustomers || plan.features.maxCustomers === 0) && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    Sınırsız müşteri
+                  </span>
+                </div>
+              )}
+
+              {/* Email & SMS Notifications - always show when plan has both */}
+              {plan.features?.emailNotifications && plan.features?.smsNotifications && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    E-posta ve SMS bildirimleri
+                  </span>
+                </div>
+              )}
+
+              {/* Mobile app access - All plans */}
+              <div className="flex items-start space-x-3">
+                <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-gray-700 text-sm leading-relaxed">
+                  Mobil uygulama erişimi
+                </span>
+              </div>
+
+              {/* Key Features */}
+              {plan.features.apiAccess && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    API Erişimi
+                  </span>
+                </div>
+              )}
+
+              {plan.features.customBranding && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    Özel Markalama
+                  </span>
+                </div>
+              )}
+
+              {plan.features.multiLocation && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    Çoklu Lokasyon Desteği
+                  </span>
+                </div>
+              )}
+
+              {plan.features.advancedReports && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    Gelişmiş Raporlar
+                  </span>
+                </div>
+              )}
+
+              {plan.features.prioritySupport && (
+                <div className="flex items-start space-x-3">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-gray-700 text-sm leading-relaxed">
+                    Öncelikli destek
+                  </span>
+                </div>
+              )}
+
+              {/* Description Features (exclude items already shown above) */}
+              {plan.features.description && Array.isArray(plan.features.description) && (
+                <>
+                  {plan.features.description
+                    .filter((f) => {
+                      const dupes = [
+                        'Up to 1 staff member',
+                        'Up to 5 staff members',
+                        '1,000 SMS per month',
+                        '1,500 SMS per month',
+                        'Unlimited customers',
+                        'Custom branding & themes',
+                        'Advanced reporting & analytics',
+                        'Advanced reporting and analytics',
+                        'Priority email & phone support',
+                        'API access',
+                        'All Basic features',
+                        'Online appointment booking system',
+                        'Online appointment booking',
+                        'Email & SMS notifications',
+                        'Email and SMS notifications',
+                        'Email support',
+                        'Mobile app access',
+                        'Mobil uygulama erişimi'
+                      ];
+                      if (dupes.includes(f)) return false;
+                      if (f.toLowerCase().includes('online appointment booking')) return false;
+                      if (f.toLowerCase().includes('email support')) return false;
+                      return true;
+                    })
+                    .map((feature, index) => {
+                      let cleanedFeature = feature;
+                      if (cleanedFeature === 'Sınırsız randevu, Mobil uygulama erişimi') {
+                        cleanedFeature = 'Sınırsız randevu';
+                      }
+                      return (
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${colors.gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                          <span className="text-gray-700 text-sm leading-relaxed">
+                            {getTranslatedFeature(cleanedFeature)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </>
+              )}
             </>
           )}
         </div>

@@ -227,7 +227,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={cardData.cardHolderName}
                 onChange={(e) => setCardData({ ...cardData, cardHolderName: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.cardHolderName ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="Ahmet Yılmaz"
@@ -242,7 +242,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={cardData.cardNumber}
                 onChange={handleCardNumberChange}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.cardNumber ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="1234 5678 9012 3456"
@@ -257,10 +257,11 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
               <select
                 value={cardData.expireMonth}
                 onChange={(e) => setCardData({ ...cardData, expireMonth: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.expireMonth ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 text-gray-900 bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.expireMonth ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}
                 disabled={loading}
+                style={{ colorScheme: 'light' }}
               >
                 <option value="">Ay</option>
                 {Array.from({ length: 12 }, (_, i) => (
@@ -277,10 +278,11 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
               <select
                 value={cardData.expireYear}
                 onChange={(e) => setCardData({ ...cardData, expireYear: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.expireYear ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 text-gray-900 bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.expireYear ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}
                 disabled={loading}
+                style={{ colorScheme: 'light' }}
               >
                 <option value="">Yıl</option>
                 {Array.from({ length: 20 }, (_, i) => {
@@ -301,8 +303,8 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={cardData.cvc}
                 onChange={(e) => setCardData({ ...cardData, cvc: e.target.value.replace(/\D/g, '') })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.cvc ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-3 py-2 text-gray-900 placeholder-gray-500 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                  errors.cvc ? 'border-red-500 bg-red-50' : 'border-gray-300'
                 }`}
                 placeholder="123"
                 maxLength={4}
@@ -316,8 +318,9 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
               <select
                 value={installment}
                 onChange={(e) => setInstallment(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 disabled={loading}
+                style={{ colorScheme: 'light' }}
               >
                 <option value="1">1 (Taksitsiz)</option>
                 <option value="2">2 taksit</option>
@@ -371,7 +374,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={buyerData.name}
                 onChange={(e) => setBuyerData({ ...buyerData, name: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="Ahmet"
@@ -388,7 +391,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={buyerData.surname}
                 onChange={(e) => setBuyerData({ ...buyerData, surname: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.surname ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="Yılmaz"
@@ -405,7 +408,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="email"
                 value={buyerData.email}
                 onChange={(e) => setBuyerData({ ...buyerData, email: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="ornek@email.com"
@@ -422,7 +425,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="tel"
                 value={buyerData.phone}
                 onChange={(e) => setBuyerData({ ...buyerData, phone: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="+905350000000"
@@ -439,7 +442,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={buyerData.address}
                 onChange={(e) => setBuyerData({ ...buyerData, address: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.address ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="Adres bilgilerinizi girin"
@@ -456,7 +459,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={buyerData.city}
                 onChange={(e) => setBuyerData({ ...buyerData, city: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.city ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="İstanbul"
@@ -473,7 +476,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
                 type="text"
                 value={buyerData.zipCode}
                 onChange={(e) => setBuyerData({ ...buyerData, zipCode: e.target.value })}
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
+                className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 border-2 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                   errors.zipCode ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                 }`}
                 placeholder="34000"

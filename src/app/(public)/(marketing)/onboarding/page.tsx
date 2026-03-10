@@ -651,30 +651,30 @@ export default function OnboardingPage() {
       <BusinessGuard>
         <div className="min-h-screen max-w-7xl mx-auto pb-8">
           {/* Hero Section */}
-          <section className="relative bg-white pt-20 pb-8">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
+          <section className="relative pt-20 pb-8">
+            <div className="relative max-w-4xl mx-auto px-4 lg:px-6">
+              <div className="mx-auto max-w-2xl rounded-[3rem] bg-white px-8 py-12 text-center shadow-[0_8px_30px_rgb(0_0_0/0.06)] border border-gray-100/80">
+                <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
+                  🏢 İşletme Kaydı
+                </div>
 
-            <div className="relative max-w-4xl mx-auto px-4 lg:px-6 text-center">
-              <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
-                🏢 İşletme Kaydı
+                <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
+                  İşletmenizi
+                  <br />
+                  <span className="text-indigo-600">Kaydedin</span>
+                </h1>
+
+                <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+                  İşletmeniz hakkında bilgileri girin ve randevu yönetim sisteminizi kullanmaya başlayın.
+                </p>
               </div>
-
-              <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
-                İşletmenizi
-                <br />
-                <span className="text-indigo-600">Kaydedin</span>
-              </h1>
-
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-8">
-                İşletmeniz hakkında bilgileri girin ve randevu yönetim sisteminizi kullanmaya başlayın.
-              </p>
             </div>
           </section>
 
           {/* Form Section */}
           <section className="pb-8">
             <div className="max-w-2xl mx-auto px-4 sm:px-6 mobile-form-container pb-4">
-              <div className="bg-white rounded-3xl shadow-md border border-gray-100 mx-2 sm:mx-0">
+              <div className="bg-white rounded-[3rem] shadow-[0_8px_30px_rgb(0_0_0/0.06)] border border-gray-100/80 mx-2 sm:mx-0 overflow-hidden">
                 {/* General Error Message */}
                 {errors.general && (
                   <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
@@ -706,19 +706,20 @@ export default function OnboardingPage() {
                         data-field="businessTypeId"
                         value={formData.businessTypeId}
                         onChange={(e) => handleInputChange('businessTypeId', e.target.value)}
-                        className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${hasInteracted && errors.businessTypeId
+                        className={`w-full px-4 py-4 text-gray-900 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer ${hasInteracted && errors.businessTypeId
                           ? 'border-red-400 bg-red-50 focus:ring-red-500/20 focus:border-red-500'
                           : formData.businessTypeId
                             ? 'border-green-400 bg-green-50'
                             : 'border-gray-200'
                           }`}
                         disabled={loading}
+                        style={{ colorScheme: 'light' }}
                       >
-                        <option value="" disabled>
+                        <option value="" disabled className="text-gray-900 bg-white">
                           İşletme türünü seçin...
                         </option>
                         {businessTypes.map((type) => (
-                          <option key={type.id} value={type.id}>
+                          <option key={type.id} value={type.id} className="text-gray-900 bg-white">
                             {type.displayName}
                           </option>
                         ))}
@@ -740,7 +741,7 @@ export default function OnboardingPage() {
                         type="text"
                         value={formData.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
-                        className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.name
+                        className={`w-full px-4 py-4 text-gray-900 placeholder-gray-500 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.name
                           ? 'border-red-400 bg-red-50 focus:ring-red-500/20 focus:border-red-500'
                           : formData.name && formData.name.trim().length >= 3
                             ? 'border-green-400 bg-green-50'
@@ -773,7 +774,7 @@ export default function OnboardingPage() {
                       <textarea
                         value={formData.description}
                         onChange={(e) => handleInputChange('description', e.target.value)}
-                        className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        className="w-full px-4 py-4 text-gray-900 placeholder-gray-500 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                         rows={4}
                         placeholder="İşletmeniz hakkında kısa bir açıklama..."
                         disabled={loading}
@@ -821,7 +822,7 @@ export default function OnboardingPage() {
                           type="text"
                           value={formData.neighborhood || ''}
                           onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-                          className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.neighborhood
+                          className={`w-full px-4 py-4 text-gray-900 placeholder-gray-500 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.neighborhood
                             ? 'border-red-400 bg-red-50 focus:ring-red-500/20 focus:border-red-500'
                             : formData.neighborhood && formData.neighborhood.trim().length > 0
                               ? 'border-green-400 bg-green-50'
@@ -847,7 +848,7 @@ export default function OnboardingPage() {
                             type="text"
                             value={formData.street || ''}
                             onChange={(e) => handleInputChange('street', e.target.value)}
-                            className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.street
+                            className={`w-full px-4 py-4 text-gray-900 placeholder-gray-500 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.street
                               ? 'border-red-400 bg-red-50 focus:ring-red-500/20 focus:border-red-500'
                               : formData.street && formData.street.trim().length > 0
                                 ? 'border-green-400 bg-green-50'
@@ -872,7 +873,7 @@ export default function OnboardingPage() {
                             type="text"
                             value={formData.buildingNumber || ''}
                             onChange={(e) => handleInputChange('buildingNumber', e.target.value)}
-                            className={`w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.buildingNumber
+                            className={`w-full px-4 py-4 text-gray-900 placeholder-gray-500 bg-gray-50 border-2 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field ${hasInteracted && errors.buildingNumber
                               ? 'border-red-400 bg-red-50 focus:ring-red-500/20 focus:border-red-500'
                               : formData.buildingNumber && formData.buildingNumber.trim().length > 0
                                 ? 'border-green-400 bg-green-50'
@@ -898,7 +899,7 @@ export default function OnboardingPage() {
                           type="text"
                           value={formData.apartment || ''}
                           onChange={(e) => handleInputChange('apartment', e.target.value)}
-                          className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field"
+                          className="w-full px-4 py-4 text-gray-900 placeholder-gray-500 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all mobile-form-field"
                           placeholder="Örnek: 3. Kat, Daire 15"
                           disabled={loading}
                         />

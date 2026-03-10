@@ -143,13 +143,13 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ mobile = false, compact =
         {/* Theme toggle button */}
         <button
           onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
-          className="flex items-center justify-center w-10 h-8 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center w-10 h-8 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
           title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
         >
           {mode === 'light' ? (
-            <Moon className="w-4 h-4 text-gray-600" />
+            <Moon className="w-4 h-4" />
           ) : (
-            <Sun className="w-4 h-4 text-gray-600" />
+            <Sun className="w-4 h-4" />
           )}
         </button>
         
@@ -164,12 +164,12 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ mobile = false, compact =
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-center rounded-lg bg-white text-[var(--theme-foregroundSecondary)] hover:bg-white/80 transition-colors border border-[var(--theme-border)] ${
+        className={`flex items-center justify-center rounded-lg bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors border border-gray-200 ${
           compact ? 'p-1.5' : 'p-2'
         }`}
         title="Theme Settings"
       >
-        <div className="text-[var(--theme-foregroundSecondary)]">
+        <div className="text-gray-700">
           {getModeIcon(mode)}
         </div>
       </button>

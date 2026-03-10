@@ -131,8 +131,8 @@ export default function AddPaymentMethodForm({
           value={formData.cardHolderName}
           onChange={(e) => handleInputChange('cardHolderName', e.target.value)}
           placeholder="John Doe"
-          className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-            formErrors.cardHolderName ? 'border-red-300' : 'border-gray-300'
+          className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 bg-white border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+            formErrors.cardHolderName ? 'border-red-300 bg-red-50' : 'border-gray-300'
           }`}
         />
         {formErrors.cardHolderName && (
@@ -151,8 +151,8 @@ export default function AddPaymentMethodForm({
           value={formData.cardNumber}
           onChange={(e) => handleCardNumberChange(e.target.value)}
           placeholder="1234 5678 9012 3456"
-          className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-            formErrors.cardNumber ? 'border-red-300' : 'border-gray-300'
+          className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 bg-white border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+            formErrors.cardNumber ? 'border-red-300 bg-red-50' : 'border-gray-300'
           }`}
         />
         {formErrors.cardNumber && (
@@ -170,9 +170,10 @@ export default function AddPaymentMethodForm({
             id="expireMonth"
             value={formData.expireMonth}
             onChange={(e) => handleInputChange('expireMonth', e.target.value)}
-            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-              formErrors.expireMonth ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-4 py-3 text-gray-900 bg-white border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              formErrors.expireMonth ? 'border-red-300 bg-red-50' : 'border-gray-300'
             }`}
+            style={{ colorScheme: 'light' }}
           >
             <option value="">Ay</option>
             {months.map(month => (
@@ -194,9 +195,10 @@ export default function AddPaymentMethodForm({
             id="expireYear"
             value={formData.expireYear}
             onChange={(e) => handleInputChange('expireYear', e.target.value)}
-            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-              formErrors.expireYear ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-4 py-3 text-gray-900 bg-white border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              formErrors.expireYear ? 'border-red-300 bg-red-50' : 'border-gray-300'
             }`}
+            style={{ colorScheme: 'light' }}
           >
             <option value="">Yıl</option>
             {years.map(year => (
@@ -225,8 +227,8 @@ export default function AddPaymentMethodForm({
               }
             }}
             placeholder="123"
-            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-              formErrors.cvc ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-4 py-3 text-gray-900 placeholder-gray-500 bg-white border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              formErrors.cvc ? 'border-red-300 bg-red-50' : 'border-gray-300'
             }`}
           />
           {formErrors.cvc && (

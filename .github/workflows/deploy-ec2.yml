@@ -1,0 +1,67 @@
+# CD: Builds and deploys the Next.js UI to EC2 (Server A)
+# Secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, EC2_HOST, EC2_SSH_KEY, ECR_REPOSITORY_URI
+# Optional: EC2_USERNAME (default: ubuntu), NEXT_PUBLIC_API_URL (default: https://api.randevubu.com/api)
+
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: eu-central-1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        env:
+          ECR_URI: ${{ secrets.ECR_REPOSITORY_URI }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f Dockerfile.prod \
+            --build-arg NEXT_PUBLIC_API_URL="${{ vars.NEXT_PUBLIC_API_URL || 'https://api.randevubu.com/api' }}" \
+            --build-arg NEXT_PUBLIC_VAPID_PUBLIC_KEY="${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" \
+            -t $ECR_URI:$IMAGE_TAG \
+            -t $ECR_URI:latest \
+            .
+
+      - name: Push to Amazon ECR
+        env:
+          ECR_URI: ${{ secrets.ECR_REPOSITORY_URI }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push $ECR_URI:$IMAGE_TAG
+          docker push $ECR_URI:latest
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            ECR_URI="${{ secrets.ECR_REPOSITORY_URI }}"
+            ECR_REGISTRY=$(echo $ECR_URI | cut -d'/' -f1)
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+            docker pull ${ECR_URI}:latest
+            docker stop randevubu-client 2>/dev/null || true
+            docker rm randevubu-client 2>/dev/null || true
+            docker run -d --name randevubu-client --restart unless-stopped -p 3000:3000 ${ECR_URI}:latest

@@ -245,13 +245,14 @@ export default function BusinessCreationForm({ onSuccess, onError }: BusinessCre
               <select
                 value={formData.businessTypeId}
                 onChange={(e) => handleInputChange('businessTypeId', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-4 py-3 text-gray-900 bg-white border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer ${
                   errors.businessTypeId ? 'border-red-500' : 'border-gray-300'
                 }`}
                 disabled={loading}
+                style={{ colorScheme: 'light' }}
               >
                 {businessTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
+                  <option key={type.id} value={type.id} className="text-gray-900 bg-white">
                     {type.displayName}
                   </option>
                 ))}

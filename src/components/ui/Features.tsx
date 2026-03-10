@@ -1,9 +1,23 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Calendar, Smartphone, Bell, Users, BarChart3, Shield } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 type ColorKey = 'indigo' | 'purple' | 'pink' | 'emerald' | 'orange' | 'blue';
 
 export default function Features() {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  const handleCtaClick = () => {
+    if (isAuthenticated) {
+      router.push('/onboarding');
+    } else {
+      router.push('/auth');
+    }
+  };
   const features: Array<{
     icon: React.ReactNode;
     title: string;
@@ -96,14 +110,9 @@ export default function Features() {
                   <h3 className="text-xl font-bold text-[var(--theme-cardForeground)] mb-3 leading-tight">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-[var(--theme-foregroundSecondary)] leading-relaxed mb-6">
+                  <p className="text-sm text-[var(--theme-foregroundSecondary)] leading-relaxed">
                     {feature.description}
                   </p>
-                  
-                  {/* Quick Action */}
-                  <button className="w-full bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foreground)] py-3 rounded-xl font-semibold hover:bg-[var(--theme-primary)] hover:text-white transition-all text-sm">
-                    Keşfet →
-                  </button>
                 </div>
               ))}
             </div>
@@ -119,7 +128,7 @@ export default function Features() {
           {/* Mobile Stats */}
           <div className="mt-16 grid grid-cols-3 gap-4 text-center">
             <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
-              <div className="text-2xl font-black text-[var(--theme-primary)] mb-1">2.5K+</div>
+              <div className="text-2xl font-black text-[var(--theme-primary)] mb-1">70+</div>
               <div className="text-xs text-[var(--theme-foregroundSecondary)]">Aktif Salon</div>
             </div>
             <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
@@ -143,7 +152,7 @@ export default function Features() {
                 <p className="text-sm opacity-90 mb-6">
                   30 saniyede kurulum, ücretsiz deneme
                 </p>
-                <button className="bg-white text-[var(--theme-primary)] px-8 py-4 rounded-2xl font-bold text-base shadow-xl">
+                <button onClick={handleCtaClick} className="bg-white text-[var(--theme-primary)] px-8 py-4 rounded-2xl font-bold text-base shadow-xl">
                   Başla →
                 </button>
               </div>
@@ -206,10 +215,10 @@ export default function Features() {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button className="bg-white text-[var(--theme-primary)] px-8 py-4 sm:py-3 rounded-2xl font-bold hover:bg-[var(--theme-backgroundSecondary)] transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
+                  <button onClick={handleCtaClick} className="bg-white text-[var(--theme-primary)] px-8 py-4 sm:py-3 rounded-2xl font-bold hover:bg-[var(--theme-backgroundSecondary)] transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
                     Ücretsiz Deneme Başlat
                   </button>
-                  <button className="border-2 border-white/30 text-white px-8 py-4 sm:py-3 rounded-2xl font-bold hover:border-white hover:bg-white/10 transition-all duration-300 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
+                  <button onClick={handleCtaClick} className="border-2 border-white/30 text-white px-8 py-4 sm:py-3 rounded-2xl font-bold hover:border-white hover:bg-white/10 transition-all duration-300 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
                     Demo Planla
                   </button>
                 </div>
