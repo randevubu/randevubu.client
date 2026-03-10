@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Info, Phone, Check, X, Star, Heart, Zap, Shield, Users, Building, Calendar, Clock, User, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, CheckCircle, AlertTriangle, Ban, Lock, Unlock, Eye, EyeOff, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Save, Loader2, Moon, Sun, XCircle, Tag, Bell, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Info, Phone, Check, X, Star, Heart, Zap, Shield, Users, Building, Calendar, Clock, User, Mail, MapPin, Settings, BarChart3, Home, CreditCard, FileText, HelpCircle, CheckCircle, AlertTriangle, Ban, Lock, Unlock, Eye, EyeOff, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Search, Filter, SortAsc, SortDesc, MoreVertical, MoreHorizontal, Download, Upload, Save, Loader2, Moon, Sun, XCircle, Tag, Bell, Plus, Edit, Trash2, RefreshCw, Table2 } from 'lucide-react';
 import { useSubscriptionPlansWithAutoDetection, getTierDisplayName } from '../../lib/hooks/useSubscriptionPlans';
 import { SubscriptionPlan } from '../../types/subscription';
 import PricingCard from './PricingCard';
+import PlanComparisonTable from './PlanComparisonTable';
 
 interface PricingProps {
   onPlanSelect?: (plan: SubscriptionPlan) => void;
@@ -15,6 +17,7 @@ interface PricingProps {
 export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showComparisonTable, setShowComparisonTable] = useState(false);
   const t = useTranslations('pricing');
 
   // Check for city in URL params (for development/testing) or prop, otherwise use frontend auto-detection
@@ -223,16 +226,27 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                Sorularınız mı Var?
-              </button>
-              <button className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-2xl font-semibold hover:border-indigo-600 hover:text-indigo-600 transition-all">
+              <button
+                onClick={() => setShowComparisonTable(true)}
+                className="group flex items-center justify-center gap-2 bg-white border-2 border-indigo-600 text-indigo-600 px-8 py-3.5 rounded-2xl font-semibold hover:bg-indigo-600 hover:text-white transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ring-2 ring-indigo-600/20"
+              >
+                <Table2 className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
                 Karşılaştırma Tablosu
+              </button>
+              <button
+                onClick={() => router.push('/contact')}
+                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Sorularınız mı Var?
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {showComparisonTable && (
+        <PlanComparisonTable plans={sortedPlans} onClose={() => setShowComparisonTable(false)} />
+      )}
     </section>
   );
 }

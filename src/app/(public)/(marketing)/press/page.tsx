@@ -3,8 +3,8 @@
 import { ExternalLink, TrendingUp, Users, Calendar, Award, Zap } from 'lucide-react';
 
 const stats = [
-  { label: 'Aktif İşletme', value: '10.000+', icon: Users },
-  { label: 'Aylık Randevu', value: '500K+', icon: Calendar },
+  { label: 'Aktif İşletme', value: '100+', icon: Users },
+  { label: 'Aylık Randevu', value: '100K+', icon: Calendar },
   { label: 'Platform Uptime', value: '99.9%', icon: TrendingUp },
   { label: 'Ortalama Yanıt Süresi', value: '24 sa', icon: Zap }
 ];

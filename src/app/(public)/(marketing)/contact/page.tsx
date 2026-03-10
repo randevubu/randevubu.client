@@ -118,15 +118,28 @@ export default function ContactPage() {
         // Auto-hide success message after 5 seconds
         setTimeout(() => setSuccess(false), 5000);
       } else {
-        // Handle API validation errors
-        if (response.error?.details) {
-          const newErrors: FormErrors = {};
-          response.error.details.forEach(detail => {
-            newErrors[detail.field as keyof FormErrors] = detail.message;
-          });
+        // Handle API validation errors - details can be array [{field, message}] or object {field: message}
+        const newErrors: FormErrors = {};
+        const details = response.error?.details;
+
+        try {
+          if (Array.isArray(details)) {
+            details.forEach((detail: { field: string; message: string }) => {
+              newErrors[detail.field as keyof FormErrors] = detail.message;
+            });
+          } else if (details && typeof details === 'object') {
+            Object.entries(details).forEach(([field, message]) => {
+              newErrors[field as keyof FormErrors] = typeof message === 'string' ? message : Array.isArray(message) ? message[0] : String(message);
+            });
+          }
+        } catch {
+          // Ignore parse errors
+        }
+
+        if (Object.keys(newErrors).length > 0) {
           setErrors(newErrors);
         } else {
-          setErrors({ general: response.message || 'Mesaj gönderilemedi' });
+          setErrors({ general: (response as { message?: string }).message || 'Mesaj gönderilemedi' });
         }
       }
     } catch (error: unknown) {
@@ -194,15 +207,16 @@ export default function ContactPage() {
 
               <div className="space-y-6 mb-12">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center text-white">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Telefon</h3>
-                    <p className="text-gray-600">+90 (212) 555-0123</p>
-                    <p className="text-sm text-gray-500">Pazartesi - Cuma: 09:00 - 18:00</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Telefon</h3>
+                    <p className="text-sm text-gray-500 mb-2">Pazartesi - Cuma: 09:00 - 18:00</p>
+                    <a href="tel:+905551756598" className="block text-gray-600 hover:text-indigo-600 hover:underline transition-colors">Eren Can Turan — 0555 175 65 98</a>
+                    <a href="tel:+905466604336" className="block text-gray-600 hover:text-indigo-600 hover:underline transition-colors mt-1">M. Cihan Işıldar — 0546 660 4336</a>
                   </div>
                 </div>
 
@@ -214,7 +228,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">E-posta</h3>
-                    <p className="text-gray-600">info@randevubu.com</p>
+                    <a href="mailto:info.randevubu@gmail.com" className="text-gray-600 hover:text-indigo-600 hover:underline transition-colors">info.randevubu@gmail.com</a>
                     <p className="text-sm text-gray-500">24 saat içinde yanıtlıyoruz</p>
                   </div>
                 </div>
@@ -229,22 +243,23 @@ export default function ContactPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">Adres</h3>
                     <p className="text-gray-600">
-                      Maslak Mahallesi, Bilim Sokağı<br />
-                      No: 5/A, 34398 Şişli/İstanbul
+                      Kemalpaşa Mah. Bahçıvan Sk. No: 1/7B<br />
+                      İnegöl/Bursa
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white flex-shrink-0">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">WhatsApp</h3>
-                    <p className="text-gray-600">+90 (555) 123-4567</p>
-                    <p className="text-sm text-gray-500">Hızlı destek için mesaj gönderin</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">WhatsApp</h3>
+                    <p className="text-sm text-gray-500 mb-2">Hızlı destek için mesaj gönderin</p>
+                    <a href="https://wa.me/905551756598" target="_blank" rel="noopener noreferrer" className="block text-gray-600 hover:text-green-600 hover:underline transition-colors">Eren Can Turan — 0555 175 65 98</a>
+                    <a href="https://wa.me/905466604336" target="_blank" rel="noopener noreferrer" className="block text-gray-600 hover:text-green-600 hover:underline transition-colors mt-1">M. Cihan Işıldar — 0546 660 4336</a>
                   </div>
                 </div>
               </div>
@@ -271,8 +286,8 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <div>
-              <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl p-8 border border-[var(--theme-border)]">
+                <h2 className="text-3xl font-bold text-[var(--theme-cardForeground)] mb-8">
                   Mesaj Gönderin
                 </h2>
 
@@ -303,7 +318,7 @@ export default function ContactPage() {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                         Ad Soyad *
                       </label>
                       <input
@@ -314,7 +329,7 @@ export default function ContactPage() {
                         value={formData.name}
                         onChange={handleInputChange}
                         disabled={isSubmitting || rateLimitCooldown}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.name ? 'border-red-300' : 'border-gray-300'
+                        className={`w-full px-4 py-3 bg-[var(--theme-card)] text-[var(--theme-cardForeground)] placeholder-[var(--theme-foregroundMuted)] border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.name ? 'border-red-500' : 'border-[var(--theme-border)]'
                           }`}
                         placeholder="Ahmet Yılmaz"
                       />
@@ -324,7 +339,7 @@ export default function ContactPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="email" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                         E-posta *
                       </label>
                       <input
@@ -335,7 +350,7 @@ export default function ContactPage() {
                         value={formData.email}
                         onChange={handleInputChange}
                         disabled={isSubmitting || rateLimitCooldown}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.email ? 'border-red-300' : 'border-gray-300'
+                        className={`w-full px-4 py-3 bg-[var(--theme-card)] text-[var(--theme-cardForeground)] placeholder-[var(--theme-foregroundMuted)] border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.email ? 'border-red-500' : 'border-[var(--theme-border)]'
                           }`}
                         placeholder="ahmet@example.com"
                       />
@@ -346,7 +361,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="phone" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                       Telefon *
                     </label>
                     <input
@@ -357,7 +372,7 @@ export default function ContactPage() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={isSubmitting || rateLimitCooldown}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.phone ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 bg-[var(--theme-card)] text-[var(--theme-cardForeground)] placeholder-[var(--theme-foregroundMuted)] border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.phone ? 'border-red-500' : 'border-[var(--theme-border)]'
                         }`}
                       placeholder="555 123 45 67"
                     />
@@ -368,7 +383,7 @@ export default function ContactPage() {
 
 
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="subject" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                       Konu *
                     </label>
                     <input
@@ -379,7 +394,7 @@ export default function ContactPage() {
                       value={formData.subject}
                       onChange={handleInputChange}
                       disabled={isSubmitting || rateLimitCooldown}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.subject ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 bg-[var(--theme-card)] text-[var(--theme-cardForeground)] placeholder-[var(--theme-foregroundMuted)] border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${errors.subject ? 'border-red-500' : 'border-[var(--theme-border)]'
                         }`}
                       placeholder="Destek Talebi"
                     />
@@ -389,7 +404,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="message" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                       Mesaj *
                     </label>
                     <textarea
@@ -400,7 +415,7 @@ export default function ContactPage() {
                       value={formData.message}
                       onChange={handleInputChange}
                       disabled={isSubmitting || rateLimitCooldown}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none ${errors.message ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 bg-[var(--theme-card)] text-[var(--theme-cardForeground)] placeholder-[var(--theme-foregroundMuted)] border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none ${errors.message ? 'border-red-500' : 'border-[var(--theme-border)]'
                         }`}
                       placeholder="Mesajınızı buraya yazın..."
                     />

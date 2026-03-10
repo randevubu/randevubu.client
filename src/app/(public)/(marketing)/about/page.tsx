@@ -4,8 +4,8 @@ import { Users, Target, Zap, Shield, Heart, TrendingUp, Award, Globe, Rocket, Ch
 import Link from 'next/link';
 
 const stats = [
-  { number: '10.000+', label: 'Aktif İşletme' },
-  { number: '500K+', label: 'Aylık Randevu' },
+  { number: '100+', label: 'Aktif İşletme' },
+  { number: '100K+', label: 'Aylık Randevu' },
   { number: '81', label: 'İlde Hizmet' },
   { number: '99.9%', label: 'Uptime' }
 ];
@@ -47,7 +47,7 @@ export default function AboutPage() {
               Randevu Yönetiminde Dijital Çözümler
             </h1>
             <p className="text-xl text-indigo-100 max-w-3xl mx-auto leading-relaxed mb-8">
-              2019'dan bu yana işletmelerin randevu yönetimini dijitalleştirmek, 
+              2025'ten bu yana işletmelerin randevu yönetimini dijitalleştirmek, 
               verimliliği artırmak ve müşteri deneyimini geliştirmek için çalışıyoruz.
             </p>
           </div>
@@ -113,14 +113,14 @@ export default function AboutPage() {
               otomasyon teknolojileri ile sektörde yeni standartlar belirlemek.
             </p>
             <div className="mt-6 bg-white/50 rounded-xl p-6">
-              <h3 className="font-bold text-gray-900 mb-3">2025 Hedefleri</h3>
+              <h3 className="font-bold text-gray-900 mb-3">2026 Hedefleri</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-indigo-600">50K+</div>
+                  <div className="text-2xl font-bold text-indigo-600">5K+</div>
                   <div className="text-sm text-gray-600">İşletme</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-indigo-600">5M+</div>
+                  <div className="text-2xl font-bold text-indigo-600">2M+</div>
                   <div className="text-sm text-gray-600">Aylık Randevu</div>
                 </div>
               </div>
@@ -162,12 +162,12 @@ export default function AboutPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-6">Hikayemiz</h2>
               <p className="text-lg text-indigo-100 leading-relaxed mb-6">
-                2019 yılında, işletmelerin randevu yönetimi konusunda yaşadığı zorlukları 
-                gözlemledik. Telefon bazlı rezervasyonlar, unutulan randevular ve manuel takip 
-                sistemi nedeniyle oluşan kayıplar, işletmeleri zaman ve gelir kaybına uğratıyordu.
+                2025 yılında, işletmelerin randevu yönetimi konusunda yaşadığı zorlukları gözlemledik. 
+                Telefon bazlı rezervasyonlar, unutulan randevular ve manuel takip sistemi nedeniyle 
+                oluşan kayıplar, işletmeleri zaman ve gelir kaybına uğratıyordu.
               </p>
               <p className="text-lg text-indigo-100 leading-relaxed">
-                Bu sorunları çözmek için yola çıktık ve bugün, binlerce işletmeye güvenilir, 
+                Bu sorunları çözmek için yola çıktık ve bugün, onlarca işletmeye güvenilir, 
                 kolay kullanılabilir ve ölçeklenebilir bir çözüm sunuyoruz.
               </p>
             </div>
@@ -183,7 +183,7 @@ export default function AboutPage() {
               Bizimle Yolculuğa Başlayın
             </h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              RandevuBu ailesine katılan binlerce işletme gibi, dijital dönüşüm yolculuğunuzu başlatın.
+              RandevuBu ailesine katılan onlarca işletme gibi, dijital dönüşüm yolculuğunuzu başlatın.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

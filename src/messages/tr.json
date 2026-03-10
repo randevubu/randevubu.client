@@ -244,7 +244,7 @@
       "yearly": "yıl",
       "smsPerMonth": "SMS/ay",
       "allPlansBenefits": "Tüm Planlar İçin Özel Avantajlar",
-      "freeTrial": "15 gün ücretsiz deneme",
+      "freeTrial": "7 gün ücretsiz deneme",
       "cancelAnytime": "İstediğiniz zaman iptal",
       "turkishSupport": "Türkçe müşteri desteği",
       "pricingNote": "Tüm fiyatlar KDV dahildir. Ödeme güvenliği SSL sertifikası ile korunmaktadır.",
@@ -259,9 +259,9 @@
       "badge": "Fiyatlandırma",
       "title": "Salonunuza Uygun",
       "titleHighlight": "Fiyat Planı Seçin",
-      "description": "İşletmenizin boyutuna ve ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma seçenekleri. Tüm planlar 15 gün ücretsiz deneme ile başlar.",
+      "description": "İşletmenizin boyutuna ve ihtiyaçlarına göre tasarlanmış esnek fiyatlandırma seçenekleri. Tüm planlar 7 gün ücretsiz deneme ile başlar.",
       "valueProps": {
-        "freeTrial": "15 Gün Ücretsiz Deneme",
+        "freeTrial": "7 Gün Ücretsiz Deneme",
         "cancelAnytime": "İstediğiniz Zaman İptal",
         "support": "7/24 Türkçe Destek"
       }
@@ -272,8 +272,8 @@
       "subtitle": "Fiyatlandırma ile ilgili merak ettikleriniz",
       "questions": {
         "creditCard": {
-          "question": "Ücretsiz deneme süresi boyunca kredi kartı bilgisi isteniy mu?",
-          "answer": "Hayır, 15 gün ücretsiz deneme için herhangi bir ödeme bilgisi istenmez. Deneme süresi bitiminde devam etmek isterseniz ödeme bilgilerinizi girebilirsiniz."
+          "question": "Ücretsiz deneme süresi boyunca kredi kartı bilgisi isteniyor mu?",
+          "answer": "Ücretsiz denemenizi başlatmak için kart bilgilerinizle 1 TL'lik bir ön onay işlemi yapmanız yeterlidir (bu tutar kontrol amaçlıdır). Deneme süresi boyunca dilediğiniz an iptal edebilirsiniz ve bu süre zarfında asıl üyelik ücreti tahsil edilmez."
         },
         "planChange": {
           "question": "Plan değiştirme işlemi nasıl yapılır?",
@@ -282,6 +282,10 @@
         "smsCredits": {
           "question": "SMS kredilerimi başka aya aktarabilir miyim?",
           "answer": "SMS kredileri kullanılmadığı takdirde bir sonraki aya aktarılır. Maksimum 3 aylık birikimi destekliyoruz."
+        },
+        "smsPackageExhausted": {
+          "question": "SMS paketim biterse ne yapabilirim?",
+          "answer": "Paketiniz tükendiğinde, mevcut ay için ek SMS paketi satın alabilir veya kullanım ihtiyacınıza göre planınızı bir üst pakete yükselterek kesintisiz hizmet almaya devam edebilirsiniz."
         },
         "cancellation": {
           "question": "İptal işlemi nasıl yapılır?",

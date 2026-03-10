@@ -1,9 +1,11 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Pricing } from '../../../../components';
 import { useTranslations } from 'next-intl';
 
 export default function PricingPage() {
+  const router = useRouter();
   const t = useTranslations('pricing');
   return (
     <div className="min-h-screen">
@@ -105,6 +107,15 @@ export default function PricingPage() {
 
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                {t('faq.questions.smsPackageExhausted.question')}
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                {t('faq.questions.smsPackageExhausted.answer')}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 {t('faq.questions.cancellation.question')}
               </h3>
               <p className="text-gray-600 leading-relaxed">
@@ -132,10 +143,16 @@ export default function PricingPage() {
                 {t('cta.description')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <button
+                  onClick={() => router.push('/contact')}
+                  className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
                   {t('cta.callUs')}
                 </button>
-                <button className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-2xl font-semibold hover:border-indigo-600 hover:text-indigo-600 transition-all">
+                <button
+                  onClick={() => router.push('/contact')}
+                  className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-2xl font-semibold hover:border-indigo-600 hover:text-indigo-600 transition-all"
+                >
                   {t('cta.liveSupport')}
                 </button>
               </div>

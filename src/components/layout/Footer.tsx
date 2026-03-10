@@ -119,7 +119,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-xs text-[var(--theme-foregroundSecondary)]">
-              © 2024 RandevuBu. Tüm hakları saklıdır.
+              © 2025 RandevuBu. Tüm hakları saklıdır.
             </p>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function Footer() {
           <div className="border-t border-[var(--theme-border)] mt-12 pt-8 transition-colors duration-300">
             <div className="flex justify-between items-center">
               <p className="text-[var(--theme-foregroundSecondary)] text-sm transition-colors duration-300">
-                © 2024 RandevuBu. Tüm hakları saklıdır.
+                © 2025 RandevuBu. Tüm hakları saklıdır.
               </p>
               <div className="flex items-center space-x-6">
                 <span className="text-[var(--theme-foregroundSecondary)] text-sm transition-colors duration-300">🇹🇷 Türkçe</span>

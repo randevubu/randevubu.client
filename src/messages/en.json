@@ -238,7 +238,7 @@
       "yearly": "year",
       "smsPerMonth": "SMS/month",
       "allPlansBenefits": "Special Benefits for All Plans",
-      "freeTrial": "15-day free trial",
+      "freeTrial": "7-day free trial",
       "cancelAnytime": "Cancel anytime",
       "turkishSupport": "Turkish customer support",
       "pricingNote": "All prices include VAT. Payment security is protected with SSL certificate.",
@@ -253,9 +253,9 @@
       "badge": "Pricing",
       "title": "Choose the Right",
       "titleHighlight": "Plan for Your Salon",
-      "description": "Flexible pricing options designed for your business size and needs. All plans start with a 15-day free trial.",
+      "description": "Flexible pricing options designed for your business size and needs. All plans start with a 7-day free trial.",
       "valueProps": {
-        "freeTrial": "15-Day Free Trial",
+        "freeTrial": "7-Day Free Trial",
         "cancelAnytime": "Cancel Anytime",
         "support": "24/7 Turkish Support"
       }
@@ -267,7 +267,7 @@
       "questions": {
         "creditCard": {
           "question": "Is a credit card required during the free trial period?",
-          "answer": "No, no payment information is required for the 15-day free trial. You can enter your payment details when you want to continue after the trial period."
+          "answer": "To start your free trial, a 1 TL pre-authorization charge is required (this amount is for verification only). You can cancel anytime during the trial and the actual membership fee will not be charged during this period."
         },
         "planChange": {
           "question": "How do I change my plan?",
@@ -276,6 +276,10 @@
         "smsCredits": {
           "question": "Can I carry over my SMS credits to the next month?",
           "answer": "SMS credits are carried over to the next month if unused. We support up to 3 months of accumulation."
+        },
+        "smsPackageExhausted": {
+          "question": "What can I do when my SMS package runs out?",
+          "answer": "When your package is exhausted, you can purchase additional SMS packages for the current month or upgrade your plan to a higher tier according to your usage needs to continue receiving uninterrupted service."
         },
         "cancellation": {
           "question": "How do I cancel my subscription?",
