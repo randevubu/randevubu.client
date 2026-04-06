@@ -253,8 +253,13 @@ export default function RequirementsPage() {
                   Herhangi bir teknik sorun yaşıyorsanız veya yardıma ihtiyacınız varsa:
                 </p>
                 <div className="space-y-2 text-sm text-gray-700">
-                  <p><strong className="text-blue-900">E-posta:</strong> info@randevubu.com</p>
-                  <p><strong className="text-blue-900">Telefon:</strong> 0545 449 60 42</p>
+                  <p>
+                    <strong className="text-blue-900">E-posta:</strong>{' '}
+                    <a href="mailto:info.randevubu@gmail.com" className="text-blue-700 hover:underline">
+                      info.randevubu@gmail.com
+                    </a>
+                  </p>
+                  <p><strong className="text-blue-900">Telefon:</strong> 0555 175 65 98 / 0546 660 4336</p>
                 </div>
               </div>
             </section>

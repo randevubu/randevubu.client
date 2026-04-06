@@ -17,7 +17,8 @@ const faqs: FAQ[] = [
   {
     category: 'Genel',
     question: 'RandevuBu nedir?',
-    answer: 'RandevuBu, işletmelerin randevu yönetimini dijitalleştiren kapsamlı bir platformdur. Rezervasyon, müşteri yönetimi, personel yönetimi ve raporlama özellikleri sunar.'
+    answer:
+      'RandevuBu; randevu ve rezervasyon süreçlerinizi tarayıcı veya uygulama üzerinden yürütmenize imkân veren bulut tabanlı bir yazılımdır. Takvim, müşteri kayıtları, personel ve yetkiler, hatırlatma bildirimleri ile raporlama gibi modüller abonelik paketinize göre açılır.'
   },
   {
     category: 'Genel',
@@ -72,7 +73,8 @@ const faqs: FAQ[] = [
   {
     category: 'Teknik Destek',
     question: 'Yardıma ihtiyacım var. Nereye başvurabilirim?',
-    answer: 'info@randevubu.com adresinden bizimle iletişime geçebilir veya 0545 449 60 42 numaralı telefondan arayabilirsiniz. Destek taleplerinize 24 saat içinde yanıt veriyoruz.'
+    answer:
+      'info.randevubu@gmail.com adresinden bizimle iletişime geçebilir veya 0555 175 65 98 / 0546 660 4336 numaralı telefonlardan arayabilirsiniz. Destek taleplerinize 24 saat içinde yanıt veriyoruz.'
   },
   {
     category: 'Güvenlik',
@@ -233,17 +235,31 @@ export default function HelpPage() {
                 SSS bölümünde aradığınız cevabı bulamadıysanız, uzman ekibimiz size yardımcı olmaya hazır!
               </p>
               <div className="space-y-4">
-                <a href="/contact" className="flex items-center space-x-3 text-gray-700 hover:text-indigo-600 transition-colors">
-                  <Phone className="w-5 h-5 text-indigo-600" />
-                  <span className="font-medium">0545 449 60 42</span>
-                </a>
-                <a href="/contact" className="flex items-center space-x-3 text-gray-700 hover:text-indigo-600 transition-colors">
+                <div className="flex items-start space-x-3 text-gray-700">
+                  <Phone className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-1 font-medium">
+                    <a href="tel:+905551756598" className="block hover:text-indigo-600 transition-colors">
+                      Eren Can Turan — 0555 175 65 98
+                    </a>
+                    <a href="tel:+905466604336" className="block hover:text-indigo-600 transition-colors">
+                      M. Cihan Işıldar — 0546 660 4336
+                    </a>
+                  </div>
+                </div>
+                <a
+                  href="mailto:info.randevubu@gmail.com"
+                  className="flex items-center space-x-3 text-gray-700 hover:text-indigo-600 transition-colors"
+                >
                   <Mail className="w-5 h-5 text-indigo-600" />
-                  <span className="font-medium">info@randevubu.com</span>
+                  <span className="font-medium">info.randevubu@gmail.com</span>
                 </a>
-                <div className="flex items-center space-x-3 text-gray-700">
-                  <MapPin className="w-5 h-5 text-indigo-600" />
-                  <span className="text-sm">MERKEZ/KÜTAHYA</span>
+                <div className="flex items-start space-x-3 text-gray-700">
+                  <MapPin className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">
+                    Kemalpaşa Mah. Bahçıvan Sk. No: 1/7B
+                    <br />
+                    İnegöl/BURSA
+                  </span>
                 </div>
               </div>
             </div>

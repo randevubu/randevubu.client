@@ -162,7 +162,9 @@ export default function ContactPage() {
       } else if (error instanceof Error && error.message.includes('Bağlantı hatası')) {
         setErrors({ general: error.message });
       } else {
-        setErrors({ general: 'Mesaj gönderilirken bir hata oluştu. Lütfen tekrar deneyin.' });
+        setErrors({
+          general: errorMessage && errorMessage !== 'Mesaj gönderilemedi' ? errorMessage : 'Mesaj gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
+        });
       }
     } finally {
       setIsSubmitting(false);
@@ -170,24 +172,24 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[var(--theme-background)]">
 
       {/* Hero Section */}
-      <section className="relative bg-white pt-20 pb-16">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/30"></div>
+      <section className="relative bg-[var(--theme-background)] pt-20 pb-16">
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--theme-primary)]/10 via-[var(--theme-background)] to-[var(--theme-accent)]/10" />
 
         <div className="relative max-w-6xl mx-auto px-4 lg:px-6 text-center">
-          <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
+          <div className="inline-flex items-center px-3 py-1 rounded-full font-medium text-xs mb-4 bg-[var(--theme-primary)]/15 text-[var(--theme-primary)]">
             📞 İletişim
           </div>
 
-          <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl lg:text-5xl font-black text-[var(--theme-foreground)] mb-6 leading-tight">
             Bizimle
             <br />
-            <span className="text-indigo-600">İletişime Geçin</span>
+            <span className="text-[var(--theme-primary)]">İletişime Geçin</span>
           </h1>
 
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
+          <p className="text-lg text-[var(--theme-foregroundSecondary)] max-w-3xl mx-auto leading-relaxed mb-12">
             Sorularınız, önerileriniz veya destek talepleriniz için 7/24 buradayız.
             Size en iyi şekilde yardımcı olmak için sabırsızlanıyoruz.
           </p>
@@ -195,13 +197,13 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Content */}
-      <section className="py-16">
+      <section className="py-16 bg-[var(--theme-background)]">
         <div className="max-w-6xl mx-auto px-4 lg:px-6">
           <div className="grid lg:grid-cols-2 gap-12">
 
             {/* Contact Info */}
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              <h2 className="text-3xl font-bold text-[var(--theme-foreground)] mb-8">
                 İletişim Bilgileri
               </h2>
 
@@ -213,10 +215,10 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Telefon</h3>
-                    <p className="text-sm text-gray-500 mb-2">Pazartesi - Cuma: 09:00 - 18:00</p>
-                    <a href="tel:+905551756598" className="block text-gray-600 hover:text-indigo-600 hover:underline transition-colors">Eren Can Turan — 0555 175 65 98</a>
-                    <a href="tel:+905466604336" className="block text-gray-600 hover:text-indigo-600 hover:underline transition-colors mt-1">M. Cihan Işıldar — 0546 660 4336</a>
+                    <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-2">Telefon</h3>
+                    <p className="text-sm text-[var(--theme-foregroundMuted)] mb-2">Pazartesi - Cuma: 09:00 - 18:00</p>
+                    <a href="tel:+905551756598" className="block text-[var(--theme-primary)] font-medium hover:underline transition-colors">Eren Can Turan — 0555 175 65 98</a>
+                    <a href="tel:+905466604336" className="block text-[var(--theme-primary)] font-medium hover:underline transition-colors mt-1">M. Cihan Işıldar — 0546 660 4336</a>
                   </div>
                 </div>
 
@@ -227,9 +229,9 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">E-posta</h3>
-                    <a href="mailto:info.randevubu@gmail.com" className="text-gray-600 hover:text-indigo-600 hover:underline transition-colors">info.randevubu@gmail.com</a>
-                    <p className="text-sm text-gray-500">24 saat içinde yanıtlıyoruz</p>
+                    <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-1">E-posta</h3>
+                    <a href="mailto:info.randevubu@gmail.com" className="text-[var(--theme-primary)] font-medium hover:underline transition-colors break-all">info.randevubu@gmail.com</a>
+                    <p className="text-sm text-[var(--theme-foregroundMuted)] mt-1">24 saat içinde yanıtlıyoruz</p>
                   </div>
                 </div>
 
@@ -241,10 +243,10 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Adres</h3>
-                    <p className="text-gray-600">
+                    <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-1">Adres</h3>
+                    <p className="text-[var(--theme-foregroundSecondary)] leading-relaxed">
                       Kemalpaşa Mah. Bahçıvan Sk. No: 1/7B<br />
-                      İnegöl/Bursa
+                      İnegöl/BURSA
                     </p>
                   </div>
                 </div>
@@ -256,29 +258,29 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">WhatsApp</h3>
-                    <p className="text-sm text-gray-500 mb-2">Hızlı destek için mesaj gönderin</p>
-                    <a href="https://wa.me/905551756598" target="_blank" rel="noopener noreferrer" className="block text-gray-600 hover:text-green-600 hover:underline transition-colors">Eren Can Turan — 0555 175 65 98</a>
-                    <a href="https://wa.me/905466604336" target="_blank" rel="noopener noreferrer" className="block text-gray-600 hover:text-green-600 hover:underline transition-colors mt-1">M. Cihan Işıldar — 0546 660 4336</a>
+                    <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-2">WhatsApp</h3>
+                    <p className="text-sm text-[var(--theme-foregroundMuted)] mb-2">Hızlı destek için mesaj gönderin</p>
+                    <a href="https://wa.me/905551756598" target="_blank" rel="noopener noreferrer" className="block text-[#25D366] font-medium hover:underline transition-colors">Eren Can Turan — 0555 175 65 98</a>
+                    <a href="https://wa.me/905466604336" target="_blank" rel="noopener noreferrer" className="block text-[#25D366] font-medium hover:underline transition-colors mt-1">M. Cihan Işıldar — 0546 660 4336</a>
                   </div>
                 </div>
               </div>
 
               {/* Working Hours */}
-              <div className="bg-gray-50 rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Çalışma Saatleri</h3>
+              <div className="bg-[var(--theme-backgroundSecondary)] border border-[var(--theme-border)] rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-[var(--theme-foreground)] mb-4">Çalışma Saatleri</h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Pazartesi - Cuma</span>
-                    <span className="font-medium text-gray-900">09:00 - 18:00</span>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-[var(--theme-foregroundSecondary)]">Pazartesi - Cuma</span>
+                    <span className="font-medium text-[var(--theme-foreground)] shrink-0">09:00 - 18:00</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Cumartesi</span>
-                    <span className="font-medium text-gray-900">10:00 - 16:00</span>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-[var(--theme-foregroundSecondary)]">Cumartesi</span>
+                    <span className="font-medium text-[var(--theme-foreground)] shrink-0">10:00 - 16:00</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Pazar</span>
-                    <span className="font-medium text-gray-900">Kapalı</span>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-[var(--theme-foregroundSecondary)]">Pazar</span>
+                    <span className="font-medium text-[var(--theme-foreground)] shrink-0">Kapalı</span>
                   </div>
                 </div>
               </div>
@@ -294,7 +296,7 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Success Message */}
                   {success && (
-                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl">
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 dark:text-emerald-100 px-4 py-3 rounded-xl">
                       <div className="flex items-center space-x-2">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -306,7 +308,7 @@ export default function ContactPage() {
 
                   {/* Error Message */}
                   {errors.general && (
-                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl">
+                    <div className="bg-red-500/10 border border-red-500/30 text-red-900 dark:text-red-100 px-4 py-3 rounded-xl">
                       <div className="flex items-center space-x-2">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />

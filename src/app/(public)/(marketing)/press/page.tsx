@@ -6,13 +6,13 @@ const stats = [
   { label: 'Aktif İşletme', value: '100+', icon: Users },
   { label: 'Aylık Randevu', value: '100K+', icon: Calendar },
   { label: 'Platform Uptime', value: '99.9%', icon: TrendingUp },
-  { label: 'Ortalama Yanıt Süresi', value: '24 sa', icon: Zap }
+  { label: 'Ortalama Yanıt Süresi', value: '24 saat', icon: Zap }
 ];
 
 const facts = [
   '2025 yılından bu yana hizmet vermekteyiz',
   'Türkiye\'nin birçok ilinde aktif kullanıcılarımız var',
-  'ISO 27001 standartlarında güvenlik uygulamaları',
+  'Veri ve erişim güvenliğine yönelik teknik tedbirlere önem veriyoruz',
   'KVKK\'ya tam uyumlu platform',
   '7/24 müşteri desteği sunuyoruz'
 ];
@@ -55,13 +55,14 @@ export default function PressPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Hakkımızda</h2>
           <div className="space-y-4 text-gray-700 leading-relaxed">
             <p>
-              <strong>RandevuBu</strong>, işletmelerin randevu yönetimini dijitalleştiren kapsamlı bir platformdur. 
-              2019 yılında kurulmuş olan şirketimiz, berberden estetik kliniğine, spor salonundan diş hekimine 
-              kadar geniş bir yelpazede hizmet veren işletmelere çözüm sunmaktadır.
+              <strong>RandevuBu</strong>, hizmet sektöründeki işletmelerin randevu takibini tek ekranda toplamasına
+              yardımcı olan bulut tabanlı bir çözümdür. 2025 yılında faaliyete geçen ekibimiz; berber ve kuaförden
+              estetik ve sağlık birimlerine, spor ve benzeri rezervasyon kullanan işletmelere yönelik ürün geliştirir.
             </p>
             <p>
-              Modern teknoloji altyapısı, kullanıcı dostu arayüzü ve kapsamlı özellikleri ile RandevuBu, 
-              işletmelerin müşteri ilişkilerini güçlendirir ve iş akışlarını optimize eder.
+              RandevuBu; müsaitlik görünümü, otomatik hatırlatmalar ve raporlama gibi parçaları sade bir arayüzle
+              bir araya getirir. Amaç, telefon trafiğini azaltmak, iptalleri azaltmak ve ekip ile müşteri arasındaki
+              iletişimi daha öngörülebilir kılmaktır.
             </p>
           </div>
 
@@ -101,7 +102,7 @@ export default function PressPage() {
                   </div>
                   <div>
                     <div className="text-sm text-indigo-100">E-posta</div>
-                    <div className="font-semibold">press@randevubu.com</div>
+                    <div className="font-semibold">info.randevubu@gmail.com</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -110,7 +111,7 @@ export default function PressPage() {
                   </div>
                   <div>
                     <div className="text-sm text-indigo-100">Telefon</div>
-                    <div className="font-semibold">0545 449 60 42</div>
+                    <div className="font-semibold">0555 175 65 98 / 0546 660 43 36</div>
                   </div>
                 </div>
               </div>

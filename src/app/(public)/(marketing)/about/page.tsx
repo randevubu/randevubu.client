@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Users, Target, Zap, Shield, Heart, TrendingUp, Award, Globe, Rocket, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -37,8 +38,19 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden text-white py-20">
+        <div className="absolute inset-0">
+          <Image
+            src="/herobackground2.png"
+            alt=""
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-flex items-center px-3 py-1 bg-white/20 rounded-full text-white font-medium text-xs mb-6">
               🚀 RandevuBu
@@ -47,8 +59,8 @@ export default function AboutPage() {
               Randevu Yönetiminde Dijital Çözümler
             </h1>
             <p className="text-xl text-indigo-100 max-w-3xl mx-auto leading-relaxed mb-8">
-              2025'ten bu yana işletmelerin randevu yönetimini dijitalleştirmek, 
-              verimliliği artırmak ve müşteri deneyimini geliştirmek için çalışıyoruz.
+              2025&apos;ten bu yana randevu yoğunluğu olan işletmelerin takvimini sadeleştirmek, ekibin günlük iş
+              yükünü hafifletmek ve müşteriye daha net bir rezervasyon deneyimi sunmak için ürün geliştiriyoruz.
             </p>
           </div>
         </div>

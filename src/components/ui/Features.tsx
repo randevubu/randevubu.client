@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Calendar, Smartphone, Bell, Users, BarChart3, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -143,13 +144,22 @@ export default function Features() {
 
           {/* Mobile CTA */}
           <div className="mt-12">
-            <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-3xl p-6 text-center text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-              <div className="relative">
-                <h3 className="text-xl font-black mb-2">
+            <div className="rounded-3xl overflow-hidden relative">
+              <div className="absolute inset-0">
+                <Image
+                  src="/backgroundthema2.png"
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                />
+                <div className="absolute inset-0 bg-black/35" />
+              </div>
+              <div className="relative p-6 text-center text-white">
+                <h3 className="text-xl font-black mb-2 [text-shadow:0_2px_8px_rgba(0,0,0,0.9),0_0_20px_rgba(0,0,0,0.5)]">
                   Hemen Dene!
                 </h3>
-                <p className="text-sm opacity-90 mb-6">
+                <p className="text-sm text-white/95 mb-6 [text-shadow:0_2px_8px_rgba(0,0,0,0.9),0_0_20px_rgba(0,0,0,0.5)]">
                   30 saniyede kurulum, ücretsiz deneme
                 </p>
                 <button onClick={handleCtaClick} className="bg-white text-[var(--theme-primary)] px-8 py-4 rounded-2xl font-bold text-base shadow-xl">
@@ -197,28 +207,30 @@ export default function Features() {
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-3xl blur-2xl opacity-10 transition-colors duration-300"></div>
-            <div className="relative bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-3xl p-8 sm:p-8 lg:p-12 text-white text-center overflow-hidden transition-colors duration-300">
-              <div className="absolute top-0 left-0 w-full h-full opacity-10">
-                <div className="absolute top-6 left-6 w-12 h-12 bg-white rounded-full"></div>
-                <div className="absolute top-16 right-12 w-8 h-8 bg-white rounded-full"></div>
-                <div className="absolute bottom-12 left-16 w-6 h-6 bg-white rounded-full"></div>
-                <div className="absolute bottom-6 right-6 w-16 h-16 bg-white rounded-full"></div>
+            <div className="relative rounded-3xl overflow-hidden">
+              <div className="absolute inset-0">
+                <Image
+                  src="/backgroundthema2.png"
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 1200px"
+                />
+                <div className="absolute inset-0 bg-black/35" />
               </div>
-              
-              <div className="relative">
-                <h3 className="text-2xl sm:text-3xl lg:text-3xl font-black mb-6 sm:mb-4">
+              <div className="relative p-8 sm:p-8 lg:p-12 text-white text-center">
+                <h3 className="text-2xl sm:text-3xl lg:text-3xl font-black mb-6 sm:mb-4 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.9),0_0_20px_rgba(0,0,0,0.5)]">
                   Salonunuzu dönüştürmeye hazır mısınız?
                 </h3>
-                <p className="text-lg sm:text-base lg:text-lg text-[var(--theme-primaryForeground)]/80 mb-8 max-w-2xl mx-auto transition-colors duration-300">
+                <p className="text-lg sm:text-base lg:text-lg text-white mb-8 max-w-2xl mx-auto [text-shadow:0_2px_8px_rgba(0,0,0,0.9),0_0_20px_rgba(0,0,0,0.5)]">
                   Daha akıllı rezervasyona geçen binlerce salon sahibine katılın.
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button onClick={handleCtaClick} className="bg-white text-[var(--theme-primary)] px-8 py-4 sm:py-3 rounded-2xl font-bold hover:bg-[var(--theme-backgroundSecondary)] transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
+                  <button onClick={handleCtaClick} className="bg-white text-[var(--theme-primary)] px-8 py-4 sm:py-3 rounded-2xl font-bold hover:bg-white/90 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
                     Ücretsiz Deneme Başlat
                   </button>
-                  <button onClick={handleCtaClick} className="border-2 border-white/30 text-white px-8 py-4 sm:py-3 rounded-2xl font-bold hover:border-white hover:bg-white/10 transition-all duration-300 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
+                  <button onClick={handleCtaClick} className="border-2 border-white/80 text-white px-8 py-4 sm:py-3 rounded-2xl font-bold hover:border-white hover:bg-white/20 transition-all duration-300 text-base min-h-[56px] sm:min-h-[auto] flex items-center justify-center">
                     Demo Planla
                   </button>
                 </div>

@@ -140,25 +140,10 @@ export default function Pricing({ onPlanSelect, city: cityProp }: PricingProps =
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-10 bg-white">
       <div className="max-w-6xl mx-auto px-4 lg:px-6">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center px-3 py-1 bg-indigo-50 rounded-full text-indigo-600 font-medium text-xs mb-4">
-            💳 Abonelik Planları
-          </div>
-
-          <h2 className="text-3xl lg:text-4xl font-black text-gray-900 mb-4 leading-tight">
-            İşiniz İçin Doğru Planı Seçin
-          </h2>
-
-          <p className="text-base lg:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            İşinizin ihtiyaçlarına uygun planı seçin. Fiyatlandırma şehrinize göre otomatik olarak belirlenir.
-          </p>
-        </div>
-
         {/* Location Info */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <div className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-700">
             <MapPin className="w-4 h-4 mr-2" />
             <span>

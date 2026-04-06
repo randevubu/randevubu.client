@@ -170,8 +170,8 @@ export default function StatusPage() {
               Sistem durumu normal görünüyorsa ancak bir sorun yaşıyorsanız, lütfen bize ulaşın:
             </p>
             <div className="flex flex-wrap gap-4 text-sm">
-              <span><strong>E-posta:</strong> info@randevubu.com</span>
-              <span><strong>Telefon:</strong> 0545 449 60 42</span>
+              <span><strong>E-posta:</strong> info.randevubu@gmail.com</span>
+              <span><strong>Telefon:</strong> 0555 175 65 98 / 0546 660 43 36</span>
             </div>
           </div>
         </div>

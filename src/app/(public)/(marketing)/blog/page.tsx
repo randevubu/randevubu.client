@@ -1,8 +1,8 @@
 'use client';
 
+import React, { useState } from 'react';
 import { ArrowRight, Calendar, Clock, Search, User } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
 
 interface BlogPost {
   id: string;
@@ -47,6 +47,7 @@ const blogPosts: BlogPost[] = [
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
+
 
   const categories = ['Tümü', ...new Set(blogPosts.map(post => post.category))];
 
@@ -171,26 +172,133 @@ export default function BlogPage() {
           </div>
         )}
 
-        {/* CTA Section */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white text-center">
+
+        {/* Newsletter CTA Section */}
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white text-center mt-12 mb-8">
           <h2 className="text-2xl font-bold mb-4">Güncellemelerden Haberdar Olun</h2>
           <p className="text-indigo-100 mb-6 max-w-2xl mx-auto">
-            Yeni blog yazılarımızdan ve RandevuBu güncellemelerinden 
+            Yeni blog yazılarımızdan ve RandevuBu güncellemelerinden
             haberdar olmak için bültenimize abone olun
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="E-posta adresiniz"
-              className="flex-1 px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
-            />
-            <button className="bg-white text-indigo-600 font-bold py-3 px-6 rounded-xl hover:bg-gray-100 transition-colors whitespace-nowrap">
-              Abone Ol
-            </button>
+
+          <div className="max-w-md mx-auto text-left">
+            <NewsletterInlineForm />
           </div>
         </div>
+
       </div>
     </div>
+  );
+}
+
+function NewsletterInlineForm() {
+  const [email, setEmail] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [kvkkAccepted, setKvkkAccepted] = React.useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+
+    if (!kvkkAccepted) {
+      setError('Lütfen KVKK ve Aydınlatma Metni\'ni onaylayın.');
+      return;
+    }
+
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError('Lütfen e-posta adresinizi girin.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      setError('Geçerli bir e-posta adresi giriniz.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { apiClient } = await import('@/src/lib/api');
+      const response = await apiClient.post('/api/v1/newsletter', { email: trimmed });
+
+      if (response.data?.success) {
+        setSuccess(true);
+        setEmail('');
+        setTimeout(() => setSuccess(false), 5000);
+      } else {
+        const message =
+          (response.data && (response.data.message || response.data.error?.message)) ||
+          'Abonelik sırasında bir hata oluştu. Lütfen tekrar deneyin.';
+        setError(message);
+      }
+    } catch (err: any) {
+      // Daha anlaşılır hata mesajları
+      const maybeAxios = err as { response?: { status?: number; data?: any } };
+
+      if (maybeAxios.response?.status === 429) {
+        setError('Çok fazla abonelik isteği gönderdiniz. Lütfen bir saat sonra tekrar deneyin.');
+      } else {
+        const message =
+          maybeAxios.response?.data?.message ||
+          maybeAxios.response?.data?.error?.message ||
+          err?.message ||
+          'Abonelik sırasında bir hata oluştu. Lütfen tekrar deneyin.';
+        setError(message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      {success && (
+        <div className="bg-emerald-500/10 border border-emerald-300 text-emerald-50 px-3 py-2 rounded-lg text-sm">
+          Bülten aboneliğiniz alındı. Teşekkür ederiz!
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-500/10 border border-red-300 text-red-50 px-3 py-2 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+      <div className="flex flex-row gap-2 items-center">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ornek@example.com"
+          className="w-full px-3 py-2 rounded-lg text-sm text-gray-900 placeholder:text-indigo-200 border border-indigo-200 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-indigo-600 focus:ring-white bg-white/95"
+          disabled={isSubmitting}
+        />
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="shrink-0 bg-white text-indigo-600 font-medium text-sm py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed border border-indigo-200"
+        >
+          {isSubmitting ? 'Gönderiliyor...' : 'Abone Ol'}
+        </button>
+      </div>
+      <label className="flex items-start gap-2 text-[10px] text-indigo-100 leading-snug cursor-pointer select-none">
+        <input
+          type="checkbox"
+          className="mt-[2px] h-3 w-3 rounded border-indigo-300 text-indigo-600 focus:ring-0"
+          checked={kvkkAccepted}
+          onChange={(e) => setKvkkAccepted(e.target.checked)}
+          disabled={isSubmitting}
+        />
+        <span>
+          Kişisel verilerimin KVKK kapsamında işlenmesine ilişkin{' '}
+          <span className="underline underline-offset-2">
+            Aydınlatma Metni ve Açık Rıza Metni
+          </span>
+          'ni okudum, kabul ediyorum.
+        </span>
+      </label>
+    </form>
   );
 }
 

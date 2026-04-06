@@ -12,9 +12,9 @@ export default function CookiesPage() {
           <div className="prose prose-sm sm:prose max-w-none">
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-600 p-6 mb-8 rounded-r-lg">
               <p className="text-sm text-gray-700 leading-relaxed">
-                Bu Çerez Politikası, <strong>RandevuBu</strong> platformu tarafından kullanılan çerezler hakkında bilgi verir. 
-                Web sitemizi ziyaret ettiğinizde, aşağıda açıklanan şekilde çerezler kullanarak sizinle daha kişiselleştirilmiş 
-                bir deneyim sunmayı amaçlıyoruz.
+                Bu metinde, RandevuBu'da hangi çerezleri neden kullandığımızı ve bunları nasıl yönetebileceğinizi açıkca
+                anlatıyoruz. Amacımız; oturumunuzu güvenli tutmak, tercihlerinizi hatırlamak ve size daha akici bir deneyim
+                sunmak.
               </p>
             </div>
 
@@ -22,14 +22,14 @@ export default function CookiesPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">1. Çerezler Nedir?</h2>
               
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  Çerezler (cookies), bir web sitesini ziyaret ettiğinizde bilgisayarınıza veya mobil cihazınıza yerleştirilen 
-                  küçük metin dosyalarıdır. Bu dosyalar, web sitesinin siz ve tercihlerinize göre daha verimli bir şekilde 
-                  çalışmasına yardımcı olur.
+                <p className="text-gray-700 leading-relaxed mb-3">
+                  Çerezler (cookies), RandevuBu'yu kullandığınızda tarayıcınıza veya cihazınıza kaydedilen küçük veri
+                  dosyalarıdır. Bu dosyalar kim olduğunuzu doğrudan göstermek için değil, oturumunuzu tanıyıp hizmeti
+                  düzenli çalıştırmak için kullanılır.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
-                  Çerezler sayesinde, ziyaret ettiğiniz sayfalar, tıkladığınız öğeler ve diğer etkileşimler gibi bilgileri 
-                  "hatırlayarak" sizin için daha kişiselleştirilmiş bir deneyim sunar.
+                  Kısaca; tekrar giriş yapma ihtiyacını azaltmak, güvenlik kontrollerini yürütmek ve temel tercihlerinizi
+                  hatırlamak için çerezlerden yararlanıyoruz.
                 </p>
               </div>
             </section>
@@ -51,11 +51,11 @@ export default function CookiesPage() {
                   </div>
                   <div className="px-6 py-4">
                     <p className="text-sm text-gray-700">
-                      Web sitesinin temel işlevlerini yerine getirmesi için gereklidir. Örneğin oturum açma, güvenlik kontrolleri, 
-                      dil tercihleriniz gibi işlemleri yönetir.
+                      Platformun temel fonksiyonlarını çalıştıran zorunlu çerezlerdir. Oturumun açık kalması, güvenlik
+                      doğrulamaları ve dil/arayüz tercihlerinizin korunması bu grupta yürütülür.
                     </p>
                     <p className="text-xs text-red-700 mt-2 italic">
-                      Bu çerezler olmadan web sitemiz düzgün çalışmaz.
+                      Bu çerezler devre dışı kalırsa hizmetin bazı bölümleri beklenen şekilde çalışmayabilir.
                     </p>
                   </div>
                 </div>
@@ -69,11 +69,11 @@ export default function CookiesPage() {
                   </div>
                   <div className="px-6 py-4">
                     <p className="text-sm text-gray-700">
-                      Web sitemizi nasıl kullandığınızı ve kullanıcı etkileşiminizi izlemek amacıyla kullanılır. 
-                      Bu çerezler, anonim veriler toplar ve sitenin nasıl geliştirilebileceğine dair bilgi sağlar.
+                      Performans çerezleri, ziyaret akışını ve sayfa etkileşimlerini ölçmemize yardımcı olur. Bu
+                      veriler sayesinde hangi alanların iyileştirilmesi gerektiğini analiz ederiz.
                     </p>
                     <p className="text-xs text-blue-700 mt-2">
-                      Kişisel bilgi içermez, sadece istatistiksel veri toplar.
+                      Kimliğinizi doğrudan tanımlayan veri üretmez; toplu ve istatistiksel ölçüm için kullanılır.
                     </p>
                   </div>
                 </div>
@@ -87,8 +87,8 @@ export default function CookiesPage() {
                   </div>
                   <div className="px-6 py-4">
                     <p className="text-sm text-gray-700">
-                      Web sitemizi daha kişisel hale getirmemize yardımcı olur. Tercihlerinizi, dil seçimlerinizi 
-                      ve kullanıcı ayarlarınızı hatırlayarak deneyiminizi iyileştirir.
+                      Fonksiyonel çerezler, yaptığınız seçimleri hatırlayarak kullanım deneyimini daha akıcı hale getirir.
+                      Dil tercihi ve arayüz ayarları gibi kişiselleştirme seçenekleri bu çerezlerle korunur.
                     </p>
                   </div>
                 </div>
@@ -102,13 +102,14 @@ export default function CookiesPage() {
                   </div>
                   <div className="px-6 py-4">
                     <p className="text-sm text-gray-700 mb-3">
-                      Size ilgi alanlarınıza dayalı reklamlar sunmak için kullanılır. 
-                      Çevrimiçi pazarlama ve reklamcılık faaliyetlerini yönetmek amacıyla kullanılır.
+                      Reklam ve pazarlama çerezleri, ilginizi çekebilecek kampanya ve içerikleri daha ilgili şekilde
+                      sunmamıza yardımcı olur. Aynı zamanda dijital reklam çalışmalarının performansını ölçmek için
+                      kullanılır.
                     </p>
                     <div className="bg-purple-100 rounded-lg p-3 mt-2">
                       <p className="text-xs text-purple-900">
-                        <strong>Önemli:</strong> Reklam ve pazarlama çerezleri, üçüncü taraf reklam hizmet sağlayıcılarıyla paylaşılabilir. 
-                        Ancak platformumuz verilerinizi üçüncü şahıslara satmaz veya paylaşmaz.
+                        <strong>Önemli:</strong> Bu çerezlere ilişkin bazı teknik veriler, reklam altyapısı sunan üçüncü taraf
+                        hizmet sağlayıcılarla sınırlı ölçüde işlenebilir. Verilerinizi üçüncü kişilere satmayız.
                       </p>
                     </div>
                   </div>
@@ -140,29 +141,6 @@ export default function CookiesPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-2">
-                    <span className="text-orange-600">🔥</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Mozilla Firefox</p>
-                      <p className="text-gray-600">Seçenekler &gt; Gizlilik &gt; Çerezler</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-2">
-                    <span className="text-blue-500">🦁</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Safari</p>
-                      <p className="text-gray-600">Tercihler &gt; Gizlilik &gt; Çerezler</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-2">
-                    <span className="text-blue-400">🌊</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Microsoft Edge</p>
-                      <p className="text-gray-600">Ayarlar &gt; Gizlilik &gt; Çerezler</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </section>
@@ -172,13 +150,13 @@ export default function CookiesPage() {
               
               <div className="bg-red-50 border border-red-200 rounded-lg p-5">
                 <p className="text-gray-700 mb-4">
-                  Çerezleri tarayıcı ayarlarınızdan manuel olarak silebilirsiniz. Ancak çerezlerinizi silmek, 
-                  web sitemizin bazı özelliklerinin düzgün çalışmamasına neden olabilir.
+                  Çerezleri tarayıcı ayarlarından dilediğiniz zaman temizleyebilirsiniz. Ancak bu işlemden sonra
+                  bazı işlevleri yeniden kurmamız gerekebilir ve deneyiminiz kısa süreli etkilenebilir.
                 </p>
                 <ul className="space-y-2 text-sm text-gray-700">
-                  <li>• Oturum bilgileriniz kaybolabilir</li>
-                  <li>• Tercihleriniz sıfırlanabilir</li>
-                  <li>• Bazı sayfa özellikleri çalışmayabilir</li>
+                  <li>• Hesap oturumunuzu yeniden açmanız gerekebilir</li>
+                  <li>• Kaydettiğiniz tercihleri tekrar seçmeniz istenebilir</li>
+                  <li>• Bazı sayfalar ilk açılışta beklenenden farklı davranabilir</li>
                 </ul>
               </div>
             </section>
@@ -188,8 +166,9 @@ export default function CookiesPage() {
               
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-5">
                 <p className="text-gray-700 leading-relaxed">
-                  Çerez politikamızı zaman zaman güncelleyebiliriz. Bu tür değişiklikler, yeni bir sürüm yayınlandığında 
-                  ve geçerli tarihlerde duyurulacaktır. Bu nedenle, çerez politikamızı düzenli olarak gözden geçirmeniz önemlidir.
+                  Çerez politikamızı, hizmetteki gelişmeler ve yasal gerekliliklere göre zaman zaman yenileriz. Güncel
+                  sürümü bu sayfada yayınlarız ve yürürlük tarihini açıkça belirtiriz. Bu yüzden politikayı belirli
+                  aralıklarla kontrol etmenizi öneririz.
                 </p>
               </div>
             </section>
@@ -214,13 +193,15 @@ export default function CookiesPage() {
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                 <h3 className="font-bold text-gray-900 mb-4">RandevuBu</h3>
                 <div className="space-y-2 text-gray-700">
-                  <p><strong>Adres:</strong> ÇALCA OSB 1 CAD. TASARIM TEKNOKENT A.Ş. NO: 1/3 İÇ KAPI NO: 204 Demiray Technology - MERKEZ/KÜTAHYA</p>
-                  <p><strong>Vergi Dairesi:</strong> Çinili V.D.</p>
-                  <p><strong>Vergi K.No:</strong> 4820868313</p>
-                  <p><strong>Ticari Sicil:</strong> 13985</p>
-                  <p><strong>Mersis No:</strong> 5875314481600001</p>
-                  <p><strong>Telefon:</strong> 0545 449 60 42</p>
-                  <p><strong>E-posta:</strong> info@randevubu.com</p>
+                  <p>
+                    <strong>Adres:</strong> Kemalpaşa Mah. Bahçıvan Sk. No: 1/7B
+                    <br />
+                    İnegöl/BURSA
+                  </p>
+                  <p><strong>Vergi Dairesi:</strong> İnegöl Vergi Dairesi</p>
+                  <p><strong>Vergi K.No:</strong> 8681220052</p>
+                  <p><strong>Telefon:</strong> 0555 175 65 98 / 0546 660 4336</p>
+                  <p><strong>E-posta:</strong> info.randevubu@gmail.com</p>
                 </div>
               </div>
 

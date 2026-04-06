@@ -12,13 +12,13 @@ export default function KVKKPage() {
           <div className="prose prose-sm sm:prose max-w-none">
             <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-600 p-6 mb-8 rounded-r-lg">
               <p className="text-sm text-gray-700 leading-relaxed">
-                6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, <strong>RandevuBu</strong> 
+                6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, <strong>RandevuBu</strong>{' '}
                 platformu ve bu platform üzerinden hizmet sunan işletmelerin kişisel veri işleme faaliyetlerine 
                 ilişkin aydınlatma yükümlülüklerini yerine getirmek amacıyla aşağıdaki bilgiler sunulmaktadır.
               </p>
               <p className="text-sm text-gray-600 mt-3 italic">
-                Bu metin, platformu kullanan işletmeler (B2B) ile son tüketiciler/müşteriler (B2C) arasındaki 
-                veri akışı ve sorumlulukların açıklanması amacıyla hazırlanmıştır.
+                Bu açıklama, RandevuBu&apos;yu kullanan işletmeler (B2B) ile onların müşterileri/son kullanıcıları (B2C)
+                arasındaki veri akışını ve tarafların sorumluluk sınırlarını netleştirmek için hazırlanmıştır.
               </p>
             </div>
 
@@ -130,150 +130,75 @@ export default function KVKKPage() {
             </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">3. İşlenen Kişisel Veri Kategorileri</h2>
-              
-              <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-indigo-50 px-6 py-3 border-b border-gray-200">
-                    <h3 className="font-bold text-indigo-900">Kimlik ve İletişim Bilgileri</h3>
-                  </div>
-                  <div className="px-6 py-4">
-                    <p className="text-sm text-gray-700">
-                      İşletme yetkililerinin adı, soyadı, unvanı; telefon numarası, e-posta adresi ve işletme iletişim bilgileri
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-blue-50 px-6 py-3 border-b border-gray-200">
-                    <h3 className="font-bold text-blue-900">İşletme ve Finansal Bilgiler</h3>
-                  </div>
-                  <div className="px-6 py-4">
-                    <p className="text-sm text-gray-700">
-                      İşletme unvanı, vergi numarası, ticari sicil bilgileri, ödeme geçmişi, fatura bilgileri
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-green-50 px-6 py-3 border-b border-gray-200">
-                    <h3 className="font-bold text-green-900">Sistem ve Teknik Veriler</h3>
-                  </div>
-                  <div className="px-6 py-4">
-                    <p className="text-sm text-gray-700">
-                      IP adresi, cihaz bilgileri, tarayıcı türü, işlem zamanları, platform kullanım logları, güvenlik kayıtları
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-purple-50 px-6 py-3 border-b border-gray-200">
-                    <h3 className="font-bold text-purple-900">Müşteri İşlem Verileri (Teknik İşleme)</h3>
-                  </div>
-                  <div className="px-6 py-4">
-                    <p className="text-sm text-gray-700">
-                      Randevu detayları, müşteri tercihleri, ileti izin durumları, işlem geçmişi kayıtları
-                    </p>
-                    <p className="text-xs text-gray-600 mt-2 italic">
-                      * Bu verilerin işlenme amaçlarını işletmeleriniz belirlerken, güvenli saklanması ve yasal uyumluluk konusundaki yükümlülükler RandevuBu'ya aittir.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">4. Hukuki Sebepler</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">3. Kişisel Veri İşleme Şartları</h2>
               
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-5 mb-6">
-                <h3 className="text-lg font-semibold text-indigo-900 mb-3">Platform'un Veri İşleme Hukuki Dayanakları</h3>
-                <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-start space-x-3">
-                    <span className="text-lg">📝</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Sözleşmenin İfası</p>
-                      <p className="text-gray-600">Hizmet sunumu ve kullanıcı desteği sağlanması</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-lg">⚖️</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Kanuni Zorunluluk</p>
-                      <p className="text-gray-600">Vergi ve ticaret mevzuatı uyumu</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-lg">🔒</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Meşru Menfaat</p>
-                      <p className="text-gray-600">Sistem güvenliği ve kötüye kullanım önleme</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-lg">✓</span>
-                    <div>
-                      <p className="font-semibold text-gray-900">Açık Rıza</p>
-                      <p className="text-gray-600">Pazarlama ve tanıtım faaliyetleri</p>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Platformu çalıştırırken verileri; hizmetin sunulması ve kullanıcı desteğinin yürütülmesi, vergi ile ticaret
+                  mevzuatından doğan yükümlülüklerin yerine getirilmesi, sistem güvenliği ile kötüye kullanımın önlenmesi ve
+                  pazarlama/tanıtım süreçlerinde gerekli olduğunda açık rıza alınması dayanaklarıyla işleriz.
+                </p>
               </div>
 
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-5">
-                <h3 className="text-lg font-semibold text-purple-900 mb-3">İşletmelerin Müşteri Verileri İçin Hukuki Dayanaklar</h3>
-                <div className="space-y-2 text-sm">
-                  <p className="text-gray-700">
-                    <strong className="text-purple-900">Randevu ve Hizmet İşlemleri:</strong> Sözleşmenin ifası kapsamında müşterilerle hizmet ilişkisinin kurulması ve sürdürülmesi.
-                  </p>
-                  <p className="text-gray-700">
-                    <strong className="text-purple-900">Bildirim ve İletişim:</strong> Müşteri talebi ve açık rıza kapsamında randevu hatırlatmaları ve bilgilendirme mesajları.
-                  </p>
-                  <p className="text-gray-700">
-                    <strong className="text-purple-900">Yasal Uyum:</strong> Elektronik Ticaret Kanunu ve İYS yükümlülüklerinin yerine getirilmesi.
-                  </p>
-                  <p className="text-gray-700">
-                    <strong className="text-purple-900">Hizmet İyileştirme:</strong> Meşru menfaat kapsamında işlem analizi ve hizmet kalitesi değerlendirmesi.
-                  </p>
-                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  İşletmelerin müşteri verilerine ilişkin süreçlerde; randevu ve hizmet ilişkisinin kurulup sürdürülmesi,
+                  müşteri talebi veya açık rıza doğrultusunda bildirim yapılması, ETK ve İYS yükümlülüklerinin karşılanması
+                  ve hizmet kalitesini geliştirmeye yönelik analizler için meşru menfaat kapsamında işlem yapılır.
+                </p>
               </div>
             </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">5. Bildirim ve Ticari İleti Sorumlulukları</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">4. Bildirim ve Ticari İleti Sorumlulukları</h2>
               
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
                 <h3 className="text-lg font-bold text-yellow-900 mb-3">⚠️ Önemli Sorumluluk Uyarısı</h3>
                 <p className="text-gray-700 mb-3">
-                  RandevuBu platformu, SMS ve e-posta gönderimleri için teknik altyapı sağlamaktadır. Ancak, 
-                  bu iletilerin içeriği, gönderim amacı, zamanlaması ve alıcı onayları konusunda tüm yasal sorumluluk işletmelere aittir.
+                  Müşterilere (B2C) gönderilen ticari elektronik iletilerde hukuki sorumluluk, gönderimi yapan işletmeye
+                  (B2B kullanıcıya) aittir. RandevuBu bu süreçte yalnızca iletim altyapısını işletir, kayıt akışını yönetir
+                  ve sistem güvenliğini sağlar. Platform hesap yönetimi ve altyapı işletimi bakımından RandevuBu veri
+                  sorumlusu olarak hareket eder; işletmelede ise kendi müşterilerine (B2C kullanıcılara) gönderdikleri iletiler 
+                  ve işledikleri veriler bakımından, veri sorumluluğu ilgili işletmelere (B2B kullanıcılar) aittir.
                 </p>
               </div>
 
               <div className="space-y-3 text-gray-700">
                 <div className="border-l-4 border-blue-500 pl-4">
-                  <p><strong className="text-blue-700">Teknik Altyapı:</strong> RandevuBu, ileti gönderimleri için güvenli ve kesintisiz teknik altyapı sunar. 
-                  İYS (İleti Yönetim Sistemi) ile entegrasyon sağlanır ve izin/ret kayıtları otomatik olarak yönetilir.</p>
+                  <p>
+                    <strong className="text-blue-700">İYS ve Teknik Akış:</strong> İzin/ret kayıtlarının İYS ile eşleştirilmesi,
+                    gönderim kayıtlarının tutulması ve teknik aktarım süreçleri platform üzerinde yürütülür. Yetkisiz erişim
+                    riskini azaltmak için gerekli idari ve teknik kontroller uygulanır.
+                  </p>
                 </div>
 
                 <div className="border-l-4 border-purple-500 pl-4">
-                  <p><strong className="text-purple-700">İçerik Sorumluluğu:</strong> Gönderilen mesajların içeriği, kampanya metinleri ve tanıtım materyalleri 
-                  tamamen işletmelere aittir. RandevuBu bu içerikleri denetlemez veya kontrol etmez.</p>
+                  <p>
+                    <strong className="text-purple-700">İşletmenin Hukuki Alanı:</strong> Mesaj metni, gönderim zamanı,
+                    hedef kitle seçimi, onayların geçerliliği ve mevzuata uygunluk denetimi işletmenin kendi yükümlülüğüdür.
+                    Her işletme, kendi ileti faaliyetinin sonuçlarından münhasıran sorumludur.
+                  </p>
                 </div>
 
                 <div className="border-l-4 border-orange-500 pl-4">
-                  <p><strong className="text-orange-700">Yasal Uyum:</strong> 6563 sayılı Elektronik Ticaret Kanunu ve İlgili Mevzuat gereği, 
-                  ticari elektronik ileti gönderimine ilişkin tüm yükümlülükler işletmelere aittir.</p>
+                  <p>
+                    <strong className="text-orange-700">Araçların Niteliği:</strong> Platformdaki izin panelleri, örnek
+                    metinler ve şablonlar yalnızca operasyonel kolaylık sağlar. Bu içerikler bağlayıcı hukuki görüş yerine
+                    geçmez ve ETK kapsamındaki yükümlülükleri işletme adına üstlenmez.
+                  </p>
                 </div>
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
-                  <p className="text-sm text-red-900"><strong>Dikkat:</strong> Müşterilerin İYS üzerinden yaptığı ret işlemleri tüm ileti gönderimlerini 
-                  etkileyebilir. Bu durum sistem gereği tüm platformu kullanan işletmeleri kapsar.</p>
+                  <p className="text-sm text-red-900">
+                    <strong>Dikkat:</strong> İYS üzerinden iletilen ret tercihleri, ilgili ileti türünde gönderimi teknik olarak
+                    durdurabilir. Bu etki, sistem kurgusu gereği işletmenin kampanya akışına doğrudan yansıyabilir.
+                  </p>
                 </div>
               </div>
             </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">6. Veri Paylaşımı ve Güvenlik</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">5. Veri Paylaşımı ve Güvenlik</h2>
               
               <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <div className="border border-gray-200 rounded-lg p-5">
@@ -311,7 +236,7 @@ export default function KVKKPage() {
             </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">7. Veri Saklama Süreleri</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">6. Veri Saklama Süreleri</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
                   <thead className="bg-gray-50">
@@ -324,18 +249,22 @@ export default function KVKKPage() {
                     <tr>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">Fatura, ödeme ve işlem kayıtları</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        10 yıl (Vergi Usul Kanunu ve ilgili mevzuat uyarınca, yasal saklama yükümlülüğü kapsamında)
+                        Vergi ve ticari mevzuattan doğan zorunluluklar nedeniyle 10 yıl süreyle saklanır.
                       </td>
                     </tr>
                     <tr>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">Ticari ileti izin/ret geçmişi</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        En az 1 yıl (6563 sayılı ETK gereği); Platform (RandevuBu), delil niteliği taşıyan kayıtları daha uzun süre saklayabilir
+                        ETK kapsamında asgari 1 yıl tutulur; uyuşmazlık veya ispat gerektiren durumlarda daha uzun süre
+                        muhafaza edilebilir.
                       </td>
                     </tr>
                     <tr>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">Diğer işlem verileri</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">Hizmet sonrası makul süre kadar (zamanaşımı ve meşru menfaat kapsamında)</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        Hizmet ilişkisi sona erdikten sonra, zamanaşımı süreleri ve meşru menfaat dengesi gözetilerek
+                        gerekli görülen makul süre boyunca saklanır.
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -343,7 +272,7 @@ export default function KVKKPage() {
             </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">8. KVKK Kapsamında Sahip Olduğunuz Haklar</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">7. KVKK Kapsamında Sahip Olduğunuz Haklar</h2>
               
               <div className="grid md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
@@ -373,7 +302,7 @@ export default function KVKKPage() {
                   <div>
                     <p className="text-gray-900 font-semibold mb-2">Haklarınızı Kullanma</p>
                     <p className="text-sm text-gray-700">
-                      Hak taleplerinizi <strong className="text-indigo-900">info@randevubu.com</strong> adresine yazılı olarak iletebilirsiniz. 
+                      Hak taleplerinizi <strong className="text-indigo-900">info.randevubu@gmail.com</strong> adresine yazılı olarak iletebilirsiniz. 
                       Talebinize en geç <strong>30 gün</strong> içinde detaylı yanıt verilecektir.
                     </p>
                   </div>
@@ -382,28 +311,21 @@ export default function KVKKPage() {
             </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">9. İletişim Bilgileri</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">8. İletişim Bilgileri</h2>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
                 <h3 className="font-bold text-gray-900 mb-4">Veri Sorumlusu (Platform Hizmetleri Kapsamında):</h3>
                 <div className="space-y-2 text-gray-700">
                   <p><strong>RandevuBu</strong></p>
-                  <p>Adres: ÇALCA OSB 1 CAD. TASARIM TEKNOKENT A.Ş. NO: 1/3 İÇ KAPI NO: 204 Demiray Technology - MERKEZ/KÜTAHYA</p>
-                  <p>Vergi Dairesi: Çinili V.D.</p>
-                  <p>Vergi K.No: 4820868313</p>
-                  <p>Ticari Sicil Numarası: 13985</p>
-                  <p>Mersis Numarası: 5875314481600001</p>
-                  <p>Telefon: 0545 449 60 42</p>
-                  <p>E-posta: info@randevubu.com</p>
+                  <p>
+                    Adres: Kemalpaşa Mah. Bahçıvan Sk. No: 1/7B
+                    <br />
+                    İnegöl/BURSA
+                  </p>
+                  <p>Vergi Dairesi: İnegöl Vergi Dairesi</p>
+                  <p>Vergi K.No: 8681220052</p>
+                  <p>Telefon: 0555 175 65 98 / 0546 660 4336</p>
+                  <p>E-posta: info.randevubu@gmail.com</p>
                 </div>
-              </div>
-              <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mt-4">
-                <p className="text-sm text-yellow-900 font-semibold mb-2">📌 Önemli Açıklama:</p>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  RandevuBu platformu, işletme hesaplarının yönetimi ve platform altyapısı bakımından <strong>veri sorumlusu</strong> konumundadır. 
-                  Platform üzerinden yürütülen hizmetler kapsamında hem RandevuBu hem de hizmet veren işletmeler 
-                  ilgili kişisel verilerin işlenmesinden sorumludur. İşletmeler kendi müşteri verilerinin işlenme amaçlarını belirlerken, 
-                  RandevuBu bu verilerin güvenli saklanması ve işlenmesi için gerekli teknik altyapı ve güvenlik önlemlerini sağlar.
-                </p>
               </div>
               <p className="text-gray-500 text-sm mt-4 text-center">
                 Versiyon: 2.1 | Son Güncelleme: {new Date().toLocaleDateString('tr-TR')}

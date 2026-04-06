@@ -21,8 +21,8 @@ export default function FeaturesPage() {
           </h1>
 
           <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-            Salon işletmenizi dijital çağa taşıyan, müşteri memnuniyetini artıran ve gelirinizi optimize eden
-            kapsamlı özellik setimizi keşfedin.
+            Takvimden bildirimlere, müşteri kayıtlarından raporlara kadar modülleri tek panelde topladık; hangi
+            özelliklerin hesabınızda açık olacağı seçtiğiniz pakete bağlıdır.
           </p>
 
           {/* Quick Stats */}

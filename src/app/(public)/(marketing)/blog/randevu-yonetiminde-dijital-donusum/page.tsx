@@ -3,7 +3,24 @@
 import { Calendar, Clock, User, ArrowLeft, Tag, Share2 } from 'lucide-react';
 import Link from 'next/link';
 
+const SHARE_LINKS: Record<string, (url: string, title: string) => string> = {
+  Facebook: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+  Twitter: (url, title) =>
+    `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+  LinkedIn: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  WhatsApp: (url, title) =>
+    `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,
+};
+
 export default function BlogPost() {
+  const handleShare = (platform: string) => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    const title = document.title || 'Randevu Yönetiminde Dijital Dönüşüm';
+    const shareUrl = SHARE_LINKS[platform]?.(url, title);
+    if (shareUrl) window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -88,19 +105,17 @@ export default function BlogPost() {
             <li>Anında randevu onayı ve rezervasyon</li>
             <li>Zaman yönetimi ve planlamada özgürlük</li>
             <li>Mobil uygulama desteği ile her yerden erişim</li>
-            <li>Hatırlatma bildirimleri ile unutma riski minimuma iner</li>
+            <li>Hatırlatma bildirimleri ile %0 unutma riski</li>
           </ul>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-6">
-            3. Finansal Kaynakların Optimize Edilmesi
+            3. Operasyonel Verimlilik ve Maliyet Yönetimi
           </h2>
           <p className="text-gray-700 leading-relaxed mb-6">
-            Manuel randevu yönetimi, personel maliyetlerini artırır. Otomatik sistemler sayesinde, 
-            rezervasyon takibinden sorumlu personel başka alanlara kaydırılabilir.
+            Manuel randevu takibi, işletme için hem zaman kaybı hem de gizli bir personel maliyetidir. Otomasyon sistemine geçiş yapmak, ekibinizin enerjisini telefon trafiği yerine doğrudan hizmet kalitesini artırmaya ve müşteri memnuniyetine odaklamasını sağlar.
           </p>
           <p className="text-gray-700 leading-relaxed mb-6">
-            Ayrıca randevu atlamalarının azalması ile işletmelerin gelir kayıpları minimize edilir. 
-            Boş zamanlar otomatik olarak doldurulabilir, bu da işletme verimliliğini artırır.
+            Ayrıca, randevu hatırlatmaları sayesinde iptal veya unutulma oranları düşer; bu da doğrudan gelir kaybının önüne geçer. Boş kalan zaman dilimlerinin sistem tarafından otomatik olarak yönetilmesi, işletme kapasitesinin her zaman en yüksek verimle kullanılmasını sağlar.
           </p>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-6">
@@ -141,7 +156,7 @@ export default function BlogPost() {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white mt-12">
             <h3 className="text-2xl font-bold mb-4">RandevuBu'yu Deneyin</h3>
             <p className="mb-6 text-indigo-100">
-              İşletmeniz için dijital dönüşümü başlatın. 14 gün ücretsiz deneme ile 
+              İşletmeniz için dijital dönüşümü başlatın. 7 gün ücretsiz deneme ile 
               tüm özellikleri keşfedin.
             </p>
             <Link
@@ -164,6 +179,8 @@ export default function BlogPost() {
               {['Facebook', 'Twitter', 'LinkedIn', 'WhatsApp'].map((platform) => (
                 <button
                   key={platform}
+                  type="button"
+                  onClick={() => handleShare(platform)}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
                   {platform}

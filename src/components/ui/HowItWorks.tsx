@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function HowItWorks() {
   const steps = [
     {
@@ -127,27 +129,30 @@ export default function HowItWorks() {
 
         {/* CTA Section */}
         <div className="mt-12 text-center">
-          <div className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] rounded-3xl p-8 lg:p-10 relative overflow-hidden transition-colors duration-300">
-            <div className="absolute top-0 left-0 w-full h-full opacity-10">
-              <div className="absolute top-6 left-6 w-12 h-12 bg-white rounded-full"></div>
-              <div className="absolute top-16 right-12 w-8 h-8 bg-white rounded-full"></div>
-              <div className="absolute bottom-12 left-16 w-6 h-6 bg-white rounded-full"></div>
-              <div className="absolute bottom-6 right-6 w-16 h-16 bg-white rounded-full"></div>
+          <div className="rounded-3xl overflow-hidden relative">
+            <div className="absolute inset-0">
+              <Image
+                src="/backgroundthema1.png"
+                alt=""
+                fill
+                className="object-cover object-left lg:object-center"
+                sizes="(max-width: 768px) 100vw, 1200px"
+              />
+              <div className="absolute inset-0 bg-black/5" />
             </div>
-            
-            <div className="relative">
+            <div className="relative p-8 lg:p-10 text-white">
               <h3 className="text-2xl lg:text-3xl font-black text-white mb-3">
                 Hemen Başlamak İster Misiniz?
               </h3>
-              <p className="text-base lg:text-lg text-[var(--theme-primaryForeground)]/80 mb-6 max-w-2xl mx-auto transition-colors duration-300">
+              <p className="text-base lg:text-lg text-white mb-6 max-w-2xl mx-auto">
                 Kurulum sadece 5 dakika! Size özel demo ile sistemi keşfedin.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-white text-[var(--theme-primary)] px-8 py-3 rounded-2xl font-bold hover:bg-[var(--theme-backgroundSecondary)] transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
+                <button className="bg-white text-[var(--theme-primary)] px-8 py-3 rounded-2xl font-bold hover:bg-white/90 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
                   Ücretsiz Demo Al
                 </button>
-                <button className="border-2 border-white/30 text-white px-8 py-3 rounded-2xl font-bold hover:border-white hover:bg-white/10 transition-all duration-300">
+                <button className="border-2 border-white/80 text-white px-8 py-3 rounded-2xl font-bold hover:border-white hover:bg-white/20 transition-all duration-300">
                   Hemen Başla
                 </button>
               </div>

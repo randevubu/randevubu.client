@@ -16,7 +16,7 @@ export default function PrivacyPage() {
                 nasıl toplandığı, kullanıldığı, saklandığı ve korunduğuna ilişkin açıklamaları içermektedir.
               </p>
               <p className="text-sm text-gray-600 italic">
-                Veri Sorumlusu: RandevuBu | İletişim: info@randevubu.com
+                Veri Sorumlusu: RandevuBu | İletişim: info.randevubu@gmail.com
               </p>
             </div>
 
@@ -34,23 +34,27 @@ export default function PrivacyPage() {
                 <div className="grid md:grid-cols-2 gap-3 text-sm">
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">✓</span>
-                    <p className="text-gray-700">Hukuka ve şeffaflığa uygunluk</p>
+                    <p className="text-gray-700">Mevzuata uyum, şeffaf bilgilendirme</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">✓</span>
-                    <p className="text-gray-700">Amaçla sınırlılık ve veri minimalliği</p>
+                    <p className="text-gray-700">Gerekli minimum veri</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">✓</span>
-                    <p className="text-gray-700">Doğruluk ve güncellik</p>
+                    <p className="text-gray-700">Güncel kayıt, düzeltme</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">✓</span>
-                    <p className="text-gray-700">Güvenli saklama ve yetkisiz erişimi önleme</p>
+                    <p className="text-gray-700">Yetkili erişim, teknik koruma</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">✓</span>
-                    <p className="text-gray-700">Veri sahibinin haklarına saygı</p>
+                    <p className="text-gray-700">KVKK başvurularına zamanında yanıt</p>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="text-blue-600">✓</span>
+                    <p className="text-gray-700">Veri sahibinin haklarını koruma</p>
                   </div>
                 </div>
               </div>
@@ -73,7 +77,7 @@ export default function PrivacyPage() {
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li><strong>Kimlik Bilgileri:</strong> Ad, soyad, unvan, işletme unvanı</li>
                   <li><strong>İletişim Bilgileri:</strong> E-posta, telefon numarası, adres</li>
-                  <li><strong>İşletme Bilgileri:</strong> Vergi numarası, ticari sicil, Mersis numarası</li>
+                  <li><strong>İşletme Bilgileri:</strong> Vergi numarası ve diğer kurumsal kayıt bilgileri</li>
                   <li><strong>Platform Kullanım Verileri:</strong> Giriş logları, işlem geçmişi, kullanım istatistikleri</li>
                   <li><strong>Teknik Veriler:</strong> IP adresi, cihaz bilgileri, tarayıcı türü</li>
                 </ul>
@@ -270,7 +274,7 @@ export default function PrivacyPage() {
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
                 <h3 className="font-bold text-indigo-900 mb-3">📧 Haklarınızı Kullanma</h3>
                 <p className="text-sm text-gray-700 mb-2">
-                  Hak taleplerinizi <strong>info@randevubu.com</strong> adresine yazılı olarak iletebilirsiniz.
+                  Hak taleplerinizi <strong>info.randevubu@gmail.com</strong> adresine yazılı olarak iletebilirsiniz.
                 </p>
                 <p className="text-sm text-gray-700">
                   Talebinize en geç <strong>30 gün</strong> içinde detaylı yanıt verilecektir.
@@ -329,13 +333,15 @@ export default function PrivacyPage() {
                 <h3 className="font-bold text-gray-900 mb-4">Veri Sorumlusu:</h3>
                 <div className="space-y-2 text-gray-700">
                   <p><strong>RandevuBu</strong></p>
-                  <p>Adres: ÇALCA OSB 1 CAD. TASARIM TEKNOKENT A.Ş. NO: 1/3 İÇ KAPI NO: 204 Demiray Technology - MERKEZ/KÜTAHYA</p>
-                  <p>Vergi Dairesi: Çinili V.D.</p>
-                  <p>Vergi K.No: 4820868313</p>
-                  <p>Ticari Sicil Numarası: 13985</p>
-                  <p>Mersis Numarası: 5875314481600001</p>
-                  <p>Telefon: 0545 449 60 42</p>
-                  <p>E-posta: info@randevubu.com</p>
+                  <p>
+                    Adres: Kemalpaşa Mah. Bahçıvan Sk. No: 1/7B
+                    <br />
+                    İnegöl/BURSA
+                  </p>
+                  <p>Vergi Dairesi: İnegöl Vergi Dairesi</p>
+                  <p>Vergi K.No: 8681220052</p>
+                  <p>Telefon: 0555 175 65 98 / 0546 660 4336</p>
+                  <p>E-posta: info.randevubu@gmail.com</p>
                 </div>
               </div>
             </section>

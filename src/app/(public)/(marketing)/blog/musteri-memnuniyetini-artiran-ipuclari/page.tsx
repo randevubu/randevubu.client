@@ -3,7 +3,23 @@
 import { Calendar, Clock, User, ArrowLeft, Tag, Share2 } from 'lucide-react';
 import Link from 'next/link';
 
+const SHARE_LINKS: Record<string, (url: string, title: string) => string> = {
+  Facebook: (url) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+  Twitter: (url, title) =>
+    `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+  LinkedIn: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  WhatsApp: (url, title) =>
+    `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,
+};
+
 export default function BlogPost2() {
+  const handleShare = (platform: string) => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    const title = document.title || 'Müşteri Memnuniyetini Artıran 7 Randevu Yönetim İpucu';
+    const shareUrl = SHARE_LINKS[platform]?.(url, title);
+    if (shareUrl) window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
+  };
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -86,7 +102,6 @@ export default function BlogPost2() {
           <ul className="list-disc pl-6 space-y-3 text-gray-700 mb-6">
             <li>SMS veya E-posta hatırlatmaları</li>
             <li>WhatsApp bildirimleri</li>
-            <li>Push notification desteği</li>
             <li>Dönem dönem müşterinin tercihine göre ayarlanabilir hatırlatmalar</li>
           </ul>
 
@@ -186,6 +201,8 @@ export default function BlogPost2() {
               {['Facebook', 'Twitter', 'LinkedIn', 'WhatsApp'].map((platform) => (
                 <button
                   key={platform}
+                  type="button"
+                  onClick={() => handleShare(platform)}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"
                 >
                   {platform}

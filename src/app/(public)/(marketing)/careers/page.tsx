@@ -115,7 +115,7 @@ export default function CareersPage() {
                   Açık pozisyonlar olduğunda haberdar olmak isterseniz, CV'nizi gönderebilirsiniz.
                 </p>
                 <a
-                  href="/contact"
+                  href="mailto:info.randevubu@gmail.com?subject=RandevuBu%20Kariyer%20-%20CV%20Ba%C5%9Fvurusu&body=Merhaba%2C%0A%0A%5BAd%20Soyad%2C%20pozisyon%20ilgisi%20ve%20CV%27nizi%20bu%20e-postaya%20ek%20olarak%20ekleyebilirsiniz.%5D%0A%0ASayg%C4%B1lar%C4%B1m%C4%B1zla"
                   className="inline-flex items-center space-x-2 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-colors"
                 >
                   <span>CV Gönder</span>
@@ -136,7 +136,12 @@ export default function CareersPage() {
                 </div>
                 <div>
                   <div className="text-sm text-indigo-100">E-posta</div>
-                  <div className="font-semibold">careers@randevubu.com</div>
+                  <a
+                    href="mailto:info.randevubu@gmail.com"
+                    className="font-semibold hover:underline"
+                  >
+                    info.randevubu@gmail.com
+                  </a>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -145,7 +150,7 @@ export default function CareersPage() {
                 </div>
                 <div>
                   <div className="text-sm text-indigo-100">Telefon</div>
-                  <div className="font-semibold">0545 449 60 42</div>
+                  <div className="font-semibold">0555 175 65 98 / 0546 660 43 36</div>
                 </div>
               </div>
             </div>
