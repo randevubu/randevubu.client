@@ -168,14 +168,14 @@ export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
         {step === 'phone' && (
           <>
             <h1 className="text-3xl font-bold text-[var(--theme-cardForeground)] mb-2 transition-colors duration-300">Hoş Geldiniz</h1>
-            <p className="text-[var(--theme-foregroundSecondary)] transition-colors duration-300">Telefon numaranızla giriş yapın</p>
+            <p className="text-gray-400 font-medium transition-colors duration-300">Telefon numaranızla giriş yapın</p>
           </>
         )}
         
         {step === 'otp' && (
           <>
             <h1 className="text-3xl font-bold text-[var(--theme-cardForeground)] mb-2 transition-colors duration-300">Doğrulama Kodu</h1>
-            <p className="text-[var(--theme-foregroundSecondary)] transition-colors duration-300">
+            <p className="text-gray-400 font-medium transition-colors duration-300">
               <span className="font-medium">{phoneNumber}</span> numarasına gönderilen 6 haneli kodu girin
             </p>
           </>
@@ -198,9 +198,9 @@ export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
               Telefon Numarası
             </label>
             <div className="relative">
-              <div className="flex rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-background)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)] focus-within:border-[var(--theme-primary)] transition-all duration-300">
+              <div className="flex w-full overflow-hidden rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-background)] focus-within:ring-2 focus-within:ring-[var(--theme-primary)] focus-within:border-[var(--theme-primary)] transition-all duration-300">
                 <div 
-                  className="flex items-center px-4 py-4 border-r border-[var(--theme-border)] bg-[var(--theme-muted)] rounded-l-2xl cursor-pointer hover:bg-[var(--theme-mutedHover)] transition-colors duration-200"
+                  className="flex shrink-0 items-center px-4 py-4 border-r border-[var(--theme-border)] bg-[var(--theme-muted)] rounded-l-2xl cursor-pointer hover:bg-[var(--theme-mutedHover)] transition-colors duration-200"
                   onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                 >
                   <span className="text-xl mr-2">🇹🇷</span>
@@ -220,7 +220,7 @@ export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
                   required
                   value={phoneNumber}
                   onChange={handlePhoneChange}
-                  className="flex-1 px-4 py-4 text-lg placeholder-[var(--theme-foregroundMuted)] focus:outline-none bg-transparent text-[var(--theme-foreground)] transition-colors duration-300 rounded-r-2xl"
+                  className="min-w-0 flex-1 px-4 py-4 text-lg placeholder-[var(--theme-foregroundMuted)] focus:outline-none bg-transparent text-[var(--theme-foreground)] transition-colors duration-300 rounded-r-2xl"
                   placeholder="555 123 45 67"
                 />
               </div>
@@ -267,7 +267,7 @@ export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
       {step === 'otp' && (
         <form onSubmit={handleOtpSubmit} className="space-y-6">
           <div>
-            <label htmlFor="otp" className="block text-sm font-medium text-[var(--theme-foregroundSecondary)] mb-2 transition-colors duration-300">
+            <label htmlFor="otp" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2 transition-colors duration-300">
               Doğrulama Kodu
             </label>
             <input
@@ -363,14 +363,14 @@ export default function PhoneAuth({ className }: PhoneAuthProps = {}) {
       )}
 
       {/* Footer */}
-      <div className="mt-8 text-center">
-        <p className="text-sm text-[var(--theme-foregroundMuted)] transition-colors duration-300">
+      <div className="mt-6 px-1 text-center sm:mt-8">
+        <p className="text-xs leading-relaxed text-gray-700 transition-colors duration-300 sm:text-sm">
           Devam ederek{' '}
-          <Link href="/terms" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium transition-colors duration-300">
+          <Link href="/terms" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-semibold underline underline-offset-2 transition-colors duration-300">
             Kullanım Şartları
           </Link>{' '}
           ve{' '}
-          <Link href="/privacy" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-medium transition-colors duration-300">
+          <Link href="/privacy" className="text-[var(--theme-primary)] hover:text-[var(--theme-primaryHover)] font-semibold underline underline-offset-2 transition-colors duration-300">
             Gizlilik Politikası
           </Link>
           'nı kabul etmiş olursunuz.

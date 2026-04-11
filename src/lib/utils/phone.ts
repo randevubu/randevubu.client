@@ -1,22 +1,22 @@
 /**
- * Format Turkish phone number for display (0XXX XXX XX XX)
+ * Format Turkish phone number for display (XXX XXX XX XX)
  */
 export const formatPhoneForDisplay = (value: string): string => {
   // Remove all non-digit characters
   const digits = value.replace(/\D/g, '');
   
-  // Limit to 11 digits (0 + 10 digits)
-  const limited = digits.slice(0, 11);
+  // Limit to 10 digits (without country code / leading 0)
+  const limited = digits.slice(0, 10);
   
-  // Format as 0XXX XXX XX XX
-  if (limited.length <= 4) {
+  // Format as XXX XXX XX XX
+  if (limited.length <= 3) {
     return limited;
-  } else if (limited.length <= 7) {
-    return limited.slice(0, 4) + ' ' + limited.slice(4);
-  } else if (limited.length <= 9) {
-    return limited.slice(0, 4) + ' ' + limited.slice(4, 7) + ' ' + limited.slice(7);
+  } else if (limited.length <= 6) {
+    return limited.slice(0, 3) + ' ' + limited.slice(3);
+  } else if (limited.length <= 8) {
+    return limited.slice(0, 3) + ' ' + limited.slice(3, 6) + ' ' + limited.slice(6);
   } else {
-    return limited.slice(0, 4) + ' ' + limited.slice(4, 7) + ' ' + limited.slice(7, 9) + ' ' + limited.slice(9);
+    return limited.slice(0, 3) + ' ' + limited.slice(3, 6) + ' ' + limited.slice(6, 8) + ' ' + limited.slice(8);
   }
 };
 

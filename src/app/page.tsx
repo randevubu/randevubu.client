@@ -12,7 +12,7 @@ import MobileBottomNav from '../components/layout/MobileBottomNav';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[var(--theme-background)] transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--theme-background)] pb-28 transition-colors duration-300 lg:pb-0">
       <Navbar />
       <Hero />
       <AnimatedSection direction="up" delay={0.1}>

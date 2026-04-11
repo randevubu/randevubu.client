@@ -65,6 +65,8 @@ export default function OnboardingPage() {
 
   const [websiteSlug, setWebsiteSlug] = useState('');
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -154,6 +156,8 @@ export default function OnboardingPage() {
 
     // KVKK acceptance validation
     if (!kvkkAccepted) newErrors.kvkkAccepted = 'KVKK aydınlatma metnini okumalı ve onaylamalısınız';
+    if (!privacyAccepted) newErrors.privacyAccepted = 'Gizlilik politikasını okumalı ve onaylamalısınız';
+    if (!termsAccepted) newErrors.termsAccepted = 'Kullanım şartlarını okumalı ve onaylamalısınız';
 
     return newErrors;
   };
@@ -993,6 +997,96 @@ export default function OnboardingPage() {
                         <div className="flex items-start mt-2 text-red-600">
                           <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
                           <p className="text-sm font-medium leading-relaxed">{errors.kvkkAccepted}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Privacy Policy Acceptance */}
+                    <div data-field="privacyAccepted">
+                      <div className={`flex items-start p-4 border-2 rounded-2xl transition-all ${hasInteracted && errors.privacyAccepted
+                        ? 'border-red-400 bg-red-50'
+                        : 'border-gray-200 bg-gray-50'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          id="privacy-acceptance"
+                          checked={privacyAccepted}
+                          onChange={(e) => {
+                            setPrivacyAccepted(e.target.checked);
+                            if (errors.privacyAccepted) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.privacyAccepted;
+                                return newErrors;
+                              });
+                            }
+                          }}
+                          className="mt-1 h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                          disabled={loading}
+                        />
+                        <label htmlFor="privacy-acceptance" className="ml-3 text-sm text-gray-700">
+                          <span className="font-medium">
+                            <a
+                              href="/privacy"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-700 hover:underline"
+                            >
+                              Gizlilik Politikası
+                            </a>
+                            'nı okudum ve kabul ediyorum. *
+                          </span>
+                        </label>
+                      </div>
+                      {hasInteracted && errors.privacyAccepted && (
+                        <div className="flex items-start mt-2 text-red-600">
+                          <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm font-medium leading-relaxed">{errors.privacyAccepted}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Terms Acceptance */}
+                    <div data-field="termsAccepted">
+                      <div className={`flex items-start p-4 border-2 rounded-2xl transition-all ${hasInteracted && errors.termsAccepted
+                        ? 'border-red-400 bg-red-50'
+                        : 'border-gray-200 bg-gray-50'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          id="terms-acceptance"
+                          checked={termsAccepted}
+                          onChange={(e) => {
+                            setTermsAccepted(e.target.checked);
+                            if (errors.termsAccepted) {
+                              setErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.termsAccepted;
+                                return newErrors;
+                              });
+                            }
+                          }}
+                          className="mt-1 h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                          disabled={loading}
+                        />
+                        <label htmlFor="terms-acceptance" className="ml-3 text-sm text-gray-700">
+                          <span className="font-medium">
+                            <a
+                              href="/terms"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-700 hover:underline"
+                            >
+                              Kullanım Şartları
+                            </a>
+                            'nı okudum ve kabul ediyorum. *
+                          </span>
+                        </label>
+                      </div>
+                      {hasInteracted && errors.termsAccepted && (
+                        <div className="flex items-start mt-2 text-red-600">
+                          <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm font-medium leading-relaxed">{errors.termsAccepted}</p>
                         </div>
                       )}
                     </div>

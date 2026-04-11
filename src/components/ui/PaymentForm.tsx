@@ -37,7 +37,7 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
     zipCode: ''
   });
 
-  const [installment, setInstallment] = useState('1');
+  const installment = '1';
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string;
@@ -315,20 +315,9 @@ export default function PaymentForm({ selectedPlan, onSubmit, onBack, loading = 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Taksit</label>
-              <select
-                value={installment}
-                onChange={(e) => setInstallment(e.target.value)}
-                className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                disabled={loading}
-                style={{ colorScheme: 'light' }}
-              >
-                <option value="1">1 (Taksitsiz)</option>
-                <option value="2">2 taksit</option>
-                <option value="3">3 taksit</option>
-                <option value="6">6 taksit</option>
-                <option value="9">9 taksit</option>
-                <option value="12">12 taksit</option>
-              </select>
+              <div className="w-full px-3 py-2 text-gray-900 bg-gray-100 border border-gray-300 rounded-lg">
+                1 (Taksitsiz)
+              </div>
             </div>
           </div>
         </div>

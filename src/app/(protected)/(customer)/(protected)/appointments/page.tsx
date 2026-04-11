@@ -385,11 +385,11 @@ export default function AppointmentsPage() {
                   setShowFilterDropdown(!showFilterDropdown);
                   setShowDateDropdown(false);
                 }}
-                className="w-full flex items-center justify-between p-3 bg-[var(--theme-backgroundSecondary)] rounded-xl border border-[var(--theme-border)] transition-colors duration-300 hover:border-[var(--theme-primary)]/30"
+                className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-900 transition-colors duration-300 hover:border-[var(--theme-primary)]/40 dark:bg-[var(--theme-backgroundSecondary)] dark:border-[var(--theme-border)] dark:text-[var(--theme-foreground)]"
               >
                 <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-[var(--theme-primary)]" />
-                  <span className="text-sm font-semibold text-[var(--theme-foreground)]">
+                  <Filter className="w-4 h-4 text-indigo-600 dark:text-[var(--theme-primary)]" />
+                  <span className="text-sm font-semibold text-slate-900 dark:text-[var(--theme-foreground)]">
                     {[
                       { value: 'all', label: 'Tüm Durumlar' },
                       { value: 'CONFIRMED', label: 'Onaylandı' },
@@ -399,11 +399,11 @@ export default function AppointmentsPage() {
                     ].find(f => f.value === selectedStatus)?.label}
                   </span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showFilterDropdown ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showFilterDropdown ? 'rotate-180' : ''}`} />
               </button>
 
               {showFilterDropdown && (
-                <div className="absolute top-full mt-2 w-full bg-[var(--theme-card)] dark:bg-gray-800/90 rounded-xl border border-[var(--theme-border)] shadow-xl z-20 overflow-hidden">
+                <div className="absolute top-full mt-2 w-full rounded-xl border shadow-xl z-20 overflow-hidden bg-white text-slate-900 border-slate-200 dark:bg-[var(--theme-card)] dark:text-[var(--theme-foreground)] dark:border-[var(--theme-border)]">
                   {[
                     { value: 'all', label: 'Tüm Durumlar', icon: List },
                     { value: 'CONFIRMED', label: 'Onaylandı', icon: CheckCircle },
@@ -412,22 +412,26 @@ export default function AppointmentsPage() {
                     { value: 'NO_SHOW', label: 'Gelmedi', icon: AlertTriangle }
                   ].map((filter, index) => {
                     const IconComponent = filter.icon;
+                    const isSelected = selectedStatus === filter.value;
                     return (
                       <button
                         key={filter.value}
+                        type="button"
                         onClick={() => {
                           setSelectedStatus(filter.value);
                           setCurrentPage(1);
                           setShowFilterDropdown(false);
                         }}
-                        className={`w-full flex items-center space-x-3 px-3 py-2.5 hover:bg-[var(--theme-backgroundSecondary)] transition-colors duration-200 ${index === 0 ? '' : 'border-t border-[var(--theme-border)]'
-                          } ${selectedStatus === filter.value ? 'bg-[var(--theme-primary)]/10 text-[var(--theme-primary)]' : 'text-[var(--theme-foreground)]'
+                        className={`w-full flex items-center space-x-3 px-3 py-2.5 text-left transition-colors duration-200 ${index === 0 ? '' : 'border-t border-slate-200 dark:border-[var(--theme-border)]'
+                          } ${isSelected
+                            ? 'bg-indigo-50 text-indigo-700 dark:bg-[var(--theme-primary)]/15 dark:text-[var(--theme-primary)]'
+                            : 'text-slate-800 hover:bg-slate-100 dark:text-[var(--theme-foreground)] dark:hover:bg-[var(--theme-backgroundSecondary)]'
                           }`}
                       >
-                        <IconComponent className="w-4 h-4 flex-shrink-0" />
+                        <IconComponent className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-indigo-600 dark:text-[var(--theme-primary)]' : 'text-slate-600 dark:text-[var(--theme-foregroundSecondary)]'}`} />
                         <span className="text-sm font-medium">{filter.label}</span>
-                        {selectedStatus === filter.value && (
-                          <Check className="w-4 h-4 ml-auto text-[var(--theme-primary)]" />
+                        {isSelected && (
+                          <Check className="w-4 h-4 ml-auto text-indigo-600 dark:text-[var(--theme-primary)]" />
                         )}
                       </button>
                     );
@@ -443,11 +447,11 @@ export default function AppointmentsPage() {
                   setShowDateDropdown(!showDateDropdown);
                   setShowFilterDropdown(false);
                 }}
-                className="w-full flex items-center justify-between p-3 bg-[var(--theme-backgroundSecondary)] rounded-xl border border-[var(--theme-border)] transition-colors duration-300 hover:border-[var(--theme-accent)]/30"
+                className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-900 transition-colors duration-300 hover:border-violet-300 dark:bg-[var(--theme-backgroundSecondary)] dark:border-[var(--theme-border)] dark:text-[var(--theme-foreground)]"
               >
                 <div className="flex items-center space-x-2">
-                  <CalendarDays className="w-4 h-4 text-[var(--theme-accent)]" />
-                  <span className="text-sm font-semibold text-[var(--theme-foreground)]">
+                  <CalendarDays className="w-4 h-4 text-violet-600 dark:text-[var(--theme-accent)]" />
+                  <span className="text-sm font-semibold text-slate-900 dark:text-[var(--theme-foreground)]">
                     {[
                       { value: 'all', label: 'Tüm Zamanlar' },
                       { value: 'today', label: 'Bugün' },
@@ -457,11 +461,11 @@ export default function AppointmentsPage() {
                     ].find(f => f.value === selectedDateFilter)?.label}
                   </span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showDateDropdown ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-[var(--theme-foregroundSecondary)] transition-transform duration-200 ${showDateDropdown ? 'rotate-180' : ''}`} />
               </button>
 
               {showDateDropdown && (
-                <div className="absolute top-full mt-2 w-full bg-[var(--theme-card)] dark:bg-gray-800/90 rounded-xl border border-[var(--theme-border)] shadow-xl z-20 overflow-hidden">
+                <div className="absolute top-full mt-2 w-full rounded-xl border shadow-xl z-20 overflow-hidden bg-white text-slate-900 border-slate-200 dark:bg-[var(--theme-card)] dark:text-[var(--theme-foreground)] dark:border-[var(--theme-border)]">
                   {[
                     { value: 'all', label: 'Tüm Zamanlar', icon: Calendar },
                     { value: 'today', label: 'Bugün', icon: Clock },
@@ -470,22 +474,26 @@ export default function AppointmentsPage() {
                     { value: 'thisYear', label: 'Bu Yıl', icon: Calendar }
                   ].map((filter, index) => {
                     const IconComponent = filter.icon;
+                    const isSelected = selectedDateFilter === filter.value;
                     return (
                       <button
                         key={filter.value}
+                        type="button"
                         onClick={() => {
                           setSelectedDateFilter(filter.value);
                           setCurrentPage(1);
                           setShowDateDropdown(false);
                         }}
-                        className={`w-full flex items-center space-x-3 px-3 py-2.5 hover:bg-[var(--theme-backgroundSecondary)] transition-colors duration-200 ${index === 0 ? '' : 'border-t border-[var(--theme-border)]'
-                          } ${selectedDateFilter === filter.value ? 'bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]' : 'text-[var(--theme-foreground)]'
+                        className={`w-full flex items-center space-x-3 px-3 py-2.5 text-left transition-colors duration-200 ${index === 0 ? '' : 'border-t border-slate-200 dark:border-[var(--theme-border)]'
+                          } ${isSelected
+                            ? 'bg-violet-50 text-violet-800 dark:bg-[var(--theme-accent)]/15 dark:text-[var(--theme-accent)]'
+                            : 'text-slate-800 hover:bg-slate-100 dark:text-[var(--theme-foreground)] dark:hover:bg-[var(--theme-backgroundSecondary)]'
                           }`}
                       >
-                        <IconComponent className="w-4 h-4 flex-shrink-0" />
+                        <IconComponent className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-violet-600 dark:text-[var(--theme-accent)]' : 'text-slate-600 dark:text-[var(--theme-foregroundSecondary)]'}`} />
                         <span className="text-sm font-medium">{filter.label}</span>
-                        {selectedDateFilter === filter.value && (
-                          <Check className="w-4 h-4 ml-auto text-[var(--theme-accent)]" />
+                        {isSelected && (
+                          <Check className="w-4 h-4 ml-auto text-violet-600 dark:text-[var(--theme-accent)]" />
                         )}
                       </button>
                     );

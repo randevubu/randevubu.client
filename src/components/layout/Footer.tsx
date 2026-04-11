@@ -75,7 +75,7 @@ export default function Footer() {
           </div>
 
           {/* Mobile Quick Links */}
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="space-y-3 text-center">
               <h3 className="font-bold text-[var(--theme-foreground)] text-sm">Ürün</h3>
               <div className="space-y-2">
@@ -90,6 +90,14 @@ export default function Footer() {
                 <a href="#help" className="block text-xs text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors">Yardım</a>
                 <a href="#contact" className="block text-xs text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors">İletişim</a>
                 <a href="#about" className="block text-xs text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors">Hakkımızda</a>
+              </div>
+            </div>
+            <div className="space-y-3 text-center">
+              <h3 className="font-bold text-[var(--theme-foreground)] text-sm">Yasal</h3>
+              <div className="space-y-2">
+                <a href="/privacy" className="block text-xs text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors">Gizlilik</a>
+                <a href="/terms" className="block text-xs text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors">Şartlar</a>
+                <a href="/kvkk" className="block text-xs text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors">KVKK</a>
               </div>
             </div>
           </div>
