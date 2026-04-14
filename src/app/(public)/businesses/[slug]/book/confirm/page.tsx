@@ -215,25 +215,6 @@ export default function ConfirmationPage() {
     return remainingMinutes > 0 ? `${hours}s ${remainingMinutes}dk` : `${hours} saat`;
   };
 
-  const getDateDisplayName = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Bugün';
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Yarın';
-    } else {
-      return date.toLocaleDateString('tr-TR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long'
-      });
-    }
-  };
-
   const handleNameDialogClose = () => {
     setShowNameDialog(false);
   };
@@ -277,10 +258,10 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3">
-      {/* Navigation Header */}
-      <div className="sticky top-0 z-10 bg-[var(--theme-background)]/90 backdrop-blur-xl border-b border-[var(--theme-border)]/50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+    <div className="flex h-dvh min-h-dvh flex-col overflow-hidden bg-gradient-to-br from-[var(--theme-primary)]/3 via-[var(--theme-background)] to-[var(--theme-accent)]/3">
+      {/* Navigation Header — sabit; sayfa gövdesi kaymaz */}
+      <div className="shrink-0 z-10 bg-[var(--theme-background)]/90 backdrop-blur-xl border-b border-[var(--theme-border)]/50 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-4xl mx-auto px-4 py-4 [@media(max-height:640px)]:py-3">
           <div className="flex items-center justify-between">
             <button
               onClick={() => router.push(`/businesses/${slug}/book/datetime?serviceId=${serviceId}${staffId ? `&staffId=${staffId}` : ''}&date=${date}&time=${time}`)}
@@ -299,14 +280,16 @@ export default function ConfirmationPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className={`max-w-4xl mx-auto px-4 py-6 ${showNameDialog ? 'pointer-events-none opacity-50' : ''}`}>
+      {/* Ana içerik: kalan viewport; yalnızca bu alan gerekirse kayar */}
+      <div
+        className={`flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain max-w-4xl w-full mx-auto px-4 py-6 [@media(max-height:680px)]:py-4 max-[360px]:px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] ${showNameDialog ? 'pointer-events-none opacity-50' : ''}`}
+      >
         {/* Business Info */}
-        <div className="bg-[var(--theme-card)] rounded-2xl p-6 shadow-xl border border-[var(--theme-border)] mb-8">
+        <div className="bg-[var(--theme-card)] rounded-2xl p-6 shadow-xl border border-[var(--theme-border)] mb-8 [@media(max-height:680px)]:mb-4 [@media(max-height:640px)]:p-4 [@media(max-height:640px)]:rounded-xl">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-[var(--theme-foreground)] mb-2">{business.name}</h2>
+            <h2 className="text-xl font-bold text-[var(--theme-foreground)] mb-2 [@media(max-height:640px)]:text-lg [@media(max-height:640px)]:mb-1">{business.name}</h2>
             {business.businessType && (
-              <p className="text-sm text-[var(--theme-foregroundSecondary)]">
+              <p className="text-sm text-[var(--theme-foregroundSecondary)] [@media(max-height:640px)]:text-xs">
                 {business.businessType.icon} {business.businessType.displayName}
               </p>
             )}
@@ -314,24 +297,28 @@ export default function ConfirmationPage() {
         </div>
 
         {/* Appointment Summary */}
-        <div className="bg-[var(--theme-card)] rounded-2xl shadow-xl border border-[var(--theme-border)] overflow-hidden">
-          <div className="p-8 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="pb-4 border-b border-[var(--theme-border)]">
-                <h4 className="font-semibold text-[var(--theme-foreground)] mb-3">Hizmet</h4>
-                <div className="space-y-2">
-                  <p className="font-medium text-[var(--theme-foreground)]">{selectedService.name}</p>
-                  <p className="text-sm text-[var(--theme-foregroundSecondary)]">{formatDuration(selectedService.duration)}</p>
-                  {selectedService.price !== null && selectedService.price !== undefined &&
-                    !business.settings?.priceVisibility?.hideAllServicePrices && (
-                      <p className="text-lg font-bold text-[var(--theme-primary)]">{formatPrice(selectedService.price)}</p>
-                    )}
+        <div className="bg-[var(--theme-card)] rounded-2xl shadow-xl border border-[var(--theme-border)] overflow-hidden [@media(max-height:640px)]:rounded-xl">
+          <div className="p-8 space-y-6 [@media(max-height:680px)]:space-y-4 [@media(max-height:680px)]:p-5 [@media(max-height:640px)]:p-4 [@media(max-height:640px)]:space-y-3">
+            <div className="space-y-6 [@media(max-height:680px)]:space-y-4 [@media(max-height:640px)]:space-y-3">
+              <div className="pb-4 border-b border-[var(--theme-border)] [@media(max-height:640px)]:pb-3">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-[var(--theme-foreground)] mb-2 [@media(max-height:640px)]:text-[0.9375rem] [@media(max-height:640px)]:mb-1">Hizmet</h4>
+                    <p className="font-medium text-[var(--theme-foreground)] [@media(max-height:640px)]:text-sm">{selectedService.name}</p>
+                  </div>
+                  <div className="shrink-0 text-right space-y-1">
+                    <p className="text-sm text-[var(--theme-foregroundSecondary)] [@media(max-height:640px)]:text-xs">{formatDuration(selectedService.duration)}</p>
+                    {selectedService.price !== null && selectedService.price !== undefined &&
+                      !business.settings?.priceVisibility?.hideAllServicePrices && (
+                        <p className="text-lg font-bold text-[var(--theme-primary)] [@media(max-height:640px)]:text-base">{formatPrice(selectedService.price)}</p>
+                      )}
+                  </div>
                 </div>
               </div>
 
               {selectedStaff && (
-                <div className="pb-4 border-b border-[var(--theme-border)]">
-                  <h4 className="font-semibold text-[var(--theme-foreground)] mb-3">Personel</h4>
+                <div className="pb-4 border-b border-[var(--theme-border)] [@media(max-height:640px)]:pb-3">
+                  <h4 className="font-semibold text-[var(--theme-foreground)] mb-3 [@media(max-height:640px)]:mb-2">Personel</h4>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       {selectedStaff.user.avatar ? (
@@ -361,26 +348,27 @@ export default function ConfirmationPage() {
                 </div>
               )}
 
-              <div className="pb-4 border-b border-[var(--theme-border)]">
-                <h4 className="font-semibold text-[var(--theme-foreground)] mb-3">Tarih & Saat</h4>
-                <div className="space-y-2">
-                  <p className="font-medium text-[var(--theme-foreground)]">{getDateDisplayName(date)}</p>
-                  <p className="text-sm text-[var(--theme-foregroundSecondary)]">
-                    {new Date(date).toLocaleDateString('tr-TR', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                  <p className="text-lg font-bold text-[var(--theme-primary)]">{time}</p>
+              <div className="pb-4 border-b border-[var(--theme-border)] [@media(max-height:640px)]:pb-3">
+                <div className="flex justify-between items-start gap-4">
+                  <h4 className="font-semibold text-[var(--theme-foreground)] shrink-0 [@media(max-height:640px)]:text-[0.9375rem]">Tarih & Saat</h4>
+                  <div className="min-w-0 text-right space-y-1">
+                    <p className="font-medium text-[var(--theme-foreground)] [@media(max-height:640px)]:text-sm">
+                      {new Date(date).toLocaleDateString('tr-TR', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-lg font-bold text-[var(--theme-primary)] [@media(max-height:640px)]:text-base">{time}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Notes Section */}
-            <div className="pt-4">
-              <label htmlFor="notes" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
+            <div className="pt-4 [@media(max-height:680px)]:pt-2">
+              <label htmlFor="notes" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2 [@media(max-height:640px)]:mb-1 [@media(max-height:640px)]:text-xs">
                 Notlar (İsteğe bağlı)
               </label>
               <textarea
@@ -388,7 +376,7 @@ export default function ConfirmationPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Randevunuz hakkında özel notlarınızı buraya yazabilirsiniz..."
-                className="w-full p-3 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-background)] text-[var(--theme-foreground)] placeholder-[var(--theme-foregroundMuted)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-none"
+                className="w-full p-3 border border-[var(--theme-border)] rounded-lg bg-[var(--theme-background)] text-[var(--theme-foreground)] placeholder-[var(--theme-foregroundMuted)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent resize-none [@media(max-height:680px)]:min-h-[4.25rem] [@media(max-height:640px)]:min-h-[3.5rem] [@media(max-height:640px)]:p-2 [@media(max-height:640px)]:text-sm"
                 rows={3}
                 maxLength={500}
               />
@@ -399,7 +387,7 @@ export default function ConfirmationPage() {
 
             {/* Booking Error Display */}
             {bookingError && (
-              <div className="bg-[var(--theme-error)]/5 border border-[var(--theme-error)]/20 rounded-xl p-4">
+              <div className="bg-[var(--theme-error)]/5 border border-[var(--theme-error)]/20 rounded-xl p-4 [@media(max-height:640px)]:p-3">
                 <div className="flex items-start">
                   <svg className="w-6 h-6 text-[var(--theme-error)] mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
@@ -422,7 +410,7 @@ export default function ConfirmationPage() {
 
             {/* Auth Notice */}
             {!isAuthenticated && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 [@media(max-height:640px)]:p-3 [@media(max-height:640px)]:text-sm">
                 <div className="flex items-start">
                   <svg className="w-6 h-6 text-amber-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
@@ -436,19 +424,11 @@ export default function ConfirmationPage() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
-              <button
-                onClick={() => router.push(`/businesses/${slug}/book/datetime?serviceId=${serviceId}${staffId ? `&staffId=${staffId}` : ''}&date=${date}&time=${time}`)}
-                disabled={isSubmitting}
-                className="w-full sm:w-auto text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] font-medium transition-colors py-3 px-6 rounded-xl border border-[var(--theme-border)] hover:border-[var(--theme-primary)] hover:bg-[var(--theme-background)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-[var(--theme-border)]"
-              >
-                ← Geri Dön
-              </button>
-
+            <div className="pt-4 [@media(max-height:680px)]:pt-2">
               <button
                 onClick={handleBooking}
                 disabled={isSubmitting || !isAuthenticated}
-                className="w-full sm:w-auto bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] text-[var(--theme-primaryForeground)] py-4 px-8 rounded-2xl font-bold text-lg hover:from-[var(--theme-primaryHover)] hover:to-[var(--theme-accentHover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-xl disabled:shadow-none"
+                className="w-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-accent)] text-[var(--theme-primaryForeground)] py-4 px-8 rounded-2xl font-bold text-lg hover:from-[var(--theme-primaryHover)] hover:to-[var(--theme-accentHover)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:ring-offset-2 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-xl disabled:shadow-none [@media(max-height:680px)]:py-3 [@media(max-height:640px)]:text-base [@media(max-height:640px)]:rounded-xl"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">

@@ -163,54 +163,82 @@ export const calculateHoursUntil = (appointmentStartTime: string | Date): number
  * @param error - Error message or object
  * @returns User-friendly error message
  */
+/**
+ * Interpolate {param} placeholders in a message template.
+ */
+const interpolateErrorParams = (template: string, params: Record<string, unknown>): string => {
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    const value = params[key];
+    return value !== undefined && value !== null ? String(value) : match;
+  });
+};
+
+/**
+ * Static Turkish translation map for customer-facing error messages.
+ * Keyed by the server's error.key (e.g. "errors.appointment.insufficientAdvance").
+ * Supports {param} interpolation.
+ */
+const CUSTOMER_ERROR_TRANSLATIONS: Record<string, string> = {
+  'errors.appointment.notFound': 'Randevu bulunamadı.',
+  'errors.appointment.accessDenied': 'Bu randevuya erişim yetkiniz bulunmuyor.',
+  'errors.appointment.timeConflict': 'Bu saatte zaten bir randevunuz var. Lütfen başka bir saat seçin.',
+  'errors.appointment.pastDate': 'Geçmiş bir tarih ve saat için randevu oluşturulamaz. Lütfen ileri bir saat seçin.',
+  'errors.appointment.tooFarFuture': 'Bu işletme için en fazla {maxDays} gün sonrasına kadar randevu alınabilir.',
+  'errors.appointment.outsideHours': 'Seçtiğiniz saat işletmenin çalışma saatleri dışında.',
+  'errors.appointment.staffNotAvailable': 'Seçilen saatte personelin başka bir randevusu var. Lütfen uygun başka bir saat seçin.',
+  'errors.appointment.serviceUnavailable': 'Seçilen hizmet bulunamadı veya şu an aktif değil.',
+  'errors.appointment.insufficientAdvance': 'Randevuyu en az {minHours} saat önceden almanız gerekmektedir.',
+  'errors.appointment.dailyLimitReached': 'Bu tarih için günlük randevu kotası ({maxDaily}) dolmuştur. Lütfen başka bir gün seçin.',
+  'errors.appointment.bookingPolicyViolation': 'İşletme kuralları gereği şu an yeni randevu alınamıyor.',
+  'errors.appointment.alreadyConfirmed': 'Bu randevu zaten onaylanmış.',
+  'errors.appointment.alreadyCompleted': 'Bu randevu zaten tamamlanmış.',
+  'errors.appointment.alreadyCancelled': 'Bu randevu zaten iptal edilmiş.',
+  'errors.appointment.cannotCancel': 'Bu randevu iptal edilemez.',
+  'errors.appointment.noShowNotAllowed': 'İşletme kuralları gereği gelmedi olarak işaretlenemez.',
+  'errors.business.notFound': 'İşletme bulunamadı.',
+  'errors.business.closed': 'İşletme bu tarihte kapalı. Lütfen başka bir gün seçin.',
+  'errors.business.accessDenied': 'Bu işletmeye erişim yetkiniz bulunmuyor.',
+  'errors.customer.notFound': 'Müşteri bulunamadı.',
+  'errors.staff.notFound': 'Seçilen personel bulunamadı.',
+  'errors.staff.notAvailable': 'Seçilen personel şu an aktif değil.',
+  'errors.auth.accessDenied': 'Bu işlem için yetkiniz bulunmuyor.',
+  'errors.auth.accountDisabled': 'Hesabınız pasif durumda.',
+  'errors.validation.general': 'Girdiğiniz bilgilerde hata var. Lütfen kontrol edin.',
+  'errors.system.internalError': 'Bir hata oluştu. Lütfen tekrar deneyin.',
+};
+
 export const getPolicyErrorMessage = (error: unknown): string => {
-  let errorMessage = typeof error === 'string' 
-    ? error 
-    : (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string')
-      ? error.message
-      : '';
+  // 1. If we received the structured error object (from extractApiError), use its key + params
+  if (error && typeof error === 'object') {
+    const errObj = error as Record<string, unknown>;
 
-  // Strip English prefixes from API errors
-  const prefixesToRemove = [
-    'Cannot book appointment: ',
-    'Cannot cancel appointment: ',
-    'Cannot update appointment: ',
-    'Cannot delete appointment: '
-  ];
+    // Translation key path
+    if (typeof errObj.key === 'string' && errObj.key) {
+      const template = CUSTOMER_ERROR_TRANSLATIONS[errObj.key];
+      if (template) {
+        const params = (errObj.params && typeof errObj.params === 'object')
+          ? errObj.params as Record<string, unknown>
+          : {};
+        return interpolateErrorParams(template, params);
+      }
+    }
 
-  for (const prefix of prefixesToRemove) {
-    if (errorMessage.startsWith(prefix)) {
-      errorMessage = errorMessage.substring(prefix.length);
-      break;
+    // Fall back to the message property
+    if (typeof errObj.message === 'string' && errObj.message) {
+      return errObj.message;
     }
   }
 
-  // If the message is already in Turkish and from the API, return it
-  if (errorMessage && errorMessage.trim() && !errorMessage.includes('Error') && !errorMessage.includes('error')) {
-    return errorMessage;
-  }
-
-  // Fallback error map for older messages or specific cases
-  const errorMap: Record<string, string> = {
-    'Aylık maksimum iptal sayısına ulaştınız':
-      'İşletmenin belirlediği aylık iptal limitine ulaştınız. Yeni randevu alamazsınız',
-    'Aylık maksimum gelmeme sayısına ulaştınız':
-      'İşletmenin belirlediği aylık gelmeme limitine ulaştınız. Yeni randevu alamazsınız',
-    'Customer is banned':
-      'İşletme tarafından engellendiniz. Randevu alamazsınız',
-    'Randevu iptali için en az':
-      'İşletmenin iptal politikası gereği randevu iptali için yeterli süre kalmamış',
-    'Customer ID is required': 'Müşteri kimliği gereklidir',
-    'Access denied': 'Bu işlem için yetkiniz bulunmuyor'
-  };
-
-  for (const [key, message] of Object.entries(errorMap)) {
-    if (errorMessage.includes(key)) {
-      return message;
+  // 2. String error
+  if (typeof error === 'string' && error.trim()) {
+    // Strip Axios "Request failed with status code XXX"
+    if (error.startsWith('Request failed')) {
+      return 'Bir hata oluştu. Lütfen tekrar deneyin.';
     }
+    return error;
   }
 
-  return errorMessage || 'Bir hata oluştu';
+  return 'Bir hata oluştu. Lütfen tekrar deneyin.';
 };
 
 /**

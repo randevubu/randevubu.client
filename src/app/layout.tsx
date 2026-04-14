@@ -92,10 +92,15 @@ export default async function RootLayout({
                           },
                         },
                         error: {
-                          duration: 5000,
+                          duration: 6000,
+                          className: 'rht-error-toast',
                           iconTheme: {
                             primary: 'var(--theme-error)',
                             secondary: 'var(--theme-background)',
+                          },
+                          style: {
+                            maxWidth: 'min(96vw, 36rem)',
+                            alignItems: 'flex-start',
                           },
                         },
                       }}

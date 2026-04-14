@@ -114,6 +114,7 @@ export function useClosures(params: UseClosuresParams = {}): UseClosuresResult {
     isError,
     error,
     refetch: () => {
+      queryClient.invalidateQueries({ queryKey });
       refetch();
     },
     deleteClosure: async (closureId: string) => {

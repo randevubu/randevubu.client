@@ -29,7 +29,16 @@ export const showSuccessToast = (message: string) => {
 };
 
 export const showErrorToast = (message: string) => {
-  toast.error(message);
+  toast.error(message, {
+    className: 'rht-error-toast',
+    duration: message.length > 120 ? 8000 : 6000,
+    style: {
+      maxWidth: 'min(96vw, 36rem)',
+      alignItems: 'flex-start',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+    },
+  });
 };
 
 export const showInfoToast = (message: string) => {
@@ -152,7 +161,21 @@ const truncateMessage = (message: string, maxLength: number = 80): string => {
   return message.substring(0, maxLength) + '...';
 };
 
+/** Backend user-facing messages (TR) can be ~100+ chars; do not cut them at 60. */
+const MAX_TOAST_MESSAGE_LENGTH = 500;
+
 const getShortErrorMessage = (fullMessage: string): string => {
+  // User-facing Turkish (and other non-English) messages: never run English-only regexes on them.
+  const looksLikeTurkishUserMessage =
+    /[ğüşöçıĞÜŞÖÇİ]/.test(fullMessage) ||
+    /\b(Seçilen|Lütfen|personel|randevu|müşteri|müsait|saatte|uygun|hizmet)\b/i.test(
+      fullMessage
+    );
+  if (looksLikeTurkishUserMessage) {
+    if (fullMessage.length <= MAX_TOAST_MESSAGE_LENGTH) return fullMessage;
+    return truncateMessage(fullMessage, MAX_TOAST_MESSAGE_LENGTH);
+  }
+
   // Common patterns to make messages more user-friendly
   const patterns = [
     // Payment and subscription errors
@@ -276,6 +299,22 @@ const getShortErrorMessage = (fullMessage: string): string => {
     {
       pattern: /Invalid file type/,
       replacement: 'Geçersiz dosya türü'
+    },
+    {
+      pattern: /Closure start date cannot be in the past/i,
+      replacement: 'Kapatma başlangıç tarihi geçmişte olamaz'
+    },
+    {
+      pattern: /Closure end date must be at or after start date/i,
+      replacement: 'Bitiş tarihi başlangıç tarihinden sonra olmalıdır'
+    },
+    {
+      pattern: /Closure period conflicts with existing closure/i,
+      replacement: 'Seçilen tarih aralığında zaten bir kapatma mevcut'
+    },
+    {
+      pattern: /Failed to create closure/i,
+      replacement: 'Kapatma oluşturulamadı. Lütfen tekrar deneyin.'
     }
   ];
 
@@ -285,101 +324,94 @@ const getShortErrorMessage = (fullMessage: string): string => {
     }
   }
 
-  // Fallback: truncate long messages
-  return truncateMessage(fullMessage, 60);
+  // Show full backend message (e.g. Turkish appointment errors); only cap huge blobs
+  if (fullMessage.length <= MAX_TOAST_MESSAGE_LENGTH) {
+    return fullMessage;
+  }
+  return truncateMessage(fullMessage, MAX_TOAST_MESSAGE_LENGTH);
+};
+
+/**
+ * Try to translate an error key using next-intl error translations.
+ * Passes params directly to next-intl for ICU message interpolation.
+ * Returns the translated string, or null if the key is missing.
+ */
+const translateErrorKey = (
+  errorKey: string,
+  params: Record<string, unknown>,
+  errorTranslations?: ReturnType<typeof useErrorTranslations>
+): string | null => {
+  if (!errorTranslations || !errorKey) return null;
+
+  // errorKey from server is e.g. "errors.appointment.insufficientAdvance"
+  // next-intl's useTranslations('errors') expects "appointment.insufficientAdvance"
+  const translationPath = errorKey.startsWith('errors.') ? errorKey.slice(7) : errorKey;
+
+  try {
+    const translated = errorTranslations(translationPath as any, params as any);
+    if (translated && translated !== translationPath && translated !== errorKey) {
+      return translated;
+    }
+  } catch {
+    // Key not found in translation file
+  }
+  return null;
 };
 
 export const handleApiError = (error: ApiErrorResponse | any, errorTranslations?: ReturnType<typeof useErrorTranslations>) => {
   // Handle Axios error responses first (most common case)
   if (error?.response?.data?.error) {
-    const apiError = error.response.data;
-    const errorData = apiError.error;
-    
-    // Handle structured error responses with translation keys
-    if (errorData.key && errorTranslations) {
-      const errorKey = errorData.key;
-      const errorParams = errorData.params || {};
-      
-      // Handle specific error types with their parameters
-      if (errorKey === 'errors.business.staffLimitExceeded') {
-        // Use translation for the base message and append the reason
-        const baseMessage = errorTranslations('business.staffLimitExceeded');
-        const reason = errorParams.reason || '';
-        // Extract the current count from the reason if available
-        const countMatch = reason.match(/Current: (\d+\/\d+)/);
-        const countText = countMatch ? ` (Mevcut: ${countMatch[1]})` : '';
-        showErrorToast(baseMessage + countText);
-      } else if (errorKey === 'errors.business.smsQuotaExceeded') {
-        const baseMessage = errorTranslations('business.smsQuotaExceeded');
-        const reason = errorParams.reason || '';
-        const countMatch = reason.match(/Current: (\d+\/\d+)/);
-        const countText = countMatch ? ` (Mevcut: ${countMatch[1]})` : '';
-        showErrorToast(baseMessage + countText);
-      } else if (errorKey === 'errors.business.serviceLimitExceeded') {
-        const baseMessage = errorTranslations('business.serviceLimitExceeded');
-        const reason = errorParams.reason || '';
-        const countMatch = reason.match(/Current: (\d+\/\d+)/);
-        const countText = countMatch ? ` (Mevcut: ${countMatch[1]})` : '';
-        showErrorToast(baseMessage + countText);
-      } else if (errorKey === 'errors.business.customerLimitExceeded') {
-        const baseMessage = errorTranslations('business.customerLimitExceeded');
-        const reason = errorParams.reason || '';
-        const countMatch = reason.match(/Current: (\d+\/\d+)/);
-        const countText = countMatch ? ` (Mevcut: ${countMatch[1]})` : '';
-        showErrorToast(baseMessage + countText);
-      } else {
-        // Fallback to generic error message
-        const reason = errorParams.reason || errorData.message || 'Bir hata oluştu';
-        showErrorToast(reason);
-      }
-    } else if (errorData.message) {
-      // Handle direct error messages
-      const fullMessage = errorData.message;
-      const suggestions = errorData.details?.suggestions;
+    const errorData = error.response.data.error;
 
-      // Use short message for toast, but keep full context available
-      let toastMessage = getShortErrorMessage(fullMessage);
-
-      // Don't add suggestions for specific error types that already have good messages
-      const shouldSkipSuggestion = fullMessage.includes('Maximum 5 reminder times allowed') || 
-                                   fullMessage.includes('At least one reminder time must be selected');
-
-      // Add suggestion if available and short, but not for specific error types
-      if (suggestions && suggestions.length > 0 && !shouldSkipSuggestion) {
-        const suggestion = suggestions[0];
-        if (suggestion.length <= 40) {
-          toastMessage += `\n${suggestion}`;
-        }
-      }
-
-      showErrorToast(toastMessage);
-    } else {
-      // Fallback for other error structures
-      showErrorToast('Bir hata oluştu');
-    }
-  } else if (error?.error?.message) {
-    // Handle direct API error responses (non-Axios)
-    const fullMessage = error.error.message;
-    const suggestions = error.error.details?.suggestions;
-
-    // Use short message for toast, but keep full context available
-    let toastMessage = getShortErrorMessage(fullMessage);
-
-    // Don't add suggestions for specific error types that already have good messages
-    const shouldSkipSuggestion = fullMessage.includes('Maximum 5 reminder times allowed') || 
-                                 fullMessage.includes('At least one reminder time must be selected');
-
-    // Add suggestion if available and short, but not for specific error types
-    if (suggestions && suggestions.length > 0 && !shouldSkipSuggestion) {
-      const suggestion = suggestions[0];
-      if (suggestion.length <= 40) {
-        toastMessage += `\n${suggestion}`;
-      }
+    // Legacy controllers may return error as a plain string
+    if (typeof errorData === 'string') {
+      showErrorToast(getShortErrorMessage(errorData));
+      return;
     }
 
-    showErrorToast(toastMessage);
+    const errorKey: string = errorData.key || '';
+    const errorParams: Record<string, unknown> = errorData.params || {};
+
+    // 1. Try translation key lookup (professional i18n path)
+    const translated = translateErrorKey(errorKey, errorParams, errorTranslations);
+    if (translated) {
+      showErrorToast(translated);
+      return;
+    }
+
+    // 2. Fallback: use the server message directly
+    if (errorData.message) {
+      showErrorToast(getShortErrorMessage(errorData.message));
+      return;
+    }
+
+    showErrorToast('Bir hata oluştu');
+  } else if (error?.error) {
+    const errorObj = error.error;
+
+    // Handle plain string error
+    if (typeof errorObj === 'string') {
+      showErrorToast(getShortErrorMessage(errorObj));
+      return;
+    }
+
+    // Handle structured error object (non-Axios direct API response)
+    const errorKey: string = errorObj.key || '';
+    const errorParams: Record<string, unknown> = errorObj.params || {};
+
+    const translated = translateErrorKey(errorKey, errorParams, errorTranslations);
+    if (translated) {
+      showErrorToast(translated);
+      return;
+    }
+
+    if (errorObj.message) {
+      showErrorToast(getShortErrorMessage(errorObj.message));
+      return;
+    }
+
+    showErrorToast('Bir hata oluştu');
   } else if (error?.response?.data?.message) {
-    // Handle legacy error format
     showErrorToast(getShortErrorMessage(error.response.data.message));
   } else if (error?.message) {
     showErrorToast(getShortErrorMessage(error.message));

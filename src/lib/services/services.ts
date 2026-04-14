@@ -108,9 +108,20 @@ export const servicesService = {
 
   // Get business services for appointment booking (staff/owner view)
   getBusinessServices: async (businessId: string): Promise<ApiResponse<Service[]>> => {
-    const response = await apiClient.get<ApiResponse<Service[]>>(
+    const response = await apiClient.get<ApiResponse<Service[] | { services: Service[] }>>(
       `/api/v1/services/business/${businessId}`
     );
-    return response.data;
+    const body = response.data;
+    if (!body || typeof body !== 'object') {
+      return { success: false, data: [] };
+    }
+    const raw = body.data as Service[] | { services?: Service[] } | undefined;
+    let list: Service[] = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (raw && typeof raw === 'object' && Array.isArray(raw.services)) {
+      list = raw.services;
+    }
+    return { ...body, data: list };
   }
 };

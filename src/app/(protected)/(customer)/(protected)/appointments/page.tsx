@@ -8,6 +8,7 @@ import { isCustomer } from '@/src/lib/utils/permissions';
 import { showSuccessToast, showErrorToast } from '@/src/lib/utils/toast';
 import { getPolicyErrorMessage } from '@/src/lib/utils/policyValidation';
 import { RatingEligibility } from '@/src/components';
+import { AppointmentStatus } from '@/src/types/enums';
 
 interface AppointmentData {
   id: string;
@@ -135,7 +136,7 @@ export default function AppointmentsPage() {
       const params = {
         page: currentPage,
         limit: 10,
-        ...(selectedStatus !== 'all' && { status: selectedStatus as any })
+        ...(selectedStatus !== 'all' && { status: selectedStatus as AppointmentStatus })
       };
 
       const response = await appointmentService.getMyAppointments(params);
@@ -193,7 +194,7 @@ export default function AppointmentsPage() {
         // Update the appointment in the list
         setAppointments(prev => prev.map(apt =>
           apt.id === appointmentToCancel.id
-            ? { ...apt, status: 'CANCELLED', cancelReason: cancelReason }
+            ? { ...apt, status: AppointmentStatus.CANCELED, cancelReason: cancelReason }
             : apt
         ));
 
@@ -392,10 +393,10 @@ export default function AppointmentsPage() {
                   <span className="text-sm font-semibold text-slate-900 dark:text-[var(--theme-foreground)]">
                     {[
                       { value: 'all', label: 'Tüm Durumlar' },
-                      { value: 'CONFIRMED', label: 'Onaylandı' },
-                      { value: 'COMPLETED', label: 'Tamamlandı' },
-                      { value: 'CANCELLED', label: 'İptal Edildi' },
-                      { value: 'NO_SHOW', label: 'Gelmedi' }
+                      { value: AppointmentStatus.CONFIRMED, label: 'Onaylandı' },
+                      { value: AppointmentStatus.COMPLETED, label: 'Tamamlandı' },
+                      { value: AppointmentStatus.CANCELED, label: 'İptal Edildi' },
+                      { value: AppointmentStatus.NO_SHOW, label: 'Gelmedi' }
                     ].find(f => f.value === selectedStatus)?.label}
                   </span>
                 </div>
@@ -406,10 +407,10 @@ export default function AppointmentsPage() {
                 <div className="absolute top-full mt-2 w-full rounded-xl border shadow-xl z-20 overflow-hidden bg-white text-slate-900 border-slate-200 dark:bg-[var(--theme-card)] dark:text-[var(--theme-foreground)] dark:border-[var(--theme-border)]">
                   {[
                     { value: 'all', label: 'Tüm Durumlar', icon: List },
-                    { value: 'CONFIRMED', label: 'Onaylandı', icon: CheckCircle },
-                    { value: 'COMPLETED', label: 'Tamamlandı', icon: Check },
-                    { value: 'CANCELLED', label: 'İptal Edildi', icon: XCircle },
-                    { value: 'NO_SHOW', label: 'Gelmedi', icon: AlertTriangle }
+                    { value: AppointmentStatus.CONFIRMED, label: 'Onaylandı', icon: CheckCircle },
+                    { value: AppointmentStatus.COMPLETED, label: 'Tamamlandı', icon: Check },
+                    { value: AppointmentStatus.CANCELED, label: 'İptal Edildi', icon: XCircle },
+                    { value: AppointmentStatus.NO_SHOW, label: 'Gelmedi', icon: AlertTriangle }
                   ].map((filter, index) => {
                     const IconComponent = filter.icon;
                     const isSelected = selectedStatus === filter.value;
@@ -803,7 +804,13 @@ export default function AppointmentsPage() {
       {/* Cancel Appointment Modal */}
       {showCancelModal && appointmentToCancel && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[var(--theme-card)] dark:bg-gray-800/90 rounded-2xl border border-[var(--theme-border)] max-w-md w-full p-6 shadow-2xl">
+          <div
+            className={`rounded-2xl border max-w-md w-full p-6 shadow-2xl ${
+              showFinalConfirmation
+                ? 'bg-white border-slate-200 text-slate-900'
+                : 'bg-[var(--theme-card)] dark:bg-gray-800/90 border-[var(--theme-border)]'
+            }`}
+          >
             {!showFinalConfirmation ? (
               <>
                 <div className="flex items-center space-x-3 mb-4">
@@ -878,17 +885,17 @@ export default function AppointmentsPage() {
                     <AlertTriangle className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[var(--theme-foreground)]">Emin misiniz?</h3>
-                    <p className="text-sm text-[var(--theme-foregroundSecondary)]">Bu işlem geri alınamaz</p>
+                    <h3 className="text-lg font-bold text-slate-900">Emin misiniz?</h3>
+                    <p className="text-sm text-slate-600">Bu işlem geri alınamaz</p>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <div className="bg-gradient-to-r from-[var(--theme-error)]/10 to-red-500/10 rounded-lg p-4 border border-[var(--theme-error)]/20">
-                    <p className="text-sm text-[var(--theme-foreground)] mb-2">
+                  <div className="bg-white rounded-lg p-4 border border-red-200 shadow-sm">
+                    <p className="text-sm text-slate-800 mb-2">
                       <strong>{appointmentToCancel.service.name}</strong> randevusunu iptal etmek istediğinizden emin misiniz?
                     </p>
-                    <p className="text-xs text-[var(--theme-foregroundSecondary)]">
+                    <p className="text-xs text-slate-600">
                       Bu işlem geri alınamaz ve randevu kalıcı olarak iptal edilecektir.
                     </p>
                   </div>
@@ -898,7 +905,7 @@ export default function AppointmentsPage() {
                   <button
                     onClick={handleCancelBack}
                     disabled={isCancelling}
-                    className="flex-1 px-4 py-2 bg-[var(--theme-backgroundSecondary)] text-[var(--theme-foreground)] rounded-lg text-sm font-semibold hover:bg-[var(--theme-border)] transition-colors duration-200 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-800 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors duration-200 disabled:opacity-50"
                   >
                     Geri Dön
                   </button>

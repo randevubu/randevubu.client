@@ -131,7 +131,7 @@ export default function ProfilePage() {
       
       // Sync language preference with API client if language was updated
       if (formData.language && (formData.language === 'tr' || formData.language === 'en')) {
-        const { setCurrentLocale } = await import('../../lib/api');
+        const { setCurrentLocale } = await import('@/src/lib/api');
         setCurrentLocale(formData.language);
       }
       

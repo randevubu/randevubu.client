@@ -273,3 +273,17 @@ button {
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
 }
+
+/* react-hot-toast: default bar is max-width 350px; long TR messages were clipped (ellipsis).
+   Widen the bar and force the message column to wrap. */
+.rht-error-toast {
+  max-width: min(96vw, 36rem) !important;
+  align-items: flex-start !important;
+}
+.rht-error-toast > *:last-child {
+  white-space: pre-wrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-break: break-word !important;
+  min-width: 0 !important;
+}

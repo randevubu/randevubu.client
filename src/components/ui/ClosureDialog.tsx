@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { businessService } from '../../lib/services/business';
-import { handleApiError, showErrorToast } from '../../lib/utils/toast';
+import { handleApiError, showErrorToast, showSuccessToast } from '../../lib/utils/toast';
+import { useErrorTranslations } from '../../lib/utils/translations';
 import {
   EnhancedClosureData,
   NotificationChannel,
@@ -65,6 +66,7 @@ export default function ClosureDialog({
   onClosureCreated,
   availableServices = []
 }: ClosureDialogProps) {
+  const errorTranslations = useErrorTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [impactPreview, setImpactPreview] = useState<ClosureImpactPreview | null>(null);
@@ -284,13 +286,11 @@ export default function ClosureDialog({
         type: formData.type
       });
       
-      // TODO: Implement enhanced closure creation when backend is ready
-      // await businessService.createEnhancedClosure(enhancedClosureData);
-      
+      showSuccessToast('Zaman aralığı başarıyla kapatıldı');
       onClosureCreated();
       handleClose();
     } catch (error) {
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
     } finally {
       setIsSubmitting(false);
     }

@@ -39,7 +39,7 @@ export const RESERVATION_RULES_LIMITS = {
     DEFAULT: 30
   },
   MIN_NOTIFICATION_HOURS: {
-    MIN: 1,
+    MIN: 0,
     MAX: 168, // 1 week
     DEFAULT: 2
   },
@@ -64,6 +64,7 @@ export const ADVANCE_BOOKING_OPTIONS = [
 ] as const;
 
 export const NOTIFICATION_HOURS_OPTIONS = [
+  { value: 0, label: '0 saniye (minimum süre yok)' },
   { value: 1, label: '1 saat önce' },
   { value: 2, label: '2 saat önce' },
   { value: 4, label: '4 saat önce' },
@@ -150,6 +151,7 @@ export const getAdvanceBookingDisplayValue = (days: number): string => {
 };
 
 export const getNotificationHoursDisplayValue = (hours: number): string => {
+  if (hours === 0) return '0 saniye (minimum süre yok)';
   if (hours === 1) return '1 saat önce';
   if (hours === 2) return '2 saat önce';
   if (hours === 4) return '4 saat önce';

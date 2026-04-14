@@ -13,7 +13,7 @@ import { Service } from '../../types/service';
 import { useUsageLimits } from '../../lib/hooks/useUsageTracking';
 import { isQuotaError, getQuotaErrorData } from '../../lib/services/error';
 import { isApiError } from '../../lib/services/error';
-import { extractApiError, isAxiosError } from '../../lib/utils/errorExtractor';
+import { isAxiosError } from '../../lib/utils/errorExtractor';
 import CustomerSelector from './CustomerSelector';
 import QuotaExceededDialog from './QuotaExceededDialog';
 
@@ -55,6 +55,7 @@ export default function AppointmentBookingDialog({
   const [submitting, setSubmitting] = useState(false);
   const [showQuotaDialog, setShowQuotaDialog] = useState(false);
   const [quotaError, setQuotaError] = useState<{ code: string; message: string } | null>(null);
+  const [noServicesAvailable, setNoServicesAvailable] = useState(false);
 
   // Usage limits hook
   const { canAddCustomer } = useUsageLimits(businessId);
@@ -83,6 +84,7 @@ export default function AppointmentBookingDialog({
 
   useEffect(() => {
     if (isOpen) {
+      setNoServicesAvailable(false);
       checkPermissions();
       loadBusiness();
       loadServices();
@@ -139,23 +141,21 @@ export default function AppointmentBookingDialog({
     try {
       setLoading(true);
       const response = await servicesService.getBusinessServices(businessId);
-      if (response.success && response.data) {
-        setServices(response.data);
-        // If no services found, show error and close dialog
-        if (!response.data || response.data.length === 0) {
-          handleApiError(new Error(errorTranslations('service.noServicesCreated')));
-          onClose();
+      if (response.success && response.data !== undefined) {
+        const list = Array.isArray(response.data) ? response.data : [];
+        setServices(list);
+        setNoServicesAvailable(list.length === 0);
+        if (list.length === 0) {
           return;
         }
       } else {
-        // If no services found, show error and close dialog
         handleApiError(new Error(errorTranslations('service.noServicesCreated')));
         onClose();
         return;
       }
     } catch (error) {
       console.error('Failed to load services:', error);
-      handleApiError(error);
+      handleApiError(error, errorTranslations);
       onClose();
     } finally {
       setLoading(false);
@@ -180,18 +180,8 @@ export default function AppointmentBookingDialog({
         console.log('Business owner ID:', business?.ownerId);
         console.log('Current user ID:', user?.id);
 
-        // If no staff members returned, add the business owner as a staff member
-        if (staffList.length === 0 && business?.ownerId && user?.id === business.ownerId && user) {
-          // Use the business owner's actual ID as the staff ID
-          staffList = [{
-            id: business.ownerId, // Use the actual business owner ID
-            firstName: user.firstName || 'Business',
-            lastName: user.lastName || 'Owner',
-            userId: business.ownerId,
-            isOwner: true
-          }];
-          console.log('Added business owner as staff member:', staffList[0]);
-        }
+        // Do not invent a staff row with owner user id — backend expects BusinessStaff.id, not User.id.
+        // When the list is empty, omit staffId on create so the server auto-assigns from service staff.
 
         setStaff(staffList);
       }
@@ -222,31 +212,21 @@ export default function AppointmentBookingDialog({
     setSubmitting(true);
 
     try {
-      // Use selected staff ID or find business owner's staff ID
-      let staffId = formData.staffId && formData.staffId.trim() !== '' 
-        ? formData.staffId 
-        : null;
+      const staffId =
+        formData.staffId && formData.staffId.trim() !== ''
+          ? formData.staffId.trim()
+          : undefined;
 
-      // If no staff selected, find the business owner's staff record
-      if (!staffId && business?.ownerId) {
-        const ownerStaffRecord = staff.find((staffMember: any) => 
-          staffMember.userId === business.ownerId || staffMember.id === business.ownerId || staffMember.isOwner
-        );
-        staffId = ownerStaffRecord?.id || null;
-      }
-
-      // If we still don't have a staffId, we need to provide one
-      if (!staffId) {
-        console.error('No staff ID found - this will cause backend validation error');
-        handleApiError(new Error('Personel seçimi gerekli. Lütfen bir personel seçin.'));
-        setSubmitting(false);
-        return;
-      }
-
+      // Omit staffId when empty so the API auto-picks an active staff for the service (server-side).
       const appointmentData: ExtendedCreateAppointmentData = {
-        ...formData,
-        staffId, // Always include staffId since backend requires it
-        // Include customerId only if booking for someone else
+        businessId: formData.businessId,
+        serviceId: formData.serviceId,
+        date: formData.date,
+        startTime: formData.startTime,
+        ...(formData.customerNotes?.trim()
+          ? { customerNotes: formData.customerNotes }
+          : {}),
+        ...(staffId ? { staffId } : {}),
         ...(selectedCustomer && { customerId: selectedCustomer.id })
       };
 
@@ -280,28 +260,15 @@ export default function AppointmentBookingDialog({
         }
       }
 
-      // Handle specific error messages
-      const errorMessages: Record<string, string> = {
-        'You do not have permission to create appointments for other customers':
-          'Diğer müşteriler için randevu oluşturma yetkiniz yok.',
-        'Customer not found':
-          'Seçilen müşteri bulunamadı.',
-        'Customer account is not active':
-          'Bu müşteri hesabı aktif değil.',
-        'Customer is banned':
-          'Bu müşteri yasaklı durumda.',
-        'Staff member is not available at the selected time':
-          'Seçilen saatte personel müsait değil.'
-      };
-
-      const userFriendlyMessage = errorMessages[error.message] || error.message;
-      handleApiError(new Error(userFriendlyMessage));
+      // Let handleApiError translate via error.key + errorTranslations
+      handleApiError(error, errorTranslations);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleClose = () => {
+    setNoServicesAvailable(false);
     setFormData({
       businessId,
       serviceId: '',
@@ -382,16 +349,31 @@ export default function AppointmentBookingDialog({
               <label htmlFor="serviceId" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
                 Hizmet *
               </label>
+              {noServicesAvailable && !loading && (
+                <div className="mb-3 p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+                  <p className="font-medium">Bu işletme için henüz hizmet tanımlı değil.</p>
+                  <p className="mt-1 text-xs text-amber-800">
+                    Randevu oluşturmak için önce{' '}
+                    <a
+                      href="/dashboard/services"
+                      className="font-semibold underline text-amber-950 hover:text-amber-700"
+                    >
+                      Hizmetler
+                    </a>{' '}
+                    sayfasından en az bir hizmet ekleyin; ardından bu pencereyi kapatıp tekrar deneyin.
+                  </p>
+                </div>
+              )}
               <select
                 id="serviceId"
                 value={formData.serviceId}
                 onChange={(e) => setFormData({...formData, serviceId: e.target.value})}
-                disabled={loading || submitting}
+                disabled={loading || submitting || noServicesAvailable}
                 required
-                className="w-full px-3 py-2 border border-[var(--theme-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] bg-[var(--theme-card)] text-[var(--theme-foreground)] transition-colors duration-200"
+                className="w-full px-3 py-2 border border-[var(--theme-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] bg-[var(--theme-card)] text-[var(--theme-foreground)] transition-colors duration-200 disabled:opacity-60"
               >
-                <option value="">Hizmet seçin</option>
-                {services && Array.isArray(services) && services.map(service => (
+                <option value="">{loading ? 'Hizmetler yükleniyor...' : 'Hizmet seçin'}</option>
+                {services.map(service => (
                   <option key={service.id} value={service.id}>
                     {service.name} - {service.price}₺ ({service.duration} dk)
                   </option>
@@ -399,28 +381,32 @@ export default function AppointmentBookingDialog({
               </select>
             </div>
 
-            {/* Staff selection */}
-            {staff.length > 0 && (
-              <div>
-                <label htmlFor="staffId" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
-                  Personel (İsteğe bağlı)
-                </label>
+            {/* Staff selection — optional; empty means server auto-assigns from service staff */}
+            <div>
+              <label htmlFor="staffId" className="block text-sm font-medium text-[var(--theme-foreground)] mb-2">
+                Personel (İsteğe bağlı)
+              </label>
+              {staff.length > 0 ? (
                 <select
                   id="staffId"
                   value={formData.staffId || ''}
-                  onChange={(e) => setFormData({...formData, staffId: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, staffId: e.target.value })}
                   disabled={submitting}
                   className="w-full px-3 py-2 border border-[var(--theme-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-[var(--theme-primary)] bg-[var(--theme-card)] text-[var(--theme-foreground)] transition-colors duration-200"
                 >
-                  <option value="">Herhangi bir personel</option>
-                  {staff.map(member => (
+                  <option value="">Herhangi bir personel (otomatik atanır)</option>
+                  {staff.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.firstName} {member.lastName}
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-[var(--theme-foregroundSecondary)] rounded-md border border-dashed border-[var(--theme-border)] px-3 py-2 bg-[var(--theme-backgroundSecondary)]">
+                  Bu işletme için listelenen personel yok; randevu ilk uygun personele otomatik atanacaktır.
+                </p>
+              )}
+            </div>
 
             {/* Notes */}
             <div>
@@ -454,7 +440,7 @@ export default function AppointmentBookingDialog({
               </button>
               <button
                 type="submit"
-                disabled={submitting || loading || !formData.serviceId}
+                disabled={submitting || loading || !formData.serviceId || noServicesAvailable}
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-[var(--theme-primary)] hover:bg-[var(--theme-primaryHover)] rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (

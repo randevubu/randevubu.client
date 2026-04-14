@@ -67,19 +67,27 @@ export default function AppointmentsPage() {
   // View mode state
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0]; // YYYY-MM-DD format
-  });
+  const getIstanbulToday = () => {
+    const now = new Date();
+    const istanbulDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Istanbul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+    return istanbulDate; // "YYYY-MM-DD"
+  };
+
+  const [selectedDate, setSelectedDate] = useState(() => getIstanbulToday());
   const [weekStart, setWeekStart] = useState(() => {
-    const today = new Date();
+    const today = new Date(getIstanbulToday() + 'T12:00:00');
     const dayOfWeek = today.getDay();
     const start = new Date(today);
-    start.setDate(today.getDate() - dayOfWeek + 1); // Start from Monday
+    start.setDate(today.getDate() - dayOfWeek + 1);
     return start;
   });
   const [monthStart, setMonthStart] = useState(() => {
-    const today = new Date();
+    const today = new Date(getIstanbulToday() + 'T12:00:00');
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
@@ -617,6 +625,72 @@ export default function AppointmentsPage() {
     }
   };
 
+  /** Readable text on status-colored slot backgrounds (theme CSS vars often clash with green/blue/red fills) */
+  const getDailySlotTypography = (status: AppointmentStatus) => {
+    switch (status) {
+      case AppointmentStatus.PENDING:
+        return {
+          primary: 'text-gray-900 dark:text-gray-100',
+          secondary: 'text-gray-800 dark:text-gray-200',
+          muted: 'text-gray-700 dark:text-gray-300',
+          meta: 'text-gray-900 font-semibold dark:text-gray-100',
+          meta2: 'text-gray-800 dark:text-gray-200',
+        };
+      case AppointmentStatus.CONFIRMED:
+      case AppointmentStatus.IN_PROGRESS:
+        return {
+          primary: 'text-green-950 dark:text-green-50',
+          secondary: 'text-green-900 dark:text-green-100',
+          muted: 'text-green-800 dark:text-green-200',
+          meta: 'text-green-950 font-semibold dark:text-green-50',
+          meta2: 'text-green-900 dark:text-green-100',
+        };
+      case AppointmentStatus.COMPLETED:
+        return {
+          primary: 'text-blue-950 dark:text-blue-50',
+          secondary: 'text-blue-900 dark:text-blue-100',
+          muted: 'text-blue-800 dark:text-blue-200',
+          meta: 'text-blue-950 font-semibold dark:text-blue-50',
+          meta2: 'text-blue-900 dark:text-blue-100',
+        };
+      case AppointmentStatus.CANCELED:
+      case AppointmentStatus.NO_SHOW:
+        return {
+          primary: 'text-red-950 dark:text-red-50',
+          secondary: 'text-red-900 dark:text-red-100',
+          muted: 'text-red-800 dark:text-red-200',
+          meta: 'text-red-950 font-semibold dark:text-red-50',
+          meta2: 'text-red-900 dark:text-red-100',
+        };
+      default:
+        return {
+          primary: 'text-gray-900 dark:text-gray-100',
+          secondary: 'text-gray-800 dark:text-gray-200',
+          muted: 'text-gray-700 dark:text-gray-300',
+          meta: 'text-gray-900 font-semibold dark:text-gray-100',
+          meta2: 'text-gray-800 dark:text-gray-200',
+        };
+    }
+  };
+
+  /** Status badge that stays legible on top of saturated slot colors */
+  const getDailySlotStatusBadgeClass = (status: AppointmentStatus) => {
+    switch (status) {
+      case AppointmentStatus.CONFIRMED:
+      case AppointmentStatus.IN_PROGRESS:
+        return 'bg-white text-green-900 border-green-600 shadow-sm dark:bg-green-950 dark:text-green-50 dark:border-green-400';
+      case AppointmentStatus.PENDING:
+        return 'bg-white text-gray-900 border-gray-500 shadow-sm dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-400';
+      case AppointmentStatus.COMPLETED:
+        return 'bg-white text-blue-900 border-blue-600 shadow-sm dark:bg-blue-950 dark:text-blue-50 dark:border-blue-400';
+      case AppointmentStatus.CANCELED:
+      case AppointmentStatus.NO_SHOW:
+        return 'bg-white text-red-900 border-red-600 shadow-sm dark:bg-red-950 dark:text-red-50 dark:border-red-400';
+      default:
+        return 'bg-white text-gray-900 border-gray-500 shadow-sm dark:bg-neutral-900 dark:text-neutral-100';
+    }
+  };
+
   // Get service name from appointment service object
   const getServiceName = (appointment: any) => {
     return appointment.service?.name || 'Hizmet bulunamadı';
@@ -697,11 +771,13 @@ export default function AppointmentsPage() {
     });
   };
 
-  // Set tomorrow date
   const setTomorrowDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setSelectedDate(tomorrow.toISOString().split('T')[0]);
+    const today = new Date(getIstanbulToday() + 'T12:00:00');
+    today.setDate(today.getDate() + 1);
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    setSelectedDate(`${yyyy}-${mm}-${dd}`);
     setViewMode('daily');
   };
 
@@ -1013,9 +1089,12 @@ export default function AppointmentsPage() {
   // Navigate dates
   const navigateDate = (direction: 'prev' | 'next') => {
     if (viewMode === 'daily') {
-      const newDate = new Date(selectedDate);
+      const newDate = new Date(selectedDate + 'T12:00:00');
       newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-      setSelectedDate(newDate.toISOString().split('T')[0]);
+      const yyyy = newDate.getFullYear();
+      const mm = String(newDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(newDate.getDate()).padStart(2, '0');
+      setSelectedDate(`${yyyy}-${mm}-${dd}`);
     } else if (viewMode === 'weekly') {
       const newWeekStart = new Date(weekStart);
       newWeekStart.setDate(weekStart.getDate() + (direction === 'next' ? 7 : -7));
@@ -1028,14 +1107,14 @@ export default function AppointmentsPage() {
   };
 
   const setTodayDate = () => {
-    const today = new Date();
-    setSelectedDate(today.toISOString().split('T')[0]);
+    const todayStr = getIstanbulToday();
+    setSelectedDate(todayStr);
 
-    // Reset week and month to current
+    const today = new Date(todayStr + 'T12:00:00');
     const dayOfWeek = today.getDay();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - dayOfWeek + 1);
-    setWeekStart(weekStart);
+    const weekStartDate = new Date(today);
+    weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
+    setWeekStart(weekStartDate);
 
     setMonthStart(new Date(today.getFullYear(), today.getMonth(), 1));
   };
@@ -1433,6 +1512,7 @@ export default function AppointmentsPage() {
 
                 const top = startIndex * 40; // 40px per slot
                 const height = slotsToSpan * 40;
+                const slotTypo = getDailySlotTypography(appointment.status);
 
                 return (
                   <div
@@ -1450,29 +1530,34 @@ export default function AppointmentsPage() {
                     }}
                   >
                     <div className="p-2 h-full flex flex-col justify-center">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between gap-1">
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-[var(--theme-foreground)] truncate">
+                          <div className={`font-semibold text-sm truncate ${slotTypo.primary}`}>
                             {appointment.startTime} - {appointment.endTime}
                           </div>
-                          <div className="font-medium text-sm truncate text-[var(--theme-foreground)] truncate">
+                          <div className={`font-medium text-sm truncate ${slotTypo.secondary}`}>
                             {getCustomerDisplayName(appointment)}
                           </div>
-                          <div className="text-xs text-[var(--theme-foregroundSecondary)] truncate mb-1">
+                          <div className={`text-xs truncate mb-1 ${slotTypo.muted}`}>
                             {getServiceName(appointment)}
                           </div>
+                          {appointment.customerNotes && (
+                            <div className={`text-xs italic line-clamp-2 min-w-0 max-w-full break-all ${slotTypo.muted}`}>
+                              💬 {appointment.customerNotes}
+                            </div>
+                          )}
 
                         </div>
-                        <div className='flex flex-col h-full items-end justify-between'>
-                          <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 ml-2 border ${getStatusColor(appointment.status)}`}>
-                            <span className="text-sm">{getStatusIcon(appointment.status)}</span>
-                            <span>{getStatusText(appointment.status)}</span>
+                        <div className="flex flex-col h-full items-end justify-between gap-1">
+                          <div className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 ml-1 border ${getDailySlotStatusBadgeClass(appointment.status)}`}>
+                            <span className="text-sm leading-none">{getStatusIcon(appointment.status)}</span>
+                            <span className="leading-tight">{getStatusText(appointment.status)}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="text-[var(--theme-success)] font-medium">
+                          <div className={`flex items-center gap-2 text-xs ${slotTypo.meta}`}>
+                            <span>
                               {appointment.price} {appointment.currency}
                             </span>
-                            <span className="text-[var(--theme-info)] font-medium">
+                            <span className={slotTypo.meta2}>
                               {appointment.duration}dk
                             </span>
                           </div>
@@ -1481,18 +1566,18 @@ export default function AppointmentsPage() {
                       </div>
 
                       {expandedAppointment === appointment.id && (
-                        <div className="mt-2 pt-2 border-t border-[var(--theme-border)] space-y-1">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="text-[var(--theme-foregroundSecondary)]">
+                        <div className={`mt-2 pt-2 border-t border-black/10 dark:border-white/20 space-y-1`}>
+                          <div className={`grid grid-cols-2 gap-2 text-xs ${slotTypo.muted}`}>
+                            <div>
                               💰 {appointment.price} {appointment.currency}
                             </div>
-                            <div className="text-[var(--theme-foregroundSecondary)]">
+                            <div>
                               ⏱️ {appointment.duration} dk
                             </div>
                           </div>
                           {appointment.customerNotes && (
-                            <div className="text-xs text-[var(--theme-foregroundSecondary)] italic">
-                              "{appointment.customerNotes}"
+                            <div className={`text-xs italic break-all min-w-0 ${slotTypo.secondary}`}>
+                              &ldquo;{appointment.customerNotes}&rdquo;
                             </div>
                           )}
                         </div>
@@ -2197,8 +2282,8 @@ export default function AppointmentsPage() {
       {/* Appointment Status Update Dialog */}
       {showStatusDialog && selectedAppointment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--theme-card)] rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+          <div className="bg-[var(--theme-card)] rounded-2xl shadow-2xl max-w-md w-full min-w-0 max-h-[90vh] overflow-y-auto overflow-x-hidden">
+            <div className="p-6 min-w-0">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-[var(--theme-cardForeground)]">
                   Randevu Durumu
@@ -2215,8 +2300,8 @@ export default function AppointmentsPage() {
               </div>
               
               {/* Appointment Details */}
-              <div className="bg-[var(--theme-background)] rounded-xl p-4 mb-6">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div className="bg-[var(--theme-background)] rounded-xl p-4 mb-6 min-w-0">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 min-w-0">
                   {/* Customer Name */}
                   <div className="flex flex-col">
                     <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Müşteri:</span>
@@ -2263,6 +2348,18 @@ export default function AppointmentsPage() {
                       <span>{getStatusText(selectedAppointment.status)}</span>
                     </div>
                   </div>
+
+                  {/* Customer Notes */}
+                  {selectedAppointment.customerNotes && (
+                    <div className="col-span-2 flex flex-col min-w-0 max-w-full">
+                      <span className="text-[var(--theme-foregroundSecondary)] text-sm mb-1">Müşteri Notu:</span>
+                      <div className="bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg p-3 min-w-0 max-w-full overflow-hidden">
+                        <p className="text-[var(--theme-foreground)] text-sm italic whitespace-pre-wrap break-all">
+                          &ldquo;{selectedAppointment.customerNotes}&rdquo;
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

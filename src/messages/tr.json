@@ -17,10 +17,10 @@
       "sessionExpired": "Oturumunuz sona erdi"
     },
     "business": {
-      "accessDenied": "İş yerine erişim reddedildi",
-      "notFound": "İş yeri bulunamadı",
-      "inactive": "İş yeri aktif değil",
-      "closed": "İş yeri kapalı",
+      "accessDenied": "Bu işletmeye erişim yetkiniz bulunmuyor.",
+      "notFound": "İşletme bulunamadı.",
+      "inactive": "İşletme aktif değil.",
+      "closed": "İşletme bu tarihte kapalı. Lütfen başka bir gün seçin.",
       "notVerified": "İş yeri doğrulanmamış",
       "slugTaken": "Bu URL adresi zaten kullanımda",
       "ownerRequired": "İş yeri sahibi yetkisi gerekli",
@@ -32,22 +32,29 @@
       "smsQuotaExceeded": "SMS kotanız dolmuş. Paketinizi yükseltin veya yeni döngüyü bekleyin.",
       "staffLimitExceeded": "Personel limitiniz dolmuş. Daha fazla personel eklemek için paketinizi yükseltin.",
       "serviceLimitExceeded": "Hizmet limitiniz dolmuş. Daha fazla hizmet eklemek için paketinizi yükseltin.",
-      "customerLimitExceeded": "Müşteri limitiniz dolmuş. Daha fazla müşteri eklemek için paketinizi yükseltin."
+      "customerLimitExceeded": "Müşteri limitiniz dolmuş. Daha fazla müşteri eklemek için paketinizi yükseltin.",
+      "closureCreateFailed": "Kapatma oluşturulamadı. Lütfen tarih ve saat bilgilerini kontrol edip tekrar deneyin.",
+      "closureStartInPast": "Kapatma başlangıç tarihi geçmişte olamaz.",
+      "closureEndBeforeStart": "Bitiş tarihi başlangıç tarihinden sonra olmalıdır.",
+      "closureConflict": "Seçilen tarih aralığında zaten bir kapatma mevcut."
     },
     "appointment": {
-      "notFound": "Randevu bulunamadı",
-      "accessDenied": "Bu randevuya erişim yetkiniz yok",
-      "timeConflict": "Bu saatte başka bir randevunuz var",
-      "pastDate": "Geçmiş tarih için randevu oluşturamazsınız",
-      "tooFarFuture": "Çok ileri bir tarih için randevu oluşturamazsınız",
-      "outsideHours": "Çalışma saatleri dışında randevu oluşturamazsınız",
-      "alreadyConfirmed": "Bu randevu zaten onaylanmış",
-      "alreadyCompleted": "Bu randevu zaten tamamlanmış",
-      "alreadyCancelled": "Bu randevu zaten iptal edilmiş",
-      "cannotCancel": "Bu randevu iptal edilemez",
-      "noShowNotAllowed": "Gelmedi işaretlenemez",
-      "staffNotAvailable": "Personel bu saatte müsait değil",
-      "serviceUnavailable": "Bu hizmet şu anda mevcut değil"
+      "notFound": "Randevu bulunamadı.",
+      "accessDenied": "Bu randevuya erişim yetkiniz bulunmuyor.",
+      "timeConflict": "Bu saatte zaten bir randevunuz var. Lütfen başka bir saat seçin.",
+      "pastDate": "Geçmiş bir tarih ve saat için randevu oluşturulamaz. Lütfen ileri bir saat seçin.",
+      "tooFarFuture": "Bu işletme için en fazla {maxDays} gün sonrasına kadar randevu alınabilir.",
+      "outsideHours": "Seçtiğiniz saat işletmenin çalışma saatleri dışında.",
+      "alreadyConfirmed": "Bu randevu zaten onaylanmış.",
+      "alreadyCompleted": "Bu randevu zaten tamamlanmış.",
+      "alreadyCancelled": "Bu randevu zaten iptal edilmiş.",
+      "cannotCancel": "Bu randevu iptal edilemez.",
+      "noShowNotAllowed": "İşletme kuralları gereği gelmedi olarak işaretlenemez.",
+      "staffNotAvailable": "Seçilen saatte personelin başka bir randevusu var. Lütfen uygun başka bir saat seçin.",
+      "serviceUnavailable": "Seçilen hizmet bulunamadı veya şu an aktif değil.",
+      "insufficientAdvance": "Randevuyu en az {minHours} saat önceden almanız gerekmektedir.",
+      "dailyLimitReached": "Bu tarih için günlük randevu kotası ({maxDaily}) dolmuştur. Lütfen başka bir gün seçin.",
+      "bookingPolicyViolation": "İşletme kuralları gereği şu an yeni randevu alınamıyor."
     },
     "service": {
       "notFound": "Hizmet bulunamadı",
@@ -60,17 +67,18 @@
       "noServicesCreated": "Önce hizmet oluşturmanız gerekiyor. Lütfen hizmetler sayfasından bir hizmet ekleyin."
     },
     "customer": {
-      "notFound": "Müşteri bulunamadı",
-      "accessDenied": "Bu müşteriye erişim yetkiniz yok",
-      "alreadyExists": "Bu müşteri zaten mevcut",
-      "noCustomersFound": "Hiç müşteriniz bulunmuyor"
+      "notFound": "Müşteri bulunamadı.",
+      "accessDenied": "Bu müşteriye erişim yetkiniz yok.",
+      "alreadyExists": "Bu müşteri zaten mevcut.",
+      "noCustomersFound": "Hiç müşteriniz bulunmuyor.",
+      "profileIncomplete": "Randevu almak için profilinizde ad ve soyadınızın dolu olması gerekir."
     },
     "staff": {
-      "notFound": "Personel bulunamadı",
-      "accessDenied": "Bu personele erişim yetkiniz yok",
-      "alreadyExists": "Bu personel zaten mevcut",
-      "notAvailable": "Personel müsait değil",
-      "cannotDeleteSelf": "Kendi hesabınızı silemezsiniz"
+      "notFound": "Seçilen personel bulunamadı.",
+      "accessDenied": "Bu personele erişim yetkiniz yok.",
+      "alreadyExists": "Bu personel zaten mevcut.",
+      "notAvailable": "Seçilen personel şu an aktif değil.",
+      "cannotDeleteSelf": "Kendi hesabınızı silemezsiniz."
     },
     "role": {
       "notFound": "Rol bulunamadı",
@@ -100,7 +108,7 @@
       "reminderTimingRequired": "En az bir hatırlatma zamanı seçilmelidir"
     },
     "system": {
-      "internalError": "Sunucu hatası oluştu",
+      "internalError": "Bir hata oluştu. Lütfen tekrar deneyin.",
       "databaseError": "Veritabanı hatası",
       "externalServiceError": "Harici servis hatası",
       "rateLimitExceeded": "Çok fazla istek gönderdiniz. Lütfen bekleyin",

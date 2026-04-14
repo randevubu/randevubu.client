@@ -827,6 +827,11 @@ export const businessService = {
       staffId?: string;
       staffName?: string;
     }>;
+    bookedRanges: Array<{
+      startTime: string;      // ISO 8601
+      endTime: string;        // ISO 8601
+      duration: number;
+    }>;
     businessHours: {
       isOpen: boolean;
       openTime?: string;      // "HH:MM"

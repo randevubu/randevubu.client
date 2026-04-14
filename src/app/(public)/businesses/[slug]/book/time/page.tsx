@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { businessService } from '@/src/lib/services/business';
 import { staffService, StaffWithUser } from '@/src/lib/services/staff';
-import { appointmentService } from '@/src/lib/services/appointments';
-import { Appointment } from '@/src/types';
 
 interface Service {
   id: string;
@@ -64,31 +62,8 @@ interface BusinessData {
 interface TimeSlot {
   time: string;
   available: boolean;
-  appointment?: AppointmentWithDetails;
-  isOccupied?: boolean; // True if slot has an appointment starting at this exact time
-  insufficientTime?: boolean; // True if there's not enough time before next appointment
-}
-
-interface AppointmentWithDetails {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  duration: number;
-  status: string;
-  service: {
-    id: string;
-    name: string;
-    duration: number;
-  };
-  staff: {
-    id: string;
-  };
-  customer?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-  };
+  isOccupied?: boolean;
+  insufficientTime?: boolean;
 }
 
 export default function TimeSelectionPage() {
@@ -108,6 +83,26 @@ export default function TimeSelectionPage() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [slotsLoading, setSlotsLoading] = useState(false);
+
+  const formatDateParam = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const goToNextDay = () => {
+    if (!selectedDate) return;
+    const dateObj = new Date(selectedDate);
+    dateObj.setDate(dateObj.getDate() + 1);
+    const nextDate = formatDateParam(dateObj);
+    const params = new URLSearchParams({
+      serviceId: serviceId!,
+      ...(staffId && { staffId }),
+      date: nextDate
+    });
+    router.push(`/businesses/${slug}/book/time?${params.toString()}`);
+  };
 
   useEffect(() => {
     if (slug && serviceId && selectedDate) {
@@ -167,600 +162,168 @@ export default function TimeSelectionPage() {
     }
   };
 
+  const parseISOToMinutes = (isoString: string): number => {
+    try {
+      const date = new Date(isoString);
+      return date.getUTCHours() * 60 + date.getUTCMinutes();
+    } catch {
+      return 0;
+    }
+  };
+
+  const buildSlotsFromHours = (
+    openTime: string,
+    closeTime: string,
+    serviceDuration: number,
+    blockedRanges: Array<{ start: number; end: number }>
+  ): TimeSlot[] => {
+    const [openHour, openMinute] = openTime.split(':').map(Number);
+    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+    const slots: TimeSlot[] = [];
+
+    for (let hour = openHour; hour < closeHour || (hour === closeHour && 0 < closeMinute); hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        if (hour === closeHour && minute >= closeMinute) break;
+        if (hour === openHour && minute < openMinute) continue;
+
+        const slotStartMinutes = hour * 60 + minute;
+        const serviceEndMinutes = slotStartMinutes + serviceDuration;
+        const closeMinutes = closeHour * 60 + closeMinute;
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+        if (serviceEndMinutes > closeMinutes) {
+          slots.push({ time: timeString, available: false });
+          continue;
+        }
+
+        const isOccupied = blockedRanges.some(range =>
+          slotStartMinutes >= range.start && slotStartMinutes < range.end
+        );
+
+        if (isOccupied) {
+          slots.push({ time: timeString, available: false, isOccupied: true });
+          continue;
+        }
+
+        const hasInsufficientTime = blockedRanges.some(range =>
+          range.start > slotStartMinutes && serviceEndMinutes > range.start
+        );
+
+        if (hasInsufficientTime) {
+          slots.push({ time: timeString, available: false, insufficientTime: true });
+          continue;
+        }
+
+        slots.push({ time: timeString, available: true });
+      }
+    }
+    return slots;
+  };
+
+  const getLocalBusinessHours = (): { openTime: string; closeTime: string } | null => {
+    if (!business?.businessHours || !selectedDate) return null;
+    const dayOfWeek = new Date(selectedDate).getDay();
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[dayOfWeek];
+    const hours = business.businessHours[dayName];
+    if (!hours?.isOpen) return null;
+    const openTime = hours.openTime || hours.open;
+    const closeTime = hours.closeTime || hours.close;
+    if (!openTime || !closeTime) return null;
+    return { openTime, closeTime };
+  };
+
   const calculateAvailableSlots = async () => {
     if (!selectedService || !selectedDate || !business) return;
 
     try {
       setSlotsLoading(true);
-      // Use real business hours API to generate time slots
-      const basicSlots = await generateBasicTimeSlots(selectedDate, selectedService, business);
-      setAvailableSlots(basicSlots);
+      const serviceDuration = selectedService.duration;
+
+      const response = await businessService.getAvailableSlots(business.id, {
+        date: selectedDate,
+        serviceId: selectedService.id,
+        ...(staffId && { staffId }),
+      });
+
+      if (response.success && response.data) {
+        const { bookedRanges, businessHours: apiBusinessHours } = response.data;
+        const blockedRanges = (bookedRanges || []).map(r => ({
+          start: parseISOToMinutes(r.startTime),
+          end: parseISOToMinutes(r.endTime),
+        }));
+
+        // Use API business hours if available, otherwise fall back to local
+        let openTime = apiBusinessHours?.openTime;
+        let closeTime = apiBusinessHours?.closeTime;
+        let isOpen = apiBusinessHours?.isOpen;
+
+        if (!isOpen || !openTime || !closeTime) {
+          const localHours = getLocalBusinessHours();
+          if (localHours) {
+            openTime = localHours.openTime;
+            closeTime = localHours.closeTime;
+            isOpen = true;
+          }
+        }
+
+        if (!isOpen || !openTime || !closeTime) {
+          setAvailableSlots([]);
+          return;
+        }
+
+        setAvailableSlots(buildSlotsFromHours(openTime, closeTime, serviceDuration, blockedRanges));
+      } else {
+        // API returned unsuccessful - use local business hours without availability data
+        const localHours = getLocalBusinessHours();
+        if (localHours) {
+          setAvailableSlots(buildSlotsFromHours(localHours.openTime, localHours.closeTime, serviceDuration, []));
+        } else {
+          setAvailableSlots([]);
+        }
+      }
     } catch (error) {
-      console.error('Error calculating available slots:', error);
-      // On error, generate basic slots without appointment checking
-      const basicSlots = await generateBasicTimeSlots(selectedDate, selectedService, business);
-      setAvailableSlots(basicSlots);
+      console.error('Error fetching available slots:', error);
+      // API failed - use local business hours without availability data
+      const localHours = getLocalBusinessHours();
+      if (localHours) {
+        setAvailableSlots(buildSlotsFromHours(localHours.openTime, localHours.closeTime, selectedService.duration, []));
+      } else {
+        setAvailableSlots(generateFallbackSlots());
+      }
     } finally {
       setSlotsLoading(false);
     }
   };
 
-  const generateBasicTimeSlots = async (date: string, service: Service, business: BusinessData): Promise<TimeSlot[]> => {
-    if (!business || !service) {
-      return [];
-    }
-
-    // Generate ALL possible time slots within business hours (15-minute intervals)
-    const allSlots = generateAllTimeSlots(business, date);
-
-    // Fetch existing appointments
-    const appointments = await fetchExistingAppointments(date, business.id);
-
-    // Check each slot for availability, conflicts, and occupancy
-    return await checkAllSlotsAvailability(allSlots, appointments, date, service, business);
-  };
-
-  // Generate all possible time slots within business hours (15-minute intervals)
-  const generateAllTimeSlots = (business: BusinessData, date: string): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-
-    // Get business hours for the selected date
-    const dayOfWeek = new Date(date).getDay();
+  const generateFallbackSlots = (): TimeSlot[] => {
+    if (!business || !selectedDate) return [];
+    const dayOfWeek = new Date(selectedDate).getDay();
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayName = dayNames[dayOfWeek];
-    const businessHours = business?.businessHours?.[dayName];
+    const hours = business.businessHours?.[dayName];
 
-    if (!businessHours || !businessHours.isOpen) {
-      return slots;
-    }
+    if (!hours?.isOpen) return [];
 
-    const openTime = businessHours.openTime || businessHours.open;
-    const closeTime = businessHours.closeTime || businessHours.close;
-    
-    if (!openTime || !closeTime) {
-      return slots;
-    }
-    
+    const openTime = hours.openTime || hours.open;
+    const closeTime = hours.closeTime || hours.close;
+    if (!openTime || !closeTime) return [];
+
     const [openHour, openMinute] = openTime.split(':').map(Number);
     const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+    const slots: TimeSlot[] = [];
 
-    // Generate 15-minute time slots from open to close
     for (let hour = openHour; hour < closeHour || (hour === closeHour && 0 < closeMinute); hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
-        // Skip if this slot would go past closing time
-        if (hour === closeHour && minute >= closeMinute) {
-          break;
-        }
-
-        // Skip if this slot is before opening time (for the first hour)
-        if (hour === openHour && minute < openMinute) {
-          continue;
-        }
-
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        if (hour === closeHour && minute >= closeMinute) break;
+        if (hour === openHour && minute < openMinute) continue;
         slots.push({
-          time: timeString,
-          available: true // Will be updated later based on appointments
-        });
-      }
-    }
-
-    return slots;
-  };
-
-  // Check all slots for availability, conflicts, and occupancy
-  const checkAllSlotsAvailability = async (
-    slots: TimeSlot[],
-    appointments: AppointmentWithDetails[],
-    date: string,
-    service: Service,
-    business: BusinessData
-  ): Promise<TimeSlot[]> => {
-    const blockedRanges = createBlockedTimeRanges(appointments, date);
-
-    return slots.map(slot => {
-      return checkSlotAvailability(slot, date, service, blockedRanges, appointments);
-    });
-  };
-
-  // Helper function to parse time to minutes since midnight (Istanbul time)
-  const parseTimeToMinutes = (timeString: string): number => {
-    try {
-      if (timeString.includes('T')) {
-        // For appointment times (ISO format), convert to Istanbul time
-        const date = new Date(timeString);
-        const istanbulTime = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Europe/Istanbul',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }).format(date);
-
-        const [hour, minute] = istanbulTime.split(':').map(Number);
-        return hour * 60 + minute;
-      } else {
-        // For simple "HH:MM" format (time slots)
-        const [hour, minute] = timeString.split(':').map(Number);
-        return hour * 60 + minute;
-      }
-    } catch (error) {
-      return 0;
-    }
-  };
-
-  // Transform Appointment to AppointmentWithDetails
-  const transformAppointment = (appointment: Appointment): AppointmentWithDetails => {
-    return {
-      id: appointment.id,
-      date: appointment.date,
-      startTime: appointment.startTime,
-      endTime: appointment.endTime,
-      duration: appointment.duration,
-      status: appointment.status,
-      service: {
-        id: appointment.serviceId,
-        name: 'Service', // We don't have service details in basic Appointment
-        duration: appointment.duration
-      },
-      staff: {
-        id: appointment.staffId || 'unknown'
-      },
-      customer: {
-        id: appointment.customerId,
-        firstName: '',
-        lastName: ''
-      }
-    };
-  };
-
-  // Fetch existing appointments for the date
-  const fetchExistingAppointments = async (date: string, businessId: string) => {
-    try {
-      const response = await appointmentService.getBusinessAppointments({
-        businessId,
-        startDate: date,
-        endDate: date
-      });
-
-      if (response.success && response.data) {
-        const appointments = Array.isArray(response.data) ? response.data : [response.data];
-        // Filter out canceled appointments and map to expected format
-        // Note: API already filters by date, so we assign the requested date to each appointment
-        return appointments
-          .filter(apt => apt.status !== 'CANCELED')
-          .map(apt => ({
-            id: apt.id,
-            date: date, // Use the requested date since API already filtered by it
-            startTime: apt.startTime,
-            endTime: apt.endTime,
-            duration: apt.duration,
-            status: apt.status,
-            service: {
-              id: apt.serviceId || 'unknown',
-              name: 'Service',
-              duration: apt.duration
-            },
-            staff: { id: apt.staffId || 'unknown' },
-            customer: { id: apt.customerId || 'unknown', firstName: '', lastName: '' }
-          } as AppointmentWithDetails));
-      }
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-    return [];
-  };
-
-  // Fallback method using the original logic
-  const generateFallbackTimeSlots = async (date: string, service: Service, business: BusinessData): Promise<TimeSlot[]> => {
-    const slots: TimeSlot[] = [];
-    const dayOfWeek = new Date(date).getDay();
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const dayName = dayNames[dayOfWeek];
-    const businessHours = business.businessHours?.[dayName];
-
-    if (!businessHours || !businessHours.isOpen) {
-      return slots;
-    }
-
-    const openTime = businessHours.openTime || businessHours.open;
-    const closeTime = businessHours.closeTime || businessHours.close;
-    const breaks = businessHours.breaks || [];
-
-    if (!openTime || !closeTime) {
-      return slots;
-    }
-
-    const [openHour, openMinute] = openTime.split(':').map(Number);
-    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-
-    // Use service duration to determine appropriate intervals
-    const interval = service.duration <= 30 ? 15 : service.duration <= 60 ? 30 : 60;
-
-    for (let hour = openHour; hour < closeHour; hour++) {
-      for (let minute = 0; minute < 60; minute += interval) {
-        const slotMinutes = hour * 60 + minute;
-        const serviceEndMinutes = slotMinutes + service.duration;
-        const closeMinutes = closeHour * 60 + closeMinute;
-
-        // Skip if service would run past closing time
-        if (serviceEndMinutes > closeMinutes) {
-          continue;
-        }
-
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-
-        // Check breaks
-        const isDuringBreak = breaks.some(breakPeriod => {
-          const [breakStartHour, breakStartMinute] = breakPeriod.startTime.split(':').map(Number);
-          const [breakEndHour, breakEndMinute] = breakPeriod.endTime.split(':').map(Number);
-          const breakStartMinutes = breakStartHour * 60 + breakStartMinute;
-          const breakEndMinutes = breakEndHour * 60 + breakEndMinute;
-
-          return slotMinutes < breakEndMinutes && serviceEndMinutes > breakStartMinutes;
-        });
-
-        if (!isDuringBreak) {
-          slots.push({
-            time: timeString,
-            available: true
-          });
-        }
-      }
-    }
-
-    return await checkAppointmentConflicts(slots, date, business);
-  };
-
-  const generateDefaultTimeSlots = (business: BusinessData, date: string): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-
-    // Get business hours for the selected date
-    const dayOfWeek = new Date(date).getDay();
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const dayName = dayNames[dayOfWeek];
-    const businessHours = business?.businessHours?.[dayName];
-
-    let openHour = 9;
-    let openMinute = 0;
-    let closeHour = 18;
-    let closeMinute = 0;
-
-    // Use business hours if available
-    const openTime = businessHours?.openTime || businessHours?.open;
-    const closeTime = businessHours?.closeTime || businessHours?.close;
-    if (businessHours?.isOpen && openTime && closeTime) {
-      [openHour, openMinute] = openTime.split(':').map(Number);
-      [closeHour, closeMinute] = closeTime.split(':').map(Number);
-      console.log(`📅 Using business hours for ${dayName}: ${openTime} - ${closeTime}`);
-    } else if (businessHours && !businessHours.isOpen) {
-      console.log(`❌ Business is closed on ${dayName}`);
-      return slots; // Return empty slots for closed days
-    } else {
-      console.log(`⚠️ No business hours found for ${dayName}, using default 09:00 - 18:00`);
-    }
-
-    // Generate 15-minute time slots within business hours
-    for (let hour = openHour; hour < closeHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        // Skip if this slot would go past closing time
-        if (hour === closeHour - 1 && minute + 15 > closeMinute) {
-          break;
-        }
-
-        // Skip if this slot is before opening time (for the first hour)
-        if (hour === openHour && minute < openMinute) {
-          continue;
-        }
-
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push({
-          time: timeString,
+          time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
           available: true
         });
       }
     }
-
-    console.log(`🕐 Generated ${slots.length} default time slots from ${openHour.toString().padStart(2, '0')}:${openMinute.toString().padStart(2, '0')} to ${closeHour.toString().padStart(2, '0')}:${closeMinute.toString().padStart(2, '0')}`);
     return slots;
-  };
-
-  const generateDefaultTimeSlotsWithAppointments = async (date: string, business: BusinessData): Promise<TimeSlot[]> => {
-    const slots = generateDefaultTimeSlots(business, date);
-    return await checkAppointmentConflicts(slots, date, business);
-  };
-
-  const checkAppointmentConflicts = async (slots: TimeSlot[], date: string, business: BusinessData): Promise<TimeSlot[]> => {
-    try {
-      // Fetch appointments for the selected date
-      const response = await appointmentService.getBusinessAppointments({
-        businessId: business.id,
-        startDate: date,
-        endDate: date
-      });
-
-      if (response.success && response.data) {
-        // Handle the API response structure and filter out canceled appointments
-        const allAppointments = Array.isArray(response.data) ? response.data : [response.data];
-        const appointments = allAppointments
-          .filter(apt => apt.status !== 'CANCELED')
-          .map(apt => ({
-            id: apt.id,
-            date: apt.date,
-            startTime: apt.startTime,
-            endTime: apt.endTime,
-            duration: apt.duration,
-            status: apt.status,
-            service: {
-              id: apt.serviceId,
-              name: 'Service',
-              duration: apt.duration
-            },
-            staff: { id: apt.staffId || 'unknown' },
-            customer: { id: apt.customerId, firstName: '', lastName: '' }
-          } as AppointmentWithDetails));
-        console.log(`🔍 Found ${appointments.length} confirmed appointments for ${date} (filtered out canceled):`);
-        appointments.forEach((apt, index) => {
-          console.log(`📋 Appointment ${index + 1}:`, {
-            id: apt.id,
-            date: apt.date,
-            startTime: apt.startTime,
-            endTime: apt.endTime,
-            duration: apt.duration,
-            status: apt.status,
-            service: apt.service?.name
-          });
-        });
-
-        // Create blocked time ranges for efficient lookup
-        const blockedRanges = createBlockedTimeRanges(appointments, date);
-        console.log('Blocked time ranges:', blockedRanges);
-
-        // Check each slot for service duration availability
-        return slots.map(slot => {
-          const slotResult = checkSlotAvailability(slot, date, selectedService, blockedRanges, appointments);
-          console.log(`📊 Slot ${slot.time} processed: available=${slotResult.available}, has appointment=${!!slotResult.appointment}`);
-          return slotResult;
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-
-    // Return original slots if appointment fetching fails
-    return slots;
-  };
-
-  // Create blocked time ranges in Istanbul timezone
-  const createBlockedTimeRanges = (appointments: AppointmentWithDetails[], date: string) => {
-    const ranges: Array<{ start: Date; end: Date; appointment: AppointmentWithDetails }> = [];
-
-    appointments.forEach(appointment => {
-      try {
-        // Validate appointment data before processing
-        if (!appointment.startTime) {
-          console.warn('Appointment missing startTime, skipping:', appointment);
-          return;
-        }
-
-        // API already filtered by date, so all appointments are for the requested date
-        // Convert appointment times to Istanbul time for comparison
-        const appointmentStart = createIstanbulTimeSlot(date, appointment.startTime);
-        const appointmentEnd = appointment.endTime ?
-          createIstanbulTimeSlot(date, appointment.endTime) :
-          new Date(appointmentStart.getTime() + (appointment.duration || 60) * 60000);
-
-        console.log(`📋 Appointment: ${appointment.startTime} - ${appointment.endTime || 'calculated'}`);
-        console.log(`📋 Istanbul time: ${appointmentStart.toLocaleString('tr-TR')} - ${appointmentEnd.toLocaleString('tr-TR')}`);
-
-        // No buffer time - appointments can be scheduled back-to-back
-        ranges.push({
-          start: appointmentStart,
-          end: appointmentEnd,
-          appointment
-        });
-      } catch (error) {
-        console.error('Error parsing appointment for blocked ranges:', error, appointment);
-      }
-    });
-
-    // Sort ranges by start time for efficient checking
-    return ranges.sort((a, b) => a.start.getTime() - b.start.getTime());
-  };
-
-  // Check if a slot can accommodate the full service duration
-  const checkSlotAvailability = (
-    slot: TimeSlot,
-    date: string,
-    service: Service | null,
-    blockedRanges: Array<{ start: Date; end: Date; appointment: AppointmentWithDetails }>,
-    appointments: AppointmentWithDetails[]
-  ): TimeSlot => {
-    if (!service) return slot;
-
-    const slotStartMinutes = parseTimeToMinutes(slot.time);
-    const serviceDuration = service.duration || 60;
-    const serviceEndMinutes = slotStartMinutes + serviceDuration;
-
-    console.log(`🔍 Checking slot ${slot.time} (${slotStartMinutes}-${serviceEndMinutes} min) for ${serviceDuration} min service`);
-
-    // Check if this slot falls within any existing appointment's duration
-    const overlappingAppointment = appointments.find(apt => {
-      // API already filtered by date, so no need to check date again
-      // Just check if this slot time falls within the appointment's time range
-      const appointmentStartMinutes = parseTimeToMinutes(apt.startTime);
-      const appointmentEndMinutes = appointmentStartMinutes + apt.duration;
-
-      console.log(`  🔍 Checking overlap: slot ${slotStartMinutes} vs appointment ${appointmentStartMinutes}-${appointmentEndMinutes}`);
-      
-      // The slot is occupied if it's within the appointment's time range
-      return slotStartMinutes >= appointmentStartMinutes && slotStartMinutes < appointmentEndMinutes;
-    });
-
-    // If this slot falls within an appointment's duration, mark as occupied
-    if (overlappingAppointment) {
-      console.log(`🚫 Slot ${slot.time} is occupied by appointment (${overlappingAppointment.startTime})`);
-      return {
-        ...slot,
-        available: false,
-        appointment: overlappingAppointment,
-        isOccupied: true
-      };
-    }
-
-    // Check if service would extend beyond business hours
-    if (!slot.time) {
-      console.warn('Slot missing time, marking as unavailable:', slot);
-      return {
-        ...slot,
-        available: false
-      };
-    }
-    
-    const slotStart = createIstanbulTimeSlot(date, slot.time);
-    const serviceEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
-    const exceedsBusinessHours = checkBusinessHoursBoundary(serviceEnd, date);
-
-    if (exceedsBusinessHours) {
-      console.log(`❌ Service would extend beyond business hours`);
-      return {
-        ...slot,
-        available: false
-      };
-    }
-
-    // SIMPLIFIED LOGIC: Only check if service would extend INTO the next appointment
-    // Find the NEAREST next appointment after this slot
-    const nextAppointments = appointments
-      .filter(apt => {
-        // API already filtered by date, so just check if appointment starts after this slot
-        const appointmentStartMinutes = parseTimeToMinutes(apt.startTime);
-        // Only consider appointments that start after this slot
-        return appointmentStartMinutes > slotStartMinutes;
-      })
-      .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
-
-    const nextAppointment = nextAppointments[0]; // Get the closest next appointment
-
-    if (nextAppointment) {
-      const nextAppointmentStartMinutes = parseTimeToMinutes(nextAppointment.startTime);
-
-      console.log(`  📅 Next appointment starts at ${nextAppointmentStartMinutes} min`);
-      console.log(`  📅 Service would end at ${serviceEndMinutes} min`);
-
-      // Check if service would extend past the start of the next appointment
-      if (serviceEndMinutes > nextAppointmentStartMinutes) {
-        console.log(`  ❌ Insufficient time: service needs ${serviceDuration}min but only ${nextAppointmentStartMinutes - slotStartMinutes}min available`);
-        return {
-          ...slot,
-          available: false,
-          appointment: nextAppointment,
-          isOccupied: false,
-          insufficientTime: true // Flag for "Yetersiz Süre"
-        };
-      }
-    }
-
-    console.log(`  ✅ Slot ${slot.time} is available`);
-    return slot;
-  };
-
-  // Convert appointment time to Istanbul time for display and comparison
-  const convertToIstanbulTime = (dateTimeString: string): Date => {
-    try {
-      const date = new Date(dateTimeString);
-
-      // Get Istanbul time components using Intl API
-      const istanbulFormatter = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Istanbul',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      });
-
-      const formatted = istanbulFormatter.format(date);
-      const istanbulTime = new Date(formatted.replace(', ', 'T'));
-
-      console.log(`🕐 Converting ${dateTimeString} to Istanbul: ${istanbulTime.toLocaleString('tr-TR')}`);
-      return istanbulTime;
-    } catch (error) {
-      console.error('Error converting to Istanbul time:', error);
-      return new Date(dateTimeString);
-    }
-  };
-
-  // Create a time slot in Istanbul timezone
-  const createIstanbulTimeSlot = (date: string, time: string): Date => {
-    try {
-      // Validate inputs
-      if (!date || !time) {
-        console.error('Invalid inputs to createIstanbulTimeSlot:', { date, time });
-        return new Date();
-      }
-
-      // Create a date object for the slot in local time (assumed to be Istanbul)
-      const [year, month, day] = date.split('-').map(Number);
-      const [hour, minute] = time.split(':').map(Number);
-
-      // Validate parsed values
-      if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
-        console.error('Invalid parsed values:', { year, month, day, hour, minute });
-        return new Date();
-      }
-
-      // Create date object (this will be in local time)
-      const slotTime = new Date(year, month - 1, day, hour, minute);
-
-      console.log(`🕐 Creating Istanbul slot: ${date} ${time} -> ${slotTime.toLocaleString('tr-TR')}`);
-
-      return slotTime;
-    } catch (error) {
-      console.error('Error creating Istanbul time slot:', error, { date, time });
-      return new Date(`${date}T${time}:00`);
-    }
-  };
-
-  // Check if service would extend beyond business closing time
-  const checkBusinessHoursBoundary = (serviceEnd: Date, date: string): boolean => {
-    if (!business?.businessHours) {
-      console.log(`⚠️ No business hours defined, using default 18:00 closing time`);
-      // If no business hours defined, allow until 18:00 (6 PM)
-      const defaultCloseTime = createIstanbulTimeSlot(date, '18:00');
-      return serviceEnd > defaultCloseTime;
-    }
-
-    try {
-      const dayOfWeek = new Date(date).getDay();
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const dayName = dayNames[dayOfWeek];
-      const businessHours = business.businessHours[dayName];
-
-      if (!businessHours?.isOpen) {
-        console.log(`❌ Business is closed on ${dayName}`);
-        return true; // Closed day
-      }
-
-      const closeTime = businessHours.closeTime || businessHours.close;
-      if (!closeTime) {
-        console.log(`⚠️ No closing time defined for ${dayName}, using default 18:00`);
-        const defaultCloseTime = createIstanbulTimeSlot(date, '18:00');
-        return serviceEnd > defaultCloseTime;
-      }
-
-      // Create business closing time in Istanbul time (no conversion needed)
-      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-      const closeTimeString = `${closeHour.toString().padStart(2, '0')}:${closeMinute.toString().padStart(2, '0')}`;
-      const businessClose = createIstanbulTimeSlot(date, closeTimeString);
-
-      console.log(`⏰ Business closes at ${businessClose.toLocaleString('tr-TR')}, service ends at ${serviceEnd.toLocaleString('tr-TR')}`);
-      return serviceEnd > businessClose;
-    } catch (error) {
-      console.error('Error checking business hours boundary:', error);
-      return false;
-    }
   };
 
   const isTimeSlotInPast = (date: string, timeSlot: string) => {
@@ -830,7 +393,7 @@ export default function TimeSelectionPage() {
       {/* Navigation Header */}
       <div className="sticky top-0 z-10 bg-[var(--theme-background)]/90 backdrop-blur-xl border-b border-[var(--theme-border)]/50">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <button
               onClick={() => router.push(`/businesses/${slug}/book/datetime?serviceId=${serviceId}${staffId ? `&staffId=${staffId}` : ''}`)}
               className="flex items-center text-[var(--theme-foregroundSecondary)] hover:text-[var(--theme-primary)] transition-colors"
@@ -845,7 +408,12 @@ export default function TimeSelectionPage() {
               Saat Seçin
             </h1>
 
-            <div className="w-16"></div> {/* Spacer for centering */}
+            <button
+              onClick={goToNextDay}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/20 transition-colors"
+            >
+              Sonraki Gün
+            </button>
           </div>
         </div>
       </div>
@@ -912,14 +480,14 @@ export default function TimeSelectionPage() {
                                 ? `En az ${business.reservationSettings.minNotificationHours} saat önceden rezervasyon gerekli`
                                 : 'Geçmiş Tarihe Randevu Alınamaz'}
                             </span>
-                          ) : !slot.available && slot.isOccupied && slot.appointment ? (
+                          ) : !slot.available && slot.isOccupied ? (
                             <div className="text-sm">
                               <div className="flex items-center space-x-2">
                                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                <span className="font-medium">Dolu</span>
+                                <span className="font-medium">Müsait Değil</span>
                               </div>
                             </div>
-                          ) : !slot.available && slot.insufficientTime && slot.appointment ? (
+                          ) : !slot.available && slot.insufficientTime ? (
                             <div className="text-sm">
                               <div className="flex items-center justify-between space-x-2">
                                 <div className='flex items-center space-x-2'>
